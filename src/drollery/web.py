@@ -24,7 +24,7 @@ def _timestamp(value) -> str:
 
 
 templates.env.filters["timestamp"] = _timestamp
-templates.env.globals.update({"_": i18n.t, "_n": i18n.tn, "lang": i18n.current, "available_languages": i18n.languages})
+templates.env.globals.update({"_": i18n.t, "_n": i18n.tn, "lang": i18n.current, "available_languages": i18n.languages, "flag_of": i18n.flag})
 
 
 def flash_redirect(url: str, text: str, kind: str = "ok") -> RedirectResponse:

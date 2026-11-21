@@ -27,7 +27,7 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 
 [tool.setuptools.package-data]
-drollery = ["templates/*", "templates/doodles/*", "static/*", "config.default.toml"]
+drollery = ["templates/*", "templates/doodles/*", "templates/flags/*", "static/*", "config.default.toml"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

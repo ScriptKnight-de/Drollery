@@ -2,6 +2,7 @@
 Plurale sind (Einzahl, Mehrzahl)-Paare. Angesprochen wird mit „du“."""
 
 NAME = "Deutsch"
+FLAG = "de"                      # country flag shown beside the name (templates/flags/<code>.svg)
 
 MESSAGES = {
     # ---- sign in, setup, errors

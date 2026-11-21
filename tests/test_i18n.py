@@ -198,3 +198,15 @@ def test_language_menu_is_in_the_signed_in_header_too(client):
 def test_switching_while_signed_in_also_updates_the_account(client):
     client.post("/language", data={"language": "de", "next": "/"})
     assert accounts.get_user_by_name("admin")["language"] == "de"
+
+
+def test_every_language_has_a_flag_that_ships_and_shows_in_the_menu(anon):
+    import tomllib
+    root = Path(__file__).parent.parent
+    assert "templates/flags/*" in tomllib.loads((root / "pyproject.toml").read_text())["tool"]["setuptools"]["package-data"]["drollery"]
+    for code in i18n.languages():
+        assert (root / f"src/drollery/templates/flags/{i18n.flag(code)}.svg").exists(), code
+    assert i18n.flag("en") == "gb" and i18n.flag("de") == "de"
+    accounts.create_user("boss", "a-long-enough-pass")
+    menu = anon.get("/login").text.split('id="lang-menu"')[1].split("</details>")[0]
+    assert menu.count('class="flag"') == len(i18n.languages())

@@ -8,7 +8,7 @@ text itself when there is none, so a missing translation never breaks a page.
 Templates use the same function as `_()` and `_n()`. The language of a request is chosen once, in the
 middleware, and lives in a context variable, so code deep in a handler needs no request object.
 
-To add a language: create `locales/<code>.py` with `NAME` and `MESSAGES`, and list it in `LOCALES` below.
+To add a language: create `locales/<code>.py` with `NAME`, `FLAG` (a country code; add `templates/flags/<code>.svg`) and `MESSAGES`, and list it in `LOCALES` below.
 `tests/test_i18n.py` fails when a catalog lacks a string used in the code, or when placeholders differ.
 """
 from __future__ import annotations
@@ -36,6 +36,12 @@ def languages() -> dict[str, str]:
     """code -> the language's own name, English first."""
     _load()
     return {DEFAULT: "English", **{code: c["name"] for code, c in _catalogs.items()}}
+
+
+def flag(code: str) -> str:
+    """Country code of the flag shown for a language (English uses the British flag)."""
+    _load()
+    return "gb" if code == DEFAULT else getattr(importlib.import_module(f"{__package__}.locales.{code}"), "FLAG", code)
 
 
 def catalog(code: str) -> dict:

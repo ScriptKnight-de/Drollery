@@ -384,6 +384,8 @@ tr.subrow td { padding: 0 20px; border-bottom: 0; } tr.subrow:has(span:empty) { 
 .langlist button { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; border: 0; border-radius: 10px; background: none;
   font: inherit; font-size: 14px; color: var(--tx2); cursor: pointer; text-align: left; }
 .langlist button:hover { color: var(--tx); background: var(--s2); }
+.langlist button .flag { width: 20px; height: 14px; flex: none; border-radius: 3px; box-shadow: 0 0 0 1px rgba(0,0,0,.28); }
+.langlist button span { flex: 1; }
 .langlist button .ic { visibility: hidden; }
 .langlist button[aria-current] { background: var(--ac); color: var(--ac-on); }
 .langlist button[aria-current] .ic { visibility: visible; }

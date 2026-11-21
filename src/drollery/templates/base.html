@@ -52,7 +52,7 @@
           <p class="pop-h">{{ _("Language") }}</p>
           <form class="langlist" method="post" action="/language">
             <input type="hidden" name="next" value="{{ request.url.path }}{{ '?' ~ request.url.query if request.url.query }}">
-            {% for code, name in available_languages().items() %}<button type="submit" name="language" value="{{ code }}" lang="{{ code }}" {{ 'aria-current=true' if code == lang() }}><span>{{ name }}</span>{{ icon("check") }}</button>{% endfor %}
+            {% for code, name in available_languages().items() %}<button type="submit" name="language" value="{{ code }}" lang="{{ code }}" {{ 'aria-current=true' if code == lang() }}>{% include 'flags/' ~ flag_of(code) ~ '.svg' %}<span>{{ name }}</span>{{ icon("check") }}</button>{% endfor %}
           </form>
         </div>
       </details>
