@@ -2,7 +2,7 @@
 {% from "icons.html" import icon %}
 {% block title %}{{ _('Card image') }} · {{ item.title }} · Drollery{% endblock %}
 {% block content %}
-{% set kind = "image" if custom else item.kind %}
+{% set kind = "image" if custom else ("video" if item.kind == "movie" else item.kind) %}
 <a class="back leave" href="/items/{{ item.id }}">{{ icon("arrow-left") }}{{ _("Back to {title}", title=item.title) }}</a>
 <div class="page-head"><h1>{{ _("Card image") }}</h1></div>
 <p class="muted lead">{% if not has_picture %}{% elif kind == "video" %}{{ _("Choose the moment for the card, then crop it.") }}{% else %}{{ _("Crop the part of the picture that should show on the card.") }}{% endif %} {{ _("Your original file is never changed") }}</p>
@@ -57,7 +57,7 @@
 </form>
 {% if item.has_card or custom %}
 <form method="post" action="/items/{{ item.id }}/card/reset" class="reset-row">
-  {% if custom and item.kind == "video" %}<button class="btn small" type="submit">{{ icon("retry") }}{{ _("Choose a video frame again") }}</button>
+  {% if custom and item.kind in ("video", "movie") %}<button class="btn small" type="submit">{{ icon("retry") }}{{ _("Choose a video frame again") }}</button>
   {% else %}<button class="btn small" type="submit">{{ icon("retry") }}{{ _("Reset to automatic") }}</button>{% endif %}
 </form>
 {% endif %}

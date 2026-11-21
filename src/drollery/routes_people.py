@@ -9,7 +9,7 @@ from pathlib import Path
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, JSONResponse
 
-from . import albums, db, people
+from . import albums, db, movies, people
 from .config import get_settings
 from .deps import api_auth, web_auth
 from .i18n import N_, t
@@ -142,7 +142,8 @@ def person_page(request: Request, person_id: int):
     with db.tx() as c:
         items = db.search(c, "", "", "", 200, 0, "", person_id)
         album_info = albums.summaries(c, [i["id"] for i in items if i["kind"] == "album"])
-    return render(request, "person.html", person=p, form=_form(p), items=items, album_info=album_info, genders=GENDER_LABELS, today=date.today().isoformat(),
+        movie_info = movies.summaries(c, [i["id"] for i in items if i["kind"] == "movie"])
+    return render(request, "person.html", person=p, form=_form(p), items=items, album_info=album_info, movie_info=movie_info, genders=GENDER_LABELS, today=date.today().isoformat(),
                   q="", tag="", kind="", src="", track_hits={}, more=False, page=0)
 
 

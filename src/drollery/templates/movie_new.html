@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block title %}{{ _("Add a movie") }} · Drollery{% endblock %}
+{% block content %}
+<a class="back" href="/">{{ icon("arrow-left") }}{{ _("Library") }}</a>
+<div class="page-head"><h1>{{ _("Add a movie") }}</h1></div>
+<p class="muted lead">{{ _("A film, a parody or a synchro (a dub with new voices). One video file; the details can be filled in from IMDb.") }}</p>
+{% if error %}<p class="note error" role="alert">{{ error }}</p>{% endif %}
+<form class="panel form movie-form" method="post" action="/movies" enctype="multipart/form-data">
+  <label>{{ _("Video file") }} <input type="file" name="file" accept="video/*" required></label>
+  <div class="kindpick" role="radiogroup" aria-label="{{ _('Type') }}">
+    {% for key, label in subtypes.items() %}<label><input type="radio" name="subtype" value="{{ key }}" {{ "checked" if form.subtype == key }}> {{ _(label) }}</label>{% endfor %}
+  </div>
+  <label>{{ _("Title") }} <input name="title" value="{{ form.title }}" maxlength="120" placeholder="{{ _('Taken from the file name when empty') }}"></label>
+  <label>{{ _("Original film") }} <input name="original_title" value="{{ form.original_title }}" maxlength="200">
+    <span class="hint">{{ _("For a parody or a synchro: the film it makes fun of or dubs") }}</span></label>
+  <label>{{ _("Description") }} <textarea name="description" rows="3" maxlength="2000">{{ form.description }}</textarea></label>
+  <label>{{ _("Your tags") }} <input name="tags" value="{{ form.tags }}" placeholder="{{ _('Separate with spaces') }}"></label>
+  {% if metadata_lookup %}
+  <label class="check"><input type="checkbox" name="lookup" value="1" {{ "checked" if form.lookup }}> {{ _("After adding, look the movie up on IMDb to fill in its details") }}</label>
+  <span class="hint">{{ _("Only the title you see in the search field is sent") }}</span>
+  {% endif %}
+  <div class="actions">
+    <button class="btn primary" type="submit">{{ icon("upload") }}{{ _("Add movie") }}</button>
+    <a class="btn" href="/">{{ _("Cancel") }}</a>
+  </div>
+</form>
+{% endblock %}

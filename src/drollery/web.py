@@ -44,7 +44,9 @@ def _job_type(name: str) -> str:
     return shown if shown != name else name.replace("_", " ")
 
 
-KIND_NAMES = {"image": i18n.N_("Image"), "gif": i18n.N_("GIF"), "video": i18n.N_("Clip"), "audio": i18n.N_("Sound"), "album": i18n.N_("Album")}
+from .movies import SUBTYPES as _SUBTYPES
+
+KIND_NAMES = {"image": i18n.N_("Image"), "gif": i18n.N_("GIF"), "video": i18n.N_("Clip"), "audio": i18n.N_("Sound"), "album": i18n.N_("Album"), "movie": i18n.N_("Movie")}
 
 
 def _kind_label(kind: str) -> str:
@@ -52,7 +54,7 @@ def _kind_label(kind: str) -> str:
     return i18n.t(KIND_NAMES.get(kind, kind))
 
 
-templates.env.globals.update({"_": i18n.t, "job_type": _job_type, "kind_label": _kind_label, "_n": i18n.tn, "lang": i18n.current, "available_languages": i18n.languages, "flag_of": i18n.flag})
+templates.env.globals.update({"_": i18n.t, "job_type": _job_type, "kind_label": _kind_label, "_n": i18n.tn, "lang": i18n.current, "available_languages": i18n.languages, "flag_of": i18n.flag, "subtype_names": _SUBTYPES})
 
 
 def flash_redirect(url: str, text: str, kind: str = "ok") -> RedirectResponse:

@@ -52,10 +52,13 @@ def _title_from_name(name: str) -> str:
 
 
 def import_file(src: Path, original_name: str, source_url: str = "", source_meta: str = "",
-                title: str = "", tags: list[str] | None = None) -> tuple[int, bool]:
-    """Store a file in the library. Returns (item_id, created). Duplicates (same SHA-256) are not re-added."""
+                title: str = "", tags: list[str] | None = None, as_movie: bool = False) -> tuple[int, bool]:
+    """Store a file in the library. Returns (item_id, created). Duplicates (same SHA-256) are not re-added.
+    as_movie stores a video file as a movie (the caller adds the movie facts)."""
     s = get_settings()
     kind, mime = media.guess(original_name)
+    if as_movie and kind != "video":
+        raise media.MediaError("a movie must be a video file")
     sha = _sha256(src)
     with db.tx() as c:
         row = c.execute("SELECT id FROM items WHERE sha256=?", (sha,)).fetchone()
@@ -74,7 +77,7 @@ def import_file(src: Path, original_name: str, source_url: str = "", source_meta
         cur = c.execute(
             "INSERT INTO items(kind,title,title_locked,mime,ext,original_name,size,sha256,duration,width,height,"
             "has_audio,has_thumb,source_url,source_meta,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-            (kind, title or _title_from_name(original_name), 1 if title else 0, mime, ext, original_name,
+            ("movie" if as_movie else kind, title or _title_from_name(original_name), 1 if title else 0, mime, ext, original_name,
              dest.stat().st_size, sha, info["duration"], info["width"], info["height"],
              int(info["has_audio"]), int(has_thumb), source_url, source_meta, now, now))
         item_id = cur.lastrowid
@@ -112,6 +115,8 @@ def plan_jobs(c, item_id: int) -> list[str]:
         if aisettings.enabled("transcribe"):
             queued += ["transcribe_track"] * plan_track_jobs(c, item_id)
         return queued
+    if item["kind"] == "movie":
+        return queued                        # a movie runs for hours: nothing is transcribed or named behind the person's back
     has_speech = item["kind"] not in ("image", "gif") and item["has_audio"] and aisettings.enabled("transcribe")
     if has_speech:
         queued.append("transcribe")          # transcribe chains into describe when it finishes

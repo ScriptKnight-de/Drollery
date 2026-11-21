@@ -8,7 +8,7 @@
   <div>
     <div class="frame">
       {% if item.kind in ("image", "gif") %}<img src="/media/{{ item.id }}" alt="{{ item.title }}">
-      {% elif item.kind == "video" %}<video src="/media/{{ item.id }}" controls preload="metadata" {% if item.has_thumb %}poster="/thumb/{{ item.id }}"{% endif %}></video>
+      {% elif item.kind in ("video", "movie") %}<video src="/media/{{ item.id }}" controls preload="metadata" {% if item.has_thumb %}poster="/thumb/{{ item.id }}"{% endif %}></video>
       {% else %}<div class="sound-stage" style="--h: {{ ((item.id * 137.508) % 360)|round|int }}">{{ sound_play(item) }}</div>{% endif %}
     </div>
     {% include "item_actions.html" %}
@@ -46,12 +46,24 @@
     <section class="panel stack facts" id="details">
       <h2>{{ _("Details") }}</h2>
       <dl>
-        <dt>{{ _("Type") }}</dt><dd>{{ kind_label(item.kind) }}</dd>
+        <dt>{{ _("Type") }}</dt><dd>{{ _(subtypes[movie.subtype]) if movie else kind_label(item.kind) }}</dd>
+        {% if movie %}
+        {% if movie.original_title and movie.subtype != "movie" %}<dt>{{ _("Original film") }}</dt><dd>{{ movie.original_title }}</dd>{% endif %}
+        {% if movie.year %}<dt>{{ _("Year") }}</dt><dd>{{ movie.year }}</dd>{% endif %}
+        {% if movie_facts.directors %}<dt>{{ _("Directors") }}</dt><dd>{{ movie_facts.directors|join(", ") }}</dd>{% endif %}
+        {% if movie_facts.cast %}<dt>{{ _("Cast") }}</dt><dd>{{ movie_facts.cast|join(", ") }}</dd>{% endif %}
+        {% if movie_facts.genres %}<dt>{{ _("Genres") }}</dt><dd class="chips">{% for g in movie_facts.genres %}<a href="/?q={{ g|urlencode }}">{{ g }}</a>{% endfor %}</dd>{% endif %}
+        {% if movie_facts.rating %}<dt>{{ _("IMDb rating") }}</dt><dd>{{ "%.1f"|format(movie_facts.rating) }} / 10</dd>{% endif %}
+        {% if movie_facts.runtime %}<dt>{{ _("Runtime") }}</dt><dd>{{ _("{n} min", n=movie_facts.runtime) }}</dd>{% endif %}
+        {% if movie_facts.language %}<dt>{{ _("Language") }}</dt><dd>{{ movie_facts.language }}</dd>{% endif %}
+        {% if movie_facts.country %}<dt>{{ _("Country") }}</dt><dd>{{ movie_facts.country }}</dd>{% endif %}
+        {% if movie.imdb_id %}<dt>IMDb</dt><dd><a href="https://www.imdb.com/title/{{ movie.imdb_id }}/" rel="noreferrer noopener" target="_blank">{{ icon("external") }}{{ movie.imdb_id }}</a></dd>{% endif %}
+        {% endif %}
         <dt>{{ _("Format") }}</dt><dd>{{ item.mime }}</dd>
         <dt>{{ _("Size") }}</dt><dd>{{ "%.1f"|format(item.size / 1048576) }} MB</dd>
         {% if item.width %}<dt>{{ _("Dimensions") }}</dt><dd>{{ item.width }}×{{ item.height }}</dd>{% endif %}
-        {% if item.duration and item.kind in ("video", "audio") %}<dt>{{ _("Duration") }}</dt><dd>{{ item.duration|clock }}</dd>{% endif %}
-        {% if item.source_url %}<dt>{{ _("Source") }}</dt><dd><a href="{{ item.source_url }}" rel="noreferrer noopener" target="_blank">{{ icon("external") }}{{ item.source_url|replace("https://", "")|replace("http://", "")|truncate(48, True) }}</a></dd>{% endif %}
+        {% if item.duration and item.kind in ("video", "audio", "movie") %}<dt>{{ _("Duration") }}</dt><dd>{{ item.duration|clock }}</dd>{% endif %}
+        {% if item.source_url and not (movie and movie.imdb_id) %}<dt>{{ _("Source") }}</dt><dd><a href="{{ item.source_url }}" rel="noreferrer noopener" target="_blank">{{ icon("external") }}{{ item.source_url|replace("https://", "")|replace("http://", "")|truncate(48, True) }}</a></dd>{% endif %}
       </dl>
       {% if item.transcript %}<details open><summary>{{ _("Transcript") }}</summary><p class="pre">{{ item.transcript }}</p></details>{% endif %}
     </section>
@@ -59,6 +71,12 @@
     <div class="panel form" id="edit-tile">
       <form id="edit-form" method="post" action="/items/{{ item.id }}/edit"></form>
       <label>{{ _("Title") }} <input form="edit-form" name="title" value="{{ item.title }}" maxlength="120"></label>
+      {% if movie %}
+      <label>{{ _("Type") }}
+        <select form="edit-form" name="subtype">{% for key, label in subtypes.items() %}<option value="{{ key }}" {{ "selected" if movie.subtype == key }}>{{ _(label) }}</option>{% endfor %}</select>
+      </label>
+      <label>{{ _("Original film") }} <input form="edit-form" name="original_title" value="{{ movie.original_title }}" maxlength="200"></label>
+      {% endif %}
       <label>{{ _("Description") }} <textarea form="edit-form" name="description" rows="4">{{ item.description }}</textarea></label>
       {% include "people_field.html" %}
       <div class="fld" id="tag-fld" data-remove="{{ _('Remove {tag}') }}">

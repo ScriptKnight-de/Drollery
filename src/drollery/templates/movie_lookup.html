@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block title %}{{ _("Look up on IMDb") }} · Drollery{% endblock %}
+{% block content %}
+<a class="back leave" href="/items/{{ item.id }}">{{ icon("arrow-left") }}{{ _("Back to {title}", title=item.title) }}</a>
+<div class="page-head"><h1>{{ _("Look up on IMDb") }}</h1></div>
+<p class="muted lead">{{ _("Search IMDb for the movie. For a parody or a synchro, search for the original film. Only the title in the field below is sent.") }}</p>
+{% if error %}<p class="note error" role="alert">{{ error }}</p>{% endif %}
+
+<form class="panel form" method="get" action="/movies/{{ item.id }}/lookup">
+  <input type="hidden" name="run" value="1">
+  <label>{{ _("Title") }} <input name="q" value="{{ q }}" maxlength="100" autofocus></label>
+  <button class="btn primary" type="submit">{{ icon("search") }}{{ _("Search") }}</button>
+</form>
+
+{% if results is not none %}
+<section class="panel stack results">
+  <h2>{{ _("Matching titles") }}</h2>
+  {% if results %}
+  <ul class="lookup-list movie-list">
+    {% for r in results %}
+    <li>
+      <a class="lookup-pick" href="/movies/{{ item.id }}/lookup/{{ r.imdb_id }}">
+        <b>{{ r.title }}</b>{% if r.year %} <span class="muted">({{ r.year }})</span>{% endif %}
+        <span class="muted small">{{ r.kind }}{% if r.cast %} · {{ r.cast }}{% endif %}</span>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="hint">{{ _("Pick the title that matches; you will see every change before it is applied") }}</p>
+  {% else %}<p class="muted">{{ _("No matching title found. Try fewer words") }}</p>{% endif %}
+  {% if not has_key %}<p class="hint">{{ icon("key") }}{{ _("Without an OMDb key only the title, year, cast and poster can be filled in.") }} <a href="/settings/lookup">{{ _("Add a key") }}</a></p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

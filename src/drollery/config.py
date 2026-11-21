@@ -30,6 +30,7 @@ class Provider(BaseModel):
 
 class Settings(BaseModel):
     max_upload_mb: int = 500
+    max_movie_mb: int = 16384         # one movie file (they are long)
     max_album_mb: int = 2048          # all the tracks of one album together (also the unpacked size of a ZIP)
     max_album_tracks: int = 500
     metadata_lookup: bool = True       # offer the online album lookup (MusicBrainz + Cover Art Archive); it only runs when someone asks for it

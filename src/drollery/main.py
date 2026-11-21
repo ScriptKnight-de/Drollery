@@ -16,10 +16,11 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import __version__, accounts, albums, db, i18n, media, people, pipeline, shares
+from . import __version__, accounts, albums, db, i18n, media, movies, people, pipeline, shares
 from .config import get_settings
 from .deps import LoginRequired, SetupRequired, api_auth, web_auth
 from .routes_auth import router as auth_router
+from .routes_movie import router as movie_router
 from .routes_people import files as people_files_router
 from .routes_people import router as people_router
 from .routes_album import router as album_router, files as album_files_router, api as album_api_router
@@ -75,6 +76,7 @@ app.include_router(auth_router)
 app.include_router(settings_router)
 app.include_router(card_router)
 app.include_router(card_files_router)
+app.include_router(movie_router)
 app.include_router(people_router)
 app.include_router(people_files_router)
 app.include_router(album_router)
@@ -138,24 +140,26 @@ def healthz():
 
 # ---------------------------------------------------------------- helpers
 
-async def _save_upload(up: UploadFile) -> tuple[int, bool]:
+async def _save_upload(up: UploadFile, as_movie: bool = False) -> tuple[int, bool]:
     s = get_settings()
     name = Path(up.filename or "upload").name
-    media.guess(name)  # raises MediaError for unsupported types
-    limit = s.max_upload_mb * 1024 * 1024
+    kind, _mime = media.guess(name)  # raises MediaError for unsupported types
+    if as_movie and kind != "video":
+        raise media.MediaError("a movie must be a video file")
+    limit = (s.max_movie_mb if as_movie else s.max_upload_mb) * 1024 * 1024
     with tempfile.NamedTemporaryFile(dir=s.tmp_dir, delete=False) as tmp:
         size = 0
         try:
             while chunk := await up.read(1 << 20):
                 size += len(chunk)
                 if size > limit:
-                    raise HTTPException(413, f"file exceeds {s.max_upload_mb} MB")
+                    raise HTTPException(413, f"file exceeds {limit // 1048576} MB")
                 tmp.write(chunk)
         except BaseException:
             Path(tmp.name).unlink(missing_ok=True)
             raise
     try:
-        return await asyncio.to_thread(pipeline.import_file, Path(tmp.name), name)
+        return await asyncio.to_thread(pipeline.import_file, Path(tmp.name), name, as_movie=as_movie)
     finally:
         Path(tmp.name).unlink(missing_ok=True)
 
@@ -309,9 +313,10 @@ def home(request: Request, q: str = "", kind: str = "", tag: str = "", src: str 
         pending = c.execute("SELECT COUNT(*) FROM jobs WHERE status IN ('queued','running')").fetchone()[0]
         album_ids = [i["id"] for i in items if i["kind"] == "album"]
         album_info = albums.summaries(c, album_ids)
+        movie_info = movies.summaries(c, [i["id"] for i in items if i["kind"] == "movie"])
         track_hits = albums.track_hits(c, q, album_ids) if q.strip() else {}
     tpl = "grid.html" if request.headers.get("hx-request") and not request.headers.get("hx-boosted") else "index.html"
-    return render(request, tpl, items=items, q=q, kind=kind, tag=tag, src=src, person_id=person, person_row=person_row, page=page, more=len(items) == PAGE, counts=counts, pending=pending, album_info=album_info, track_hits=track_hits)
+    return render(request, tpl, items=items, q=q, kind=kind, tag=tag, src=src, person_id=person, person_row=person_row, page=page, more=len(items) == PAGE, counts=counts, pending=pending, album_info=album_info, movie_info=movie_info, track_hits=track_hits)
 
 
 @app.post("/add", dependencies=[Depends(web_auth)])
@@ -342,11 +347,14 @@ def item_page(request: Request, item_id: int):
                           item_people=people.of_item(c, item_id), transcription=albums.transcription_state(c, item_id), matches=albums.matching_track_ids(c, q, item_id) if q.strip() else set(), q=q, tracks=albums.tracks_of(c, item_id), **share_context(request, item))
     with db.tx() as c:
         item_people = people.of_item(c, item_id)
-    return render(request, "item.html", item=item, jobs=jobs, item_people=item_people, **share_context(request, item))
+        movie = movies.get(c, item_id) if item["kind"] == "movie" else None
+    return render(request, "item.html", item=item, jobs=jobs, item_people=item_people, movie=movie, movie_facts=movies.facts(movie) if movie else {},
+                  subtypes=movies.SUBTYPES, **share_context(request, item))
 
 
 @app.post("/items/{item_id}/edit", dependencies=[Depends(web_auth)])
-def item_edit(item_id: int, title: str = Form(""), description: str = Form(""), tags: str = Form(""), artist: str | None = Form(None)):
+def item_edit(item_id: int, title: str = Form(""), description: str = Form(""), tags: str = Form(""), artist: str | None = Form(None),
+              subtype: str | None = Form(None), original_title: str | None = Form(None)):
     item = _get_or_404(item_id)
     with db.tx() as c:
         if title.strip() != item["title"]:
@@ -356,6 +364,8 @@ def item_edit(item_id: int, title: str = Form(""), description: str = Form(""), 
         if item["kind"] == "album" and artist is not None:
             c.execute("UPDATE albums SET artist=? WHERE item_id=?", (artist.strip()[:120], item_id))
             db.reindex(c, item_id)
+        if item["kind"] == "movie" and subtype is not None:
+            movies.update(c, item_id, subtype, original_title or "")
     return RedirectResponse(f"/items/{item_id}", status_code=303)
 
 

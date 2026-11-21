@@ -1,0 +1,24 @@
+{% extends "settings_base.html" %}
+{% from "icons.html" import icon %}
+{% block settings %}
+<section class="panel stack">
+  <h2>{{ _("Online lookup") }}</h2>
+  <p class="muted">{{ _("Albums are looked up on MusicBrainz and movies on IMDb. A lookup only runs when you press its button, and it sends only the title (and artist) you can see in the search field.") }}</p>
+  {% if not enabled %}<p class="note error">{{ _("Online lookup is switched off in the configuration file") }}</p>{% endif %}
+</section>
+
+<form class="panel form" method="post" action="/settings/lookup" autocomplete="off">
+  <h2>{{ _("Movie details (OMDb)") }}</h2>
+  <p class="muted">{{ _("IMDb's search finds a movie, its year, main cast and poster without any account. For the plot, genres, directors, the full cast, the rating and the runtime, Drollery asks OMDb, which serves IMDb's data. It needs a free key.") }}
+    <a href="https://www.omdbapi.com/apikey.aspx" target="_blank" rel="noopener noreferrer">{{ icon("external") }}{{ _("Get a free key") }}</a></p>
+  <p>{% if has_key %}<span class="dot done"></span>{{ _("A key is saved") }}{% else %}<span class="dot idle"></span>{{ _("No key yet. Movie lookups will only fill in the title, year, cast and poster") }}{% endif %}</p>
+  <label>{{ _("OMDb key") }}
+    <input type="password" name="omdb_key" maxlength="40" autocomplete="new-password" placeholder="{{ _('Paste the key here') if not has_key else _('Paste a new key to replace it') }}">
+    <span class="hint">{{ _("The key is only stored on this server and is never shown again") }}</span>
+  </label>
+  <div class="actions">
+    <button class="btn primary" type="submit">{{ icon("check") }}{{ _("Save key") }}</button>
+    {% if has_key %}<button class="btn" type="submit" name="remove" value="1">{{ icon("trash") }}{{ _("Remove key") }}</button>{% endif %}
+  </div>
+</form>
+{% endblock %}

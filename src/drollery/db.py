@@ -11,7 +11,7 @@ from .config import get_settings
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS items (
   id INTEGER PRIMARY KEY,
-  kind TEXT NOT NULL,              -- image | gif | video | audio | album
+  kind TEXT NOT NULL,              -- image | gif | video | audio | album | movie
   title TEXT NOT NULL DEFAULT '',
   title_locked INTEGER NOT NULL DEFAULT 0,
   description TEXT NOT NULL DEFAULT '',
@@ -44,6 +44,14 @@ CREATE TABLE IF NOT EXISTS albums (                   -- extra facts of an item 
   label TEXT NOT NULL DEFAULT '',
   mbid TEXT NOT NULL DEFAULT '',                      -- MusicBrainz release id the details came from
   details TEXT NOT NULL DEFAULT ''                    -- JSON: release date, country, catalog number, format, genres ... from the lookup
+);
+CREATE TABLE IF NOT EXISTS movies (                   -- extra facts of an item whose kind is 'movie' (a film, a parody or a synchro / dub)
+  item_id INTEGER PRIMARY KEY REFERENCES items(id) ON DELETE CASCADE,
+  subtype TEXT NOT NULL DEFAULT 'movie',              -- movie | parody | synchro
+  original_title TEXT NOT NULL DEFAULT '',            -- the title of the film that is parodied or dubbed
+  year TEXT NOT NULL DEFAULT '',
+  imdb_id TEXT NOT NULL DEFAULT '',
+  details TEXT NOT NULL DEFAULT '{}'                  -- JSON: plot, genres, directors, cast, rating, runtime ... from the lookup
 );
 CREATE TABLE IF NOT EXISTS tracks (
   id INTEGER PRIMARY KEY,
@@ -295,6 +303,17 @@ def reindex(c: sqlite3.Connection, item_id: int) -> None:
     source = f"{row['source_url']} {row['source_meta']} {row['original_name']}"
     source += " " + " ".join(r["name"] for r in c.execute("SELECT p.name FROM people p JOIN item_people ip ON ip.person_id=p.id WHERE ip.item_id=?", (item_id,)))   # found by who made it
     transcript = row["transcript"]
+    if row["kind"] == "movie":                                      # a movie is found by the film it parodies or dubs, its year, cast, directors and genres
+        m = c.execute("SELECT original_title, year, imdb_id, details FROM movies WHERE item_id=?", (item_id,)).fetchone()
+        if m:
+            source += f" {m['original_title']} {m['year']} {m['imdb_id']}"
+            try:
+                d = json.loads(m["details"] or "{}")
+                for k in ("genres", "directors", "writers", "cast"):
+                    source += " " + " ".join(d.get(k, []))
+                source += " " + str(d.get("plot", ""))
+            except (ValueError, TypeError, AttributeError):
+                pass
     if row["kind"] == "album":                                      # an album is found by its artist and by its track titles
         extra = c.execute("SELECT artist, year, label, details FROM albums WHERE item_id=?", (item_id,)).fetchone()
         if extra:

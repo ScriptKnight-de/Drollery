@@ -37,12 +37,12 @@ def _source(item: dict):
         return albums.cover_path(item), "image"
     if pipeline.card_source_path(item).exists():
         return pipeline.card_source_path(item), "image"
-    return pipeline.media_path(item), item["kind"]
+    return pipeline.media_path(item), media.media_kind(item["kind"])
 
 
 def default_time(item: dict) -> float:
     """Where the automatic thumbnail was taken (matches media.make_thumb)."""
-    return round(min(1.0, (item["duration"] or 0) / 2), 2) if item["kind"] == "video" else 0.0
+    return round(min(1.0, (item["duration"] or 0) / 2), 2) if media.media_kind(item["kind"]) == "video" else 0.0
 
 
 @router.get("/items/{item_id}/card")

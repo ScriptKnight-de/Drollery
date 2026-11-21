@@ -20,13 +20,19 @@ for _ext, _mime in {
 }.items():
     mimetypes.add_type(_mime, _ext)
 
-KINDS = ("image", "gif", "video", "audio")      # a GIF is told apart from other pictures: it is stored as kind "gif"
+KINDS = ("image", "gif", "video", "audio")      # a GIF is told apart from other pictures (kind "gif"); a "movie" is a video file marked as a movie (see media_kind)
+_UNUSED_KINDS = None      # a GIF is told apart from other pictures: it is stored as kind "gif"
 # Formats that can carry scripts. Served from this origin they would run with the owner's session, so they are refused.
 UNSAFE_MIMES = {"image/svg+xml", "image/svg+xml-compressed"}
 
 
 class MediaError(Exception):
     pass
+
+
+def media_kind(kind: str) -> str:
+    """What ffmpeg-level handling an item needs: a movie is a video."""
+    return "video" if kind == "movie" else kind
 
 
 def guess(path_or_name: str) -> tuple[str, str]:

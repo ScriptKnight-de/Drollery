@@ -1,11 +1,14 @@
 """Settings pages: profile, security (password, 2FA, sessions), API keys and AI models."""
 from __future__ import annotations
 
+import re
+
 import segno
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 
-from . import __version__, accounts, aisettings, db, i18n, pipeline, security
+from . import __version__, accounts, aisettings, db, i18n, imdb, pipeline, security
+from .config import get_settings
 from .deps import SESSION_COOKIE, web_auth
 from .i18n import t, tn
 from .web import flash_redirect, render
@@ -57,6 +60,29 @@ GITHUB_URL = "https://github.com/ScriptKnight-de"
 @router.get("/about")
 def about_page(request: Request):
     return render(request, "settings_about.html", tab="about", kofi_url=KOFI_URL, github_url=GITHUB_URL, version=__version__)
+
+
+# ----------------------------------------------------------- online lookup
+
+OMDB_KEY = re.compile(r"^[A-Za-z0-9]{4,40}$")
+
+
+@router.get("/lookup")
+def lookup_page(request: Request):
+    return render(request, "settings_lookup.html", tab="lookup", has_key=imdb.has_key(), enabled=get_settings().metadata_lookup)
+
+
+@router.post("/lookup")
+def lookup_save(omdb_key: str = Form(""), remove: str = Form("")):
+    """The OMDb key is write-only: it is stored, never shown again and never put into a page, a log or an error."""
+    if remove:
+        accounts.set_setting(imdb.KEY_SETTING, None)
+        return flash_redirect("/settings/lookup", t("OMDb key removed"))
+    key = omdb_key.strip()
+    if not OMDB_KEY.match(key):
+        return flash_redirect("/settings/lookup", t("That does not look like an OMDb key (letters and digits only)"), "error")
+    accounts.set_setting(imdb.KEY_SETTING, key)
+    return flash_redirect("/settings/lookup", t("OMDb key saved"))
 
 
 # --------------------------------------------------------------- impressum
