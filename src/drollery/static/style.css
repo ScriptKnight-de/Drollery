@@ -379,6 +379,10 @@ tr.subrow td { padding: 0 20px; border-bottom: 0; } tr.subrow:has(span:empty) { 
 .qr svg { display: block; max-width: 100%; height: auto; }
 .snippet { margin: 0; padding: 14px 16px; border-radius: 14px; background: var(--bg); border: 2px solid var(--ln); font-size: 13px; line-height: 20px; overflow-x: auto; white-space: pre; }
 .login-wrap.wide { max-width: 440px; }
+.langswitch { display: flex; justify-content: center; gap: 4px; margin-top: 16px; }
+.langswitch button { font: inherit; font-size: 14px; padding: 4px 12px; border-radius: 16px; border: 2px solid transparent; background: transparent; color: var(--tx2); cursor: pointer; }
+.langswitch button:hover { color: var(--tx); background: var(--s1); }
+.langswitch button.on { color: var(--ac-ink); border-color: var(--ln2); background: var(--s1); }
 .login .note { margin: 0; }
 
 @media (max-width: 600px) {

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Set up') }} · Drollery{% endblock %}
+{% from "macros.html" import langswitch %}
 {% block content %}
 <div class="login-wrap wide">
 <div class="doodle">{% include "doodles/castle.svg" %}</div>
@@ -17,5 +18,6 @@
   <label>{{ _("Repeat password") }} <input type="password" name="password2" autocomplete="new-password" required></label>
   <button class="btn primary" type="submit">{{ _("Create admin account") }}</button>
 </form>
+{{ langswitch("/setup") }}
 </div>
 {% endblock %}

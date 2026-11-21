@@ -6,7 +6,7 @@ import re
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import RedirectResponse
 
-from . import accounts, i18n, security
+from . import accounts, i18n, security, shares
 from .i18n import t
 from .config import get_settings
 from .deps import PENDING_COOKIE, SESSION_COOKIE, client_ip
@@ -67,6 +67,21 @@ def setup(request: Request, code: str = Form(""), username: str = Form(""),
     accounts.clear_setup_code()
     resp = flash_redirect("/settings/ai", t("Admin account created. Next, tell Drollery which AI models to use, or skip this for now"))
     _set_session(resp, request, user_id)
+    return resp
+
+
+# --------------------------------------------------------------- language
+
+@router.post("/language")
+def choose_language(request: Request, language: str = Form(""), next: str = Form("/login")):
+    """The switcher on the sign-in pages. It sets the browser's language cookie (and the account's, if someone is signed in)."""
+    code = i18n.normalize(language)
+    resp = RedirectResponse(shares.safe_next(next, "/login"), status_code=303)
+    if code:
+        resp.set_cookie(i18n.COOKIE, code, max_age=365 * 86400, samesite="lax")
+        user = accounts.lookup_session(request.cookies.get(SESSION_COOKIE, ""))
+        if user:
+            accounts.set_language(user["id"], code)
     return resp
 
 

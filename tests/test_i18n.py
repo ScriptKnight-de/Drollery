@@ -165,3 +165,34 @@ def test_locales_ship_with_the_package():
     for code in i18n.LOCALES:
         assert (root / f"src/drollery/locales/{code}.py").exists()
     assert (root / "src/drollery/locales/__init__.py").exists()           # so packages.find picks the folder up
+
+
+def test_language_switcher_on_the_sign_in_pages(anon):
+    accounts.create_user("boss", "a-long-enough-pass")
+    page = anon.get("/login")
+    assert 'action="/language"' in page.text and ">English<" in page.text and ">Deutsch<" in page.text
+    assert re.search(r'value="en"[^>]*aria-current', page.text)                      # the current language is marked
+    r = anon.post("/language", data={"language": "de", "next": "/login"})
+    assert r.status_code == 303 and r.headers["location"] == "/login" and f"{i18n.COOKIE}=de" in r.headers["set-cookie"]
+    after = anon.get("/login")                                                       # the cookie now decides, whatever the browser sends
+    assert "Halt! Wer da?" in after.text and re.search(r'value="de"[^>]*aria-current', after.text)
+    anon.post("/language", data={"language": "en", "next": "/login"})
+    assert "Halt! Who goes there?" in anon.get("/login", headers=DE).text
+
+
+def test_language_switcher_is_safe_and_on_every_pre_login_page(anon):
+    accounts.create_user("boss", "a-long-enough-pass")
+    assert anon.post("/language", data={"language": "de", "next": "https://evil.example"}).headers["location"] == "/login"
+    assert anon.post("/language", data={"language": "de", "next": "//evil.example"}).headers["location"] == "/login"
+    assert "set-cookie" not in anon.post("/language", data={"language": "klingon"}).headers          # unknown codes are ignored
+    assert 'action="/language"' in anon.get("/login").text
+    assert anon.post("/language", data={"language": "de"}, headers={"origin": "https://evil.example"}).status_code == 403
+
+
+def test_language_switcher_on_setup_and_two_factor_pages(anon):
+    assert 'action="/language"' in anon.get("/setup").text and 'name="next" value="/setup"' in anon.get("/setup").text
+
+
+def test_switching_while_signed_in_also_updates_the_account(client):
+    client.post("/language", data={"language": "de", "next": "/"})
+    assert accounts.get_user_by_name("admin")["language"] == "de"

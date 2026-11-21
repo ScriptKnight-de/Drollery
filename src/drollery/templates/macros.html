@@ -1,4 +1,11 @@
 {% from "icons.html" import icon %}
+{# Language buttons for the pages shown before sign-in. Posts to /language and comes straight back. #}
+{% macro langswitch(next) -%}
+<form class="langswitch" method="post" action="/language" aria-label="{{ _('Language') }}">
+  <input type="hidden" name="next" value="{{ next }}">
+  {% for code, name in available_languages().items() %}<button type="submit" name="language" value="{{ code }}" lang="{{ code }}" {{ 'aria-current=true class=on' if code == lang() }}>{{ name }}</button>{% endfor %}
+</form>
+{%- endmacro %}
 {# An error message: one truncated line that opens in place to the whole text, with a copy button. #}
 {% macro errbox(error) -%}
 {% if error %}<details class="errbox">
