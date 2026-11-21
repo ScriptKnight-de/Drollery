@@ -366,3 +366,10 @@ def test_saving_does_not_reload_the_page_that_is_playing(client, mp3s):
     # the plain form post still works without scripts (and answers with a redirect, as before)
     r = client.post(f"/items/{aid}/edit", data={"title": "Plain", "description": "", "tags": "a b", "artist": "X"}, follow_redirects=False)
     assert r.status_code == 303 and r.headers["location"] == f"/items/{aid}"
+
+
+def test_the_audio_player_is_dressed_like_the_other_blocks(client):
+    css = client.get("/static/style.css").text
+    rule = re.search(r"^audio \{([^}]*)\}", css, flags=re.M).group(1)                      # the plain `audio { ... }` rule
+    assert "border: 2px solid var(--ln)" in rule and "background: var(--s1)" in rule
+    assert "audio::-webkit-media-controls-panel { background-color: var(--s1); }" in css

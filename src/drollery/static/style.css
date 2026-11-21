@@ -249,6 +249,11 @@ kbd { color: var(--tx3); border: 2px solid var(--ln); border-radius: 6px; paddin
   .detail.album .side > * + * { margin-top: 0; }
 }
 .player audio { width: 100%; }
+/* the browser's own player, dressed like the other blocks: same surface, hairline and corners in every theme.
+   (Chromium and Safari let the control panel be styled; Firefox draws its own, which follows color-scheme.) */
+audio { color-scheme: inherit; box-sizing: border-box; height: 54px; border: 2px solid var(--ln); border-radius: 20px; background: var(--s1); }
+audio::-webkit-media-controls-enclosure { border-radius: 18px; background-color: var(--s1); }
+audio::-webkit-media-controls-panel { background-color: var(--s1); }
 .nowplaying { margin: 0; font-size: 14px; line-height: 20px; color: var(--tx2); min-height: 20px; }
 .nowplaying b { color: var(--tx); font-weight: 500; }
 .tracklist { list-style: none; margin: 0; padding: 0; display: grid; }
