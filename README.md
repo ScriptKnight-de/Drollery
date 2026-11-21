@@ -15,7 +15,7 @@ instantly with full-text search.
 - **Add by upload or by link.** Direct media URLs, anything `yt-dlp` supports, and gallery pages via `gallery-dl` — downloaded by a background job.
 - **Optional, pluggable AI** — nothing is required, nothing is bundled, everything is configurable (see below). Jobs are queued, retried, and run one at a time so a Raspberry Pi stays responsive.
 - **Your edits win.** A title you set by hand is never overwritten by AI.
-- **Playful, themeable UI.** Light, dark or follow-the-system, a soft glow backdrop (or plain) and 10 highlight colors from the palette button in the header; the choice is remembered per browser.
+- **Playful, themeable UI.** Light, dark or follow-the-system, a parchment/stone texture, glow or plain backdrop and 10 highlight colors from the palette button in the header; the choice is remembered per browser.
 - **Medieval doodles.** Line-art knights, snails, dragons, wizards, castles, chests and burglars decorate the empty states, login and 404 pages; a tiny skyline runs along the bottom.
 - **One container**, one data volume, no external services. Token auth for the UI and API.
 

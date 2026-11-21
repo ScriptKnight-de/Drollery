@@ -11,7 +11,7 @@
       var r = document.documentElement, t = localStorage.getItem("drollery.theme"), a = localStorage.getItem("drollery.accent"), g = localStorage.getItem("drollery.bg");
       if (t === "light" || t === "dark") r.dataset.theme = t;
       if (a) r.dataset.accent = a;
-      if (g === "plain") r.dataset.bg = g;
+      if (g === "plain" || g === "glow" || g === "texture") r.dataset.bg = g;
     } catch (e) {}
   </script>
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
@@ -35,7 +35,8 @@
             <button type="button" data-theme-set="system">{{ icon("monitor") }}Auto</button>
           </div>
           <p class="pop-h">Backdrop</p>
-          <div class="modes two" role="group" aria-label="Backdrop">
+          <div class="modes three" role="group" aria-label="Backdrop">
+            <button type="button" data-bg-set="texture">Texture</button>
             <button type="button" data-bg-set="glow">Glow</button>
             <button type="button" data-bg-set="plain">Plain</button>
           </div>
@@ -57,7 +58,7 @@
     var root = document.documentElement, menu = document.getElementById("theme-menu");
     function save(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
     function sync() {
-      var t = root.dataset.theme || "system", a = root.dataset.accent || "gold", g = root.dataset.bg || "glow";
+      var t = root.dataset.theme || "system", a = root.dataset.accent || "gold", g = root.dataset.bg || "texture";
       document.querySelectorAll("[data-theme-set]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.themeSet === t); });
       document.querySelectorAll("[data-accent-set]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.accentSet === a); });
       document.querySelectorAll("[data-bg-set]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.bgSet === g); });
