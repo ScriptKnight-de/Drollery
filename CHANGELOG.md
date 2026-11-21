@@ -29,6 +29,7 @@ First public release.
 ### Distribution
 - A ready-made Docker image for `linux/amd64` and `linux/arm64` is built by CI and published to
   `ghcr.io/scriptknight-de/drollery` (and the Forgejo registry): `latest`, the version (`0.1.0`) and the minor (`0.1`).
+  The project's `docker-compose.yml` pulls it by default (`DROLLERY_IMAGE` pins a version); `--build` builds from source.
 
 ### Hardening
 - Links to private, loopback and link-local addresses are not fetched by default (checked when a link is added, when the

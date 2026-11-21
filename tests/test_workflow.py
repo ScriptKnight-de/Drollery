@@ -131,3 +131,16 @@ def test_the_readme_tells_people_to_pull_the_image_the_workflow_publishes():
 
 def test_the_changelog_mentions_the_published_image():
     assert "ghcr.io/scriptknight-de/drollery" in (ROOT / "CHANGELOG.md").read_text()
+
+
+def test_the_compose_file_pulls_the_published_image_and_can_still_build_it():
+    compose = (ROOT / "docker-compose.yml").read_text()
+    ghcr = re.search(r"^  GHCR_IMAGE: (\S+)$", workflow(), re.M).group(1)
+    drollery = compose.split("  drollery:\n", 1)[1].split("\n  # ----", 1)[0]
+    assert f"image: ${{DROLLERY_IMAGE:-{ghcr}:latest}}" in drollery                       # the image the workflow publishes, overridable
+    assert "build:\n      context: ." in drollery                                        # and `--build` still builds from source
+    assert "pull_policy" not in drollery                                                  # the default does what the README says
+    env = (ROOT / ".env.example").read_text()
+    assert re.search(r"^DROLLERY_IMAGE=$", env, re.M) and "DROLLERY_IMAGE" in (ROOT / "docs/configuration.md").read_text()
+    readme = (ROOT / "README.md").read_text()
+    assert "docker compose up -d               # add --build" in readme and "docker compose pull && docker compose up -d" in readme

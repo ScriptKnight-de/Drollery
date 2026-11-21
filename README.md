@@ -52,12 +52,13 @@ volumes:
 `latest` follows the newest version on the main branch. To stay on one release, use a version such as
 `ghcr.io/scriptknight-de/drollery:0.1.0`.
 
-**Or build it yourself** from the source, which also gives you the optional Whisper container and the `.env` file:
+**Or use the project's Compose file**, which also gives you the optional Whisper container and the `.env` file. It pulls
+the same ready-made image:
 
 ```bash
 git clone https://forgejo.scriptknight.de/scriptknight/drollery.git
 cd drollery
-docker compose up -d --build
+docker compose up -d               # add --build to build the image from this folder instead
 docker compose logs drollery       # shows your one-time setup code
 ```
 
@@ -71,7 +72,7 @@ Either way, then:
 > created your account.
 
 Everything you add lives in one Docker volume: `drollery-data` with the ready-made image, or `drollery_drollery-data`
-when you built it yourself (the first part is the name of the folder you cloned into). See
+when you started it from the cloned project's Compose file (the first part is the name of the folder you cloned into). See
 [Looking after your library](#looking-after-your-library).
 
 > The commands further down use `docker compose …`. If you started Drollery with the plain `docker run` command, use
@@ -223,7 +224,7 @@ docker run -d --name drollery --restart unless-stopped -p 8080:8080 -v drollery-
   ghcr.io/scriptknight-de/drollery:latest
 ```
 
-(with the Compose file above: `docker compose pull && docker compose up -d`). If you built it yourself:
+(with a Compose file: `docker compose pull && docker compose up -d`). If you cloned the project and build it yourself:
 
 ```bash
 git pull
