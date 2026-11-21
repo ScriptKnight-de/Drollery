@@ -182,3 +182,15 @@ def test_an_older_database_gets_the_card_columns(client, image_id):
         item = db.get_item(c, image_id)
     assert item["title"] == "halves" and item["has_card"] == 0
     assert client.post(f"/items/{image_id}/card", data={"x": "0", "y": "0", "s": "1"}).status_code == 200
+
+
+def test_item_facts_sit_in_a_details_box_not_under_the_picture(client, image_id):
+    client.post(f"/items/{image_id}/edit", data={"title": "Halves", "description": "", "tags": ""})
+    with db.tx() as c:
+        c.execute("UPDATE items SET source_url='https://example.org/halves.png' WHERE id=?", (image_id,))
+    page = client.get(f"/items/{image_id}").text
+    box = page.split('id="details"')[1].split("</section>")[0]
+    for want in ("<dt>Type</dt><dd>Image</dd>", "<dt>Format</dt><dd>image/png</dd>", "<dt>Size</dt>", "<dt>Dimensions</dt><dd>200×100</dd>", "<dt>Source</dt>", "example.org/halves.png"):
+        assert want in box, want
+    line = page.split('class="meta-line"')[1].split("</p>")[0]
+    assert "image/png" not in line and "Source" not in line and "Download" in line

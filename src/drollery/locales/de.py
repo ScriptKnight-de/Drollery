@@ -592,4 +592,5 @@ MESSAGES = {
     "Picture": "Bild",
     "It replaces the current cover. You can crop it afterwards": "Es ersetzt das aktuelle Cover. Du kannst es danach zuschneiden",
     "Use this picture": "Dieses Bild verwenden",
+    "Dimensions": "Abmessungen",
 }

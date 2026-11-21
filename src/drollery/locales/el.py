@@ -591,4 +591,5 @@ MESSAGES = {
     "Picture": "Εικόνα",
     "It replaces the current cover. You can crop it afterwards": "Αντικαθιστά το τρέχον εξώφυλλο. Μπορείς να την περικόψεις μετά",
     "Use this picture": "Χρήση αυτής της εικόνας",
+    "Dimensions": "Διαστάσεις",
 }

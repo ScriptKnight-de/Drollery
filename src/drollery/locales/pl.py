@@ -605,4 +605,5 @@ MESSAGES = {
     "Picture": "Obraz",
     "It replaces the current cover. You can crop it afterwards": "Zastępuje obecną okładkę. Potem możesz go przyciąć",
     "Use this picture": "Użyj tego obrazu",
+    "Dimensions": "Wymiary",
 }

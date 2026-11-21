@@ -596,4 +596,5 @@ MESSAGES = {
     "Picture": "Image",
     "It replaces the current cover. You can crop it afterwards": "Elle remplace la pochette actuelle. Vous pourrez la recadrer ensuite",
     "Use this picture": "Utiliser cette image",
+    "Dimensions": "Dimensions",
 }

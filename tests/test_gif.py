@@ -47,7 +47,7 @@ def test_tiles_and_pages_mark_a_gif(library):
     tiles = client.get("/").text
     assert 'class="chip k-gif" title="GIF"' in tiles and 'class="chip k-image" title="Image"' in tiles
     page = client.get(f"/items/{g}").text
-    assert f'<img src="/media/{g}"' in page and "<span>GIF</span>" in page and "<video" not in page         # shown as a picture, so it keeps moving
+    assert f'<img src="/media/{g}"' in page and "<dt>Type</dt><dd>GIF</dd>" in page and "<video" not in page         # shown as a picture, so it keeps moving
     assert client.get(f"/media/{g}").headers["content-type"] == "image/gif"
 
 

@@ -591,4 +591,5 @@ MESSAGES = {
     "Picture": "Afbeelding",
     "It replaces the current cover. You can crop it afterwards": "Ze vervangt de huidige hoes. Daarna kun je haar bijsnijden",
     "Use this picture": "Deze afbeelding gebruiken",
+    "Dimensions": "Afmetingen",
 }

@@ -12,11 +12,8 @@
       {% else %}<audio src="/media/{{ item.id }}" controls preload="metadata"></audio>{% endif %}
     </div>
     <p class="meta-line">
-      <span>{{ kind_label(item.kind) }}</span><span>{{ item.mime }}</span><span>{{ "%.1f"|format(item.size / 1048576) }} MB</span>
-      {% if item.width %}<span>{{ item.width }}×{{ item.height }}</span>{% endif %}
       <a href="/media/{{ item.id }}" download="{{ item.original_name }}">{{ icon("download") }}{{ _("Download") }}</a>
       {% if item.kind != "audio" %}<a href="/items/{{ item.id }}/card">{{ icon("crop") }}{{ _("Card image") }}{% if item.has_card %} {{ _("(custom)") }}{% endif %}</a>{% endif %}
-      {% if item.source_url %}<a href="{{ item.source_url }}" rel="noreferrer noopener" target="_blank">{{ icon("external") }}{{ _("Source") }}</a>{% endif %}
     </p>
   </div>
 
@@ -49,6 +46,19 @@
       </div>
     </div>
 
+    <section class="panel stack facts" id="details">
+      <h2>{{ _("Details") }}</h2>
+      <dl>
+        <dt>{{ _("Type") }}</dt><dd>{{ kind_label(item.kind) }}</dd>
+        <dt>{{ _("Format") }}</dt><dd>{{ item.mime }}</dd>
+        <dt>{{ _("Size") }}</dt><dd>{{ "%.1f"|format(item.size / 1048576) }} MB</dd>
+        {% if item.width %}<dt>{{ _("Dimensions") }}</dt><dd>{{ item.width }}×{{ item.height }}</dd>{% endif %}
+        {% if item.duration and item.kind in ("video", "audio") %}<dt>{{ _("Duration") }}</dt><dd>{{ item.duration|clock }}</dd>{% endif %}
+        {% if item.source_url %}<dt>{{ _("Source") }}</dt><dd><a href="{{ item.source_url }}" rel="noreferrer noopener" target="_blank">{{ icon("external") }}{{ item.source_url|replace("https://", "")|replace("http://", "")|truncate(48, True) }}</a></dd>{% endif %}
+      </dl>
+      {% if item.transcript %}<details open><summary>{{ _("Transcript") }}</summary><p class="pre">{{ item.transcript }}</p></details>{% endif %}
+    </section>
+
     <form method="post" action="/items/{{ item.id }}/edit" class="panel form">
       <label>{{ _("Title") }} <input name="title" value="{{ item.title }}" maxlength="120"></label>
       <label>{{ _("Description") }} <textarea name="description" rows="4">{{ item.description }}</textarea></label>
@@ -60,7 +70,6 @@
       <button class="btn primary" type="submit">{{ _("Save") }}</button>
     </form>
 
-    {% if item.transcript %}<details open><summary>{{ _("Transcript") }}</summary><p class="pre">{{ item.transcript }}</p></details>{% endif %}
     {% include "share_panel.html" %}
 
     <details {{ "open" if jobs }}><summary>{{ _("Background jobs") }} <i>{{ jobs|length }}</i></summary>

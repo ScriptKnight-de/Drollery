@@ -36,7 +36,7 @@ def test_a_single_item_is_a_clip_or_a_sound(library):
     tiles = library.get("/").text
     assert 'title="Clip"' in tiles and 'title="Sound"' in tiles and 'title="Image"' in tiles and 'title="Video"' not in tiles
     items = {i["kind"]: i["id"] for i in library.get("/api/v1/items").json()["items"]}
-    assert "<span>Clip</span>" in library.get(f"/items/{items['video']}").text and "<span>Sound</span>" in library.get(f"/items/{items['audio']}").text
+    assert "<dt>Type</dt><dd>Clip</dd>" in library.get(f"/items/{items['video']}").text and "<dt>Type</dt><dd>Sound</dd>" in library.get(f"/items/{items['audio']}").text
 
 
 def test_the_new_names_are_translated(library):
