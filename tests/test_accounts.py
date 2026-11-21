@@ -427,3 +427,9 @@ def test_impressum_page_is_public_escaped_and_needs_login_to_edit(client, anon):
     assert anon.post("/settings/impressum", data={"text": "x"}, follow_redirects=False).status_code in (303, 401, 403)
     big = client.post("/settings/impressum", data={"text": "a" * 20001, "enabled": "1"})
     assert big.status_code == 422 and "too long" in big.text
+
+
+def test_impressum_page_has_a_way_back_to_the_library(client):
+    client.post("/settings/impressum", data={"text": "Max", "enabled": "1"})
+    html = client.get("/impressum").text
+    assert 'class="back" href="/"' in html

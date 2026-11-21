@@ -1,6 +1,8 @@
 {% extends "base.html" %}
 {% block title %}Impressum · Drollery{% endblock %}
+{% from "icons.html" import icon %}
 {% block content %}
+<a class="back" href="/">{{ icon("arrow-left") }}{{ _("Back to library") }}</a>
 <article class="panel legal">
   <h1>Impressum</h1>
   <div class="pre">{{ text }}</div>
