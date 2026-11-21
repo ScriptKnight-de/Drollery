@@ -43,8 +43,34 @@ def profile_save(request: Request, display_name: str = Form(""), email: str = Fo
 
 # --------------------------------------------------------------- security
 
+def qr_matrix(uri: str) -> list[list[int]]:
+    return [list(row) for row in segno.make(uri, error="m").matrix]
+
+
+def render_qr_svg(matrix: list[list[int]], quiet: int = 4, target: int = 260) -> str:
+    """Draw the QR as an inline SVG with whole-pixel modules and a symmetric quiet zone (4 modules, per the spec),
+    so it renders sharp at its natural size and scans reliably. Dark modules are merged into one path per run."""
+    n = len(matrix)
+    total = n + 2 * quiet
+    px = max(5, target // total)
+    parts = []
+    for y, row in enumerate(matrix):
+        x = 0
+        while x < n:
+            if row[x]:
+                start = x
+                while x < n and row[x]:
+                    x += 1
+                parts.append(f"M{start + quiet} {y + quiet}h{x - start}v1h-{x - start}z")
+            else:
+                x += 1
+    return (f'<svg xmlns="http://www.w3.org/2000/svg" width="{px * total}" height="{px * total}" viewBox="0 0 {total} {total}" '
+            f'shape-rendering="crispEdges" role="img" aria-label="QR code to scan with your authenticator app">'
+            f'<rect width="{total}" height="{total}" fill="#fff"/><path d="{"".join(parts)}" fill="#000"/></svg>')
+
+
 def _qr_svg(uri: str) -> str:
-    return segno.make(uri, error="m").svg_inline(scale=5, border=2, dark="#000000", light="#ffffff")
+    return render_qr_svg(qr_matrix(uri))
 
 
 def _security_page(request: Request, status_code: int = 200, **extra):
@@ -89,21 +115,21 @@ def change_password(request: Request, current: str = Form(""), new: str = Form("
 def twofa_start(request: Request):
     if not _user(request)["totp_enabled"]:
         accounts.start_2fa(_user(request)["id"])
-    return RedirectResponse("/settings/security", status_code=303)
+    return RedirectResponse("/settings/security#two-factor", status_code=303)
 
 
 @router.post("/security/2fa/cancel")
 def twofa_cancel(request: Request):
     with db.tx() as c:
         c.execute("UPDATE users SET totp_pending='' WHERE id=?", (_user(request)["id"],))
-    return RedirectResponse("/settings/security", status_code=303)
+    return RedirectResponse("/settings/security#two-factor", status_code=303)
 
 
 @router.post("/security/2fa/enable")
 def twofa_enable(request: Request, code: str = Form("")):
     me = _fresh(request)
     if me["totp_enabled"] or not me["totp_pending"]:
-        return RedirectResponse("/settings/security", status_code=303)
+        return RedirectResponse("/settings/security#two-factor", status_code=303)
     step = security.totp_verify(me["totp_pending"], code)
     if step is None:
         return _security_page(request, 422, error="That code is not valid. Check the clock on your phone and try the next code")
@@ -117,14 +143,14 @@ def twofa_disable(request: Request, password: str = Form("")):
     if not security.verify_password(password, me["password_hash"]):
         return _security_page(request, 401, error="The password is not correct")
     accounts.disable_2fa(me["id"])
-    return flash_redirect("/settings/security", "Two-factor authentication is off")
+    return flash_redirect("/settings/security#two-factor", "Two-factor authentication is off")
 
 
 @router.post("/security/2fa/backup")
 def twofa_backup(request: Request, password: str = Form("")):
     me = _fresh(request)
     if not me["totp_enabled"]:
-        return RedirectResponse("/settings/security", status_code=303)
+        return RedirectResponse("/settings/security#two-factor", status_code=303)
     if not security.verify_password(password, me["password_hash"]):
         return _security_page(request, 401, error="The password is not correct")
     return _security_page(request, new_backup_codes=accounts.regenerate_backup_codes(me["id"]), ok="New backup codes created; the old ones no longer work")

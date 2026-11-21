@@ -260,6 +260,7 @@ td.clip { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-spa
 .tabs a.on { background: var(--ac); color: var(--ac-on); border-color: transparent; }
 .stack { display: grid; gap: 16px; align-content: start; }
 .stack > *, .stack h2 { margin: 0; }
+.stack, .panel { scroll-margin-top: 80px; }
 .panel + .panel, .panel + .page-head, .reveal + .panel, section.panel + div.panel, div.panel + section.panel, .tabs + .panel { margin-top: 16px; }
 .narrow-form { max-width: 640px; }
 .page-head.sub { margin: 24px 0 12px; }
@@ -289,7 +290,8 @@ tr.subrow td { padding: 0 20px; border-bottom: 0; } tr.subrow:has(span:empty) { 
 .codes { list-style: none; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; padding: 0; margin: 0 0 12px; }
 .codes li { padding: 8px 12px; border-radius: 10px; background: var(--bg); border: 2px solid var(--ln); font-size: 14px; letter-spacing: .04em; text-align: center; font-variant-numeric: tabular-nums; }
 .steps { margin: 0; padding-left: 20px; display: grid; gap: 20px; } .steps li { padding-left: 4px; }
-.qr { width: 200px; margin: 12px 0; padding: 8px; border-radius: 12px; background: #fff; } .qr svg { display: block; width: 100%; height: auto; }
+.qr { display: block; width: fit-content; max-width: 100%; margin: 12px auto; padding: 0; border-radius: 12px; background: #fff; line-height: 0; overflow: hidden; }
+.qr svg { display: block; max-width: 100%; height: auto; }
 .snippet { margin: 0; padding: 14px 16px; border-radius: 14px; background: var(--bg); border: 2px solid var(--ln); font-size: 13px; line-height: 20px; overflow-x: auto; white-space: pre; }
 .login-wrap.wide { max-width: 440px; }
 .login .note { margin: 0; }

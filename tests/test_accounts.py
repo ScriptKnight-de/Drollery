@@ -368,3 +368,23 @@ def test_reprocess_existing_items(client):
     r = client.post("/settings/ai/reprocess")
     assert "Queued AI processing for 2 item(s)" in r.text
     assert "Nothing to queue" in client.post("/settings/ai/reprocess").text    # already queued: no duplicates
+
+
+def test_qr_svg_reproduces_the_matrix_exactly_and_is_centered():
+    """The 2FA QR is drawn module-by-module with a symmetric 4-module quiet zone and whole-pixel size."""
+    from drollery import routes_settings as rs
+    uri = security.totp_uri("JBSWY3DPEHPK3PXP", "admin")
+    matrix = rs.qr_matrix(uri)
+    svg = rs.render_qr_svg(matrix)
+    n = len(matrix)
+    vb = re.search(r'viewBox="0 0 (\d+) (\d+)"', svg)
+    total = n + 8
+    assert vb.groups() == (str(total), str(total))                                # square, quiet zone 4 on every side
+    size = int(re.search(r'width="(\d+)"', svg).group(1))
+    assert size % total == 0 and size >= 200                                      # integer pixels per module
+    rebuilt = [[0] * n for _ in range(n)]
+    for x, y, w in re.findall(r"M(\d+) (\d+)h(\d+)v1h-\d+z", svg):
+        for dx in range(int(w)):
+            rebuilt[int(y) - 4][int(x) - 4 + dx] = 1
+    assert rebuilt == matrix                                                       # drawn exactly as encoded, nothing shifted
+    assert all(not any(r[:0]) for r in matrix)
