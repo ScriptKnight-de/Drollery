@@ -1,4 +1,5 @@
 import io
+import re
 import subprocess
 import zipfile
 from pathlib import Path
@@ -344,3 +345,24 @@ def test_disc_numbers_only_split_albums_that_really_have_several_discs(client, t
     rows = [{"disc": 2, "num": 1, "name": "d2t1"}, {"disc": 1, "num": 9, "name": "d1t9"}, {"disc": 1, "num": 2, "name": "d1t2"}]
     albums.order_tracks(rows)
     assert [r["name"] for r in rows] == ["d1t2", "d1t9", "d2t1"]                         # two discs: disc first
+
+
+def test_saving_does_not_reload_the_page_that_is_playing(client, mp3s):
+    """The right-hand column is swapped by keepplaying.js, so the player on the left is never reloaded."""
+    from test_share import make_item
+    upload(client, [mp3s["one"], mp3s["two"]])
+    aid = album_id(client)
+    img = make_item(client)
+    for url in (f"/items/{aid}", f"/items/{img}"):
+        html = client.get(url).text
+        assert 'id="side"' in html and "/static/keepplaying.js" in html
+        assert re.search(r'<form[^>]*action="/items/\d+/delete"[^>]*data-reload', html)                  # deleting still leaves the page
+    assert 'id="player"' not in client.get(f"/items/{aid}").text.split('id="side"')[1]
+    for name in ("keepplaying.js", "tagfield.js", "sharepanel.js"):
+        r = client.get(f"/static/{name}")
+        assert r.status_code == 200 and "initTagField" in client.get("/static/tagfield.js").text
+    js = client.get("/static/keepplaying.js").text
+    assert "data-reload" in js and "location.reload()" in js and "initTagField" in js and "initSharePanel" in js
+    # the plain form post still works without scripts (and answers with a redirect, as before)
+    r = client.post(f"/items/{aid}/edit", data={"title": "Plain", "description": "", "tags": "a b", "artist": "X"}, follow_redirects=False)
+    assert r.status_code == 303 and r.headers["location"] == f"/items/{aid}"

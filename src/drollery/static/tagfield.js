@@ -1,7 +1,8 @@
 // Your tags: every word becomes a small black chip with a red round cross. Without scripts the plain field above still works.
-(function () {
+// initTagField() can be called again after part of the page was replaced (see keepplaying.js).
+function initTagField() {
   var fld = document.getElementById("tag-fld"), store = document.getElementById("tags-in");
-  if (!fld || !store) return;
+  if (!fld || !store || store.type === "hidden") return;
   var removeText = fld.dataset.remove, ph = store.getAttribute("placeholder") || "", tags = [], box = document.createElement("div"), entry = document.createElement("input");
   var CROSS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 7 7 17M7 7l10 10"/></svg>';
   function clean(w) { return w.trim().replace(/^#+/, "").toLowerCase().replace(/\s+/g, "-").slice(0, 40); }
@@ -38,4 +39,5 @@
   entry.addEventListener("blur", function () { if (entry.value.trim()) { add(entry.value); entry.value = ""; } });
   store.form.addEventListener("submit", function () { if (entry.value.trim()) { add(entry.value); entry.value = ""; } sync(); });
   sync(); draw();
-})();
+}
+initTagField();

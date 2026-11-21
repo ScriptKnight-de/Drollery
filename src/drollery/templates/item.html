@@ -20,7 +20,7 @@
     </p>
   </div>
 
-  <div class="side">
+  <div class="side" id="side">
     <p class="folio">{{ _("fol.") }} {{ "%03d"|format(item.id) }}</p>
     <h1>{{ item.title }}</h1>
 
@@ -70,11 +70,12 @@
       {% else %}<p class="muted">{{ _("No AI providers are enabled. See {file} in the data volume.", file="<code>config.toml</code>")|safe }}</p>{% endif %}
     </details>
 
-    <form method="post" action="/items/{{ item.id }}/delete" onsubmit="return confirm({{ _('Feed this item to the dragon? It cannot be undone.')|tojson|forceescape }})">
+    <form method="post" action="/items/{{ item.id }}/delete" data-reload onsubmit="return confirm({{ _('Feed this item to the dragon? It cannot be undone.')|tojson|forceescape }})">
       <button class="btn danger" type="submit">{{ icon("trash") }}{{ _("Delete") }}</button>
     </form>
   </div>
 </div>
 <script src="/static/tagfield.js" defer></script>
 <script src="/static/sharepanel.js" defer></script>
+<script src="/static/keepplaying.js" defer></script>
 {% endblock %}
