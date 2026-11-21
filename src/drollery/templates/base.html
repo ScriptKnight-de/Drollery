@@ -46,6 +46,16 @@
           </div>
         </div>
       </details>
+      <details class="menu" id="lang-menu">
+        <summary class="icon-btn" aria-label="{{ _('Language') }}" title="{{ _('Language') }}">{{ icon("globe") }}</summary>
+        <div class="pop narrow" role="dialog" aria-label="{{ _('Language') }}">
+          <p class="pop-h">{{ _("Language") }}</p>
+          <form class="langlist" method="post" action="/language">
+            <input type="hidden" name="next" value="{{ request.url.path }}{{ '?' ~ request.url.query if request.url.query }}">
+            {% for code, name in available_languages().items() %}<button type="submit" name="language" value="{{ code }}" lang="{{ code }}" {{ 'aria-current=true' if code == lang() }}><span>{{ name }}</span>{{ icon("check") }}</button>{% endfor %}
+          </form>
+        </div>
+      </details>
     </nav>
   </div>
 </header>
@@ -64,7 +74,7 @@
 {% endif %}
 <script>
   (function () {
-    var root = document.documentElement, menu = document.getElementById("theme-menu");
+    var root = document.documentElement, menus = Array.prototype.slice.call(document.querySelectorAll("details.menu"));
     function save(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
     function sync() {
       var t = root.dataset.theme || "system", a = root.dataset.accent || "gold";
@@ -78,9 +88,9 @@
         else { root.dataset.theme = th.dataset.themeSet; save("drollery.theme", th.dataset.themeSet); }
         sync();
       } else if (ac) { root.dataset.accent = ac.dataset.accentSet; save("drollery.accent", ac.dataset.accentSet); sync(); }
-      else if (menu && menu.open && !menu.contains(e.target)) menu.open = false;
+      else menus.forEach(function (m) { if (m.open && !m.contains(e.target)) m.open = false; });
     });
-    addEventListener("keydown", function (e) { if (e.key === "Escape" && menu) menu.open = false; });
+    addEventListener("keydown", function (e) { if (e.key === "Escape") menus.forEach(function (m) { m.open = false; }); });
     sync();
   })();
   // the footer rises into view once the end of the page is reached (visible at once on short pages or without JS)

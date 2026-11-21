@@ -167,30 +167,32 @@ def test_locales_ship_with_the_package():
     assert (root / "src/drollery/locales/__init__.py").exists()           # so packages.find picks the folder up
 
 
-def test_language_switcher_on_the_sign_in_pages(anon):
+def test_language_menu_in_the_header_on_every_page(anon):
     accounts.create_user("boss", "a-long-enough-pass")
     page = anon.get("/login")
-    assert 'action="/language"' in page.text and ">English<" in page.text and ">Deutsch<" in page.text
-    assert re.search(r'value="en"[^>]*aria-current', page.text)                      # the current language is marked
+    assert 'id="lang-menu"' in page.text and 'action="/language"' in page.text and ">English<" in page.text and ">Deutsch<" in page.text
+    assert page.text.index('id="theme-menu"') < page.text.index('id="lang-menu"')                    # the globe sits right of the palette
+    assert re.search(r'value="en"[^>]*aria-current', page.text)                                      # the current language is marked
+    assert 'name="next" value="/login"' in page.text
     r = anon.post("/language", data={"language": "de", "next": "/login"})
     assert r.status_code == 303 and r.headers["location"] == "/login" and f"{i18n.COOKIE}=de" in r.headers["set-cookie"]
-    after = anon.get("/login")                                                       # the cookie now decides, whatever the browser sends
+    after = anon.get("/login")                                                                       # the cookie now decides, whatever the browser sends
     assert "Halt! Wer da?" in after.text and re.search(r'value="de"[^>]*aria-current', after.text)
     anon.post("/language", data={"language": "en", "next": "/login"})
     assert "Halt! Who goes there?" in anon.get("/login", headers=DE).text
 
 
-def test_language_switcher_is_safe_and_on_every_pre_login_page(anon):
+def test_language_menu_returns_to_the_same_page_and_is_safe(anon):
     accounts.create_user("boss", "a-long-enough-pass")
     assert anon.post("/language", data={"language": "de", "next": "https://evil.example"}).headers["location"] == "/login"
     assert anon.post("/language", data={"language": "de", "next": "//evil.example"}).headers["location"] == "/login"
     assert "set-cookie" not in anon.post("/language", data={"language": "klingon"}).headers          # unknown codes are ignored
-    assert 'action="/language"' in anon.get("/login").text
     assert anon.post("/language", data={"language": "de"}, headers={"origin": "https://evil.example"}).status_code == 403
 
 
-def test_language_switcher_on_setup_and_two_factor_pages(anon):
-    assert 'action="/language"' in anon.get("/setup").text and 'name="next" value="/setup"' in anon.get("/setup").text
+def test_language_menu_is_in_the_signed_in_header_too(client):
+    html = client.get("/jobs").text
+    assert 'id="lang-menu"' in html and 'name="next" value="/jobs"' in html
 
 
 def test_switching_while_signed_in_also_updates_the_account(client):

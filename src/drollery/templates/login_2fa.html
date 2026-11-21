@@ -1,6 +1,5 @@
 {% extends "base.html" %}
 {% block title %}{{ _('Two-factor code') }} · Drollery{% endblock %}
-{% from "macros.html" import langswitch %}
 {% block content %}
 <div class="login-wrap">
 <form class="panel login" method="post" action="/login/2fa">
@@ -11,6 +10,5 @@
   <button class="btn primary" type="submit">{{ _("Verify") }}</button>
   <a class="muted small" href="/login">{{ _("Start over") }}</a>
 </form>
-{{ langswitch("/login/2fa") }}
 </div>
 {% endblock %}
