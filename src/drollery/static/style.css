@@ -45,17 +45,16 @@
 * { box-sizing: border-box; }
 body { margin: 0; color: var(--tx); font: 400 16px/24px var(--sans); -webkit-font-smoothing: antialiased; min-height: 100vh; display: flex; flex-direction: column;
   background-color: var(--bg); }
-/* backdrops: heraldic diamond lattice (default), chessboard, or plain */
+/* backdrop: a soft torch-glow of the highlight color from the top edge, fixed to the window; "plain" turns it off */
 body {
-  --line: color-mix(in srgb, var(--ac) 11%, transparent);
+  --glow: 34%;
   background-image:
-    repeating-linear-gradient(45deg, transparent 0 31px, var(--line) 31px 32px),
-    repeating-linear-gradient(-45deg, transparent 0 31px, var(--line) 31px 32px);
+    radial-gradient(ellipse 85% 60% at 50% -10%, color-mix(in srgb, var(--ac) var(--glow), transparent), transparent 72%),
+    radial-gradient(ellipse 45% 40% at 100% 0%, color-mix(in srgb, var(--ac) calc(var(--glow) * .5), transparent), transparent 70%);
+  background-attachment: fixed;
 }
-:root[data-bg="checks"] body {
-  background-image: conic-gradient(color-mix(in srgb, var(--ac) 7%, transparent) 25%, transparent 0 50%, color-mix(in srgb, var(--ac) 7%, transparent) 0 75%, transparent 0);
-  background-size: 64px 64px;
-}
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) body { --glow: 28%; } }
+:root[data-theme="light"] body { --glow: 28%; }
 :root[data-bg="plain"] body { background-image: none; }
 a { color: var(--ac-ink); text-decoration: none; }
 a:hover { text-decoration: underline; text-underline-offset: 3px; }
@@ -104,7 +103,8 @@ main { max-width: 1280px; width: 100%; margin: 0 auto; padding: 24px; flex: 1; }
   color: var(--tx2); font: 500 12px/16px var(--sans); cursor: pointer; transition: background-color .15s var(--ease), color .15s var(--ease); }
 .modes button:hover { color: var(--tx); }
 .modes button[aria-pressed="true"] { background: var(--ac); color: var(--ac-on); }
-.modes.plain button { padding: 8px 0; }
+.modes.two { grid-template-columns: repeat(2, 1fr); }
+.modes.two button { padding: 8px 0; }
 .swatches { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
 .sw { aspect-ratio: 1; border-radius: 50%; border: 2px solid transparent; cursor: pointer; display: grid; place-items: center; color: transparent; padding: 0;
   background: var(--c); transition: transform .12s var(--ease); }
