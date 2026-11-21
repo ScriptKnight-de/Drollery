@@ -217,12 +217,12 @@ kbd { color: var(--tx3); border: 2px solid var(--ln); border-radius: 6px; paddin
 .chips a:nth-child(5n+4) { --h: var(--ac); } .chips a:nth-child(5n+5) { --h: #9b3dff; }
 .chips a:hover { transform: translateY(-2px) rotate(-1.5deg); text-decoration: none; }
 .foot { text-align: center; padding: 0 24px 28px; }
-.foot::before { content: ""; display: block; height: 10px; margin: 24px auto 20px; max-width: 1232px; border-bottom: 2px solid var(--ln);
-  background: repeating-linear-gradient(90deg, var(--ln) 0 12px, transparent 12px 24px); }          /* a little battlement above the link */
-.seal { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px 6px 12px; border: 2px dashed var(--ln2); border-radius: 18px;
+.foot::before { content: ""; display: block; height: 10px; margin: 24px auto 20px; max-width: 1232px; border-bottom: 2px solid var(--ln2);
+  background: repeating-linear-gradient(90deg, var(--ln2) 0 12px, transparent 12px 24px); }          /* a little battlement above the link */
+.seal { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px 6px 12px; border: 2px dashed var(--ln2); border-radius: 18px; background: var(--s1);
   font-size: 14px; color: var(--tx2); text-decoration: none; transition: transform .25s var(--ease), border-color .2s, color .2s, background .2s; }
 .seal .ic { color: var(--ac-ink); }
-.seal:hover, .seal:focus-visible { color: var(--tx); border-style: solid; border-color: var(--ac); background: var(--s1); transform: rotate(-2deg) translateY(-2px); text-decoration: none; }
+.seal:hover, .seal:focus-visible { color: var(--tx); border-style: solid; border-color: var(--ac); transform: rotate(-2deg) translateY(-2px); text-decoration: none; }
 @media (prefers-reduced-motion: reduce) { .seal { transition: none; } .seal:hover, .seal:focus-visible { transform: none; } }
 .legal { max-width: 720px; }
 .legal h1 { margin-top: 0; }
