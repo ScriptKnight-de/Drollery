@@ -87,7 +87,6 @@ MESSAGES = {
     "Library": "Bibliotek",
     "Download": "Ladda ner",
     "Card image": "Kortbild",
-    "(custom)": "(egen)",
     "Source": "Källa",
     "Your tags": "Dina taggar",
     "None yet. Add your own below": "Inga än. Lägg till egna nedan",

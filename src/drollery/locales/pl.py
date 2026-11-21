@@ -97,7 +97,6 @@ MESSAGES = {
     "Library": "Biblioteka",
     "Download": "Pobierz",
     "Card image": "Obraz karty",
-    "(custom)": "(własny)",
     "Source": "Źródło",
     "Your tags": "Twoje tagi",
     "None yet. Add your own below": "Na razie brak. Dodaj własne poniżej",

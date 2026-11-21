@@ -87,7 +87,6 @@ MESSAGES = {
     "Library": "Bibliotheek",
     "Download": "Downloaden",
     "Card image": "Kaartafbeelding",
-    "(custom)": "(aangepast)",
     "Source": "Bron",
     "Your tags": "Jouw tags",
     "None yet. Add your own below": "Nog geen. Voeg hieronder je eigen toe",

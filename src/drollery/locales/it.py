@@ -87,7 +87,6 @@ MESSAGES = {
     "Library": "Libreria",
     "Download": "Scarica",
     "Card image": "Immagine della scheda",
-    "(custom)": "(personalizzata)",
     "Source": "Fonte",
     "Your tags": "I tuoi tag",
     "None yet. Add your own below": "Ancora nessuno. Aggiungi i tuoi qui sotto",

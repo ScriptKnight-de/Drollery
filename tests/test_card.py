@@ -94,7 +94,7 @@ def test_the_page_remembers_a_saved_crop(client, image_id):
     client.post(f"/items/{image_id}/card", data={"x": "0.8", "y": "0.25", "s": "0.5"})
     page = client.get(f"/items/{image_id}/card").text
     assert 'data-x="0.8"' in page and 'data-y="0.25"' in page and 'data-s="0.5"' in page and "Reset to automatic" in page
-    assert "Card image (custom)" in client.get(f"/items/{image_id}").text
+    assert "(custom)" not in client.get(f"/items/{image_id}").text
 
 
 def test_deleting_the_item_removes_its_card_file(client, image_id):
@@ -194,3 +194,10 @@ def test_item_facts_sit_in_a_details_box_not_under_the_picture(client, image_id)
         assert want in box, want
     line = page.split('class="meta-line"')[1].split("</p>")[0]
     assert "image/png" not in line and "Source" not in line and "Download" in line
+
+
+def test_card_image_is_a_popup_on_item_pages_and_not_labelled_custom(client, image_id):
+    client.post(f"/items/{image_id}/card", data={"t": 0, "x": 0, "y": 0, "s": 0.5})        # a custom crop exists now
+    page = client.get(f"/items/{image_id}").text
+    assert f'href="/items/{image_id}/card" data-popup="Card image"' in page and "(custom)" not in page
+    assert 'id="popup-dialog"' in page and "/static/popup.js" in page

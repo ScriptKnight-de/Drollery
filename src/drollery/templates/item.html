@@ -13,7 +13,7 @@
     </div>
     <p class="meta-line">
       <a href="/media/{{ item.id }}" download="{{ item.original_name }}">{{ icon("download") }}{{ _("Download") }}</a>
-      {% if item.kind != "audio" %}<a href="/items/{{ item.id }}/card">{{ icon("crop") }}{{ _("Card image") }}{% if item.has_card %} {{ _("(custom)") }}{% endif %}</a>{% endif %}
+      {% if item.kind != "audio" %}<a href="/items/{{ item.id }}/card" data-popup="{{ _('Card image') }}">{{ icon("crop") }}{{ _("Card image") }}</a>{% endif %}
     </p>
   </div>
 
@@ -84,6 +84,8 @@
     </form>
   </div>
 </div>
+{% include "popup_dialog.html" %}
+<script src="/static/popup.js" defer></script>
 <script src="/static/tagfield.js" defer></script>
 <script src="/static/sharepanel.js" defer></script>
 <script src="/static/keepplaying.js" defer></script>

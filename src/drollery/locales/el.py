@@ -87,7 +87,6 @@ MESSAGES = {
     "Library": "Βιβλιοθήκη",
     "Download": "Λήψη",
     "Card image": "Εικόνα κάρτας",
-    "(custom)": "(προσαρμοσμένη)",
     "Source": "Πηγή",
     "Your tags": "Οι ετικέτες σου",
     "None yet. Add your own below": "Καμία ακόμη. Πρόσθεσε τις δικές σου παρακάτω",

@@ -68,7 +68,7 @@
       <p class="meta-line">
         <a href="/albums/{{ item.id }}/download">{{ icon("download") }}{{ _("Download all") }}</a>
         {% if metadata_lookup %}<a href="/albums/{{ item.id }}/lookup?run=1" data-popup="{{ _('Look up details online') }}">{{ icon("search") }}{{ _("Look up details online") }}</a>{% endif %}
-      <a href="/items/{{ item.id }}/card" data-popup="{{ _('Card image') }}">{{ icon("crop") }}{{ _("Card image") }}{% if item.has_card %} {{ _("(custom)") }}{% endif %}</a>
+      <a href="/items/{{ item.id }}/card" data-popup="{{ _('Card image') }}">{{ icon("crop") }}{{ _("Card image") }}</a>
       </p>
     </div>
 
@@ -125,13 +125,7 @@
   <div class="modal-body pre" id="tr-text"></div>
   <div class="modal-foot"><button type="button" class="btn small" id="tr-copy" data-copy="">{{ icon("copy") }}{{ _("Copy transcript") }}</button></div>
 </dialog>
-<dialog id="popup-dialog" class="modal framed" aria-labelledby="pp-title">
-  <div class="modal-head">
-    <h2 id="pp-title"></h2>
-    <button type="button" class="play share" data-close aria-label="{{ _('Close') }}" title="{{ _('Close') }}">{{ icon("x") }}</button>
-  </div>
-  <iframe id="pp-frame" title="" src="about:blank"></iframe>
-</dialog>
+{% include "popup_dialog.html" %}
 <script src="/static/popup.js" defer></script>
 <script src="/static/transcript.js" defer></script>
 <script src="/static/tagfield.js" defer></script>
