@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).parent.parent
-SKIP_DIRS = {".git", ".venv", "data", "__pycache__", ".pytest_cache", "drollery.egg-info", "node_modules"}
+SKIP_DIRS = {".git", ".venv", "data", "__pycache__", ".pytest_cache", "drollery.egg-info", "node_modules", "graphify-out"}
 TEXT_SUFFIXES = {".py", ".html", ".js", ".css", ".md", ".toml", ".yml", ".yaml", ".txt", ".example", ".cfg", ".svg", ".json"}
 
 
@@ -139,3 +139,52 @@ def test_the_guards_really_catch_what_they_are_for():
     assert re.search(mail, "write to someone@gmail.com") and not re.search(mail, "me@example.org") and not re.search(mail, "admin@localhost")
     home = r"/home/(?!ubuntu/)[a-z][\w.-]*/"
     assert re.search(home, "/home/alice/projects/x") and not re.search(home, "/home/ubuntu/.cache/huggingface")
+
+
+# ------------------------------------------------------------ what a public repository needs
+
+def test_the_public_files_exist_and_are_not_empty():
+    for name, smallest in (("LICENSE", 900), ("README.md", 2000), ("SECURITY.md", 500), ("CONTRIBUTING.md", 500), ("CHANGELOG.md", 300),
+                           ("THIRD_PARTY_NOTICES.md", 1000), (".gitignore", 20), (".env.example", 200)):
+        assert (ROOT / name).is_file() and (ROOT / name).stat().st_size >= smallest, name
+
+
+def test_the_version_is_the_same_everywhere_and_the_changelog_knows_it():
+    import tomllib
+    meta = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]
+    init = re.search(r'__version__ = "([^"]+)"', (ROOT / "src/drollery/__init__.py").read_text()).group(1)
+    assert meta["version"] == init
+    assert re.search(r"^## \[%s\]" % re.escape(init), (ROOT / "CHANGELOG.md").read_text(), re.M), "add this version to CHANGELOG.md"
+
+
+def test_the_package_metadata_is_complete_for_publishing():
+    import tomllib
+    meta = tomllib.loads((ROOT / "pyproject.toml").read_text())["project"]
+    for key in ("name", "version", "description", "readme", "requires-python", "license", "authors", "classifiers", "keywords", "urls"):
+        assert meta.get(key), key
+    assert {"Repository", "Issues", "Changelog"} <= set(meta["urls"])
+    assert (ROOT / "LICENSE").read_text().startswith("MIT License") and meta["license"]["text"] == "MIT"
+
+
+def test_vendored_code_and_assets_are_credited():
+    notices = (ROOT / "THIRD_PARTY_NOTICES.md").read_text()
+    htmx = (ROOT / "src/drollery/static/htmx.min.js").read_text()
+    version = re.search(r'version:"([\d.]+)"', htmx).group(1)
+    assert f"htmx {version}" in notices                                    # the credit names the version that is really bundled
+    icons = (ROOT / "src/drollery/templates/icons.html").read_text()
+    assert "lucide" in icons.lower() and "Lucide" in notices and "ISC" in notices
+    for brand in ("Simple Icons", "Octicons"):
+        assert brand in icons and brand in notices
+    for dependency in re.findall(r'^\s*"([A-Za-z0-9_.-]+)', (ROOT / "pyproject.toml").read_text().split("dependencies = [")[1].split("]")[0], re.M):
+        name = dependency.split(">")[0].split("=")[0]
+        assert name.lower().replace("_", "-") in notices.lower().replace("_", "-") or name.lower() == "python-multipart", name
+
+
+def test_the_readme_promises_match_the_code():
+    readme = (ROOT / "README.md").read_text()
+    assert "no telemetry" in readme.lower() and "THIRD_PARTY_NOTICES.md" in readme and "SECURITY.md" in readme
+    base = (ROOT / "src/drollery/templates/base.html").read_text()
+    assert not re.search(r"""(?:src|href)=["']https?://""", base)            # no CDN, font or tracker is loaded by a page
+    css = (ROOT / "src/drollery/static/style.css").read_text()
+    assert "@import" not in css and "url(http" not in css
+    assert "birthday" in readme and "age, gender" not in readme                # the people feature is described as it is now

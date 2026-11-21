@@ -6,6 +6,8 @@ instantly with full-text search.
 
 > *drollery* (n.): the comic doodles medieval scribes drew in manuscript margins — arguably the first memes.
 
+[Quick start](#quick-start) · [Privacy](#privacy) · [Security](SECURITY.md) · [Contributing](CONTRIBUTING.md) · [Changelog](CHANGELOG.md) · [License](#license)
+
 **Status:** early (v0.1). Web app + HTTP API work. Browser extension and Android app are planned and will use the same API.
 
 ## Features
@@ -21,7 +23,7 @@ instantly with full-text search.
 - **Medieval doodles.** Line-art knights, snails, dragons, wizards, castles, chests and burglars decorate the empty states, login and 404 pages, and a row of tiny scenery stands on the header edge.
 - **Custom card images.** For any picture or video, crop a square for its card on the library page: drag and zoom the crop on a picture, or scrub a video to an exact moment (with ±0.1 s and ±1 s steps), take that frame and crop it. The original file is never changed, and the automatic card can be restored.
 - **Movies, parodies and synchros.** Add a movie (one video file, up to `max_movie_mb`, 16 GB by default) and mark it as a film, a parody or a synchro (a dub with new voices); a parody or synchro also remembers the original film. "Look up on IMDb" searches IMDb's own search service (no account needed: title, year, main cast, poster) and, with a free [OMDb](https://www.omdbapi.com/apikey.aspx) key entered under Settings → Online lookup, also takes over the plot, genres, directors, the full cast, the rating and the runtime. You see every change before it is applied; the poster can become the card image. IMDb's title pages themselves sit behind a bot check and are not read. With a free [TMDB](https://www.themoviedb.org/settings/api) key (Settings → Online lookup) the search and the details come in the language the tool is set to (a German title, plot, genres and poster), movies are found by their IMDb id so the IMDb link stays, and an OMDb key still adds the IMDb rating; without it, IMDb and OMDb only know English. This product uses the TMDB API but is not endorsed or certified by TMDB. Only the title you typed (and the picked IMDb id), the client name is just `Drollery/<version>`, and the key is stored on your server and never shown again. Movies are never transcribed or named automatically (they run for hours); the details are searchable.
-- **Creators and people involved.** A global list of people (name, picture, age, gender, a social media link), each stored once. On any item, type a name to look the person up and add them, or use "New person" to fill in their details in a popup. A person's page lists everything they appear on, and items are found by the names of their people. Shared public pages never show them.
+- **Creators and people involved.** A global list of people (name, picture, birthday with the age worked out from it, gender, a social media link), each stored once. On any item, type a name to look the person up and add them, or use "New person" to fill in their details in a popup. A person's page lists everything they appear on, and items are found by the names of their people. Shared public pages never show them.
 - **One way in, with progress.** The top of the library is a single upload zone: drop files anywhere on the page, choose them, or paste a link (a pasted link or picture is picked up as well). A panel then shows what was picked and suggests what it should become: separate items, an album or audiobook (several audio files or a ZIP, a picture among them becomes the cover) or a movie, parody or synchro (one video file). You confirm the type, fill in its details (with the option to look it up on MusicBrainz or IMDb afterwards) and the upload runs with a progress bar showing the percentage, the amount sent, the speed, the time left and a Cancel button; when the last byte is sent it says that the server is storing and checking the file. The album and movie forms (`/albums/new`, `/movies/new`) still exist, and without scripts the page falls back to a plain form. If you run Drollery behind a reverse proxy, allow long requests there (a large file is checked after it has arrived) and a body size that fits `max_movie_mb`.
 - **Share a picture, clip or album** with a public link (for an album: the whole album with a player and a ZIP, or a single track), permanent or temporary (1 hour to 1 year), with an optional label, a view counter and instant revoke. The page needs no login, shows only the title and description (never your tags), and has link-preview tags for chat apps.
 - **Your tags and the AI's tags stay apart.** Editing yours never touches the AI's, a re-run replaces only the AI's, and a tag you remove is not suggested again.
@@ -117,6 +119,22 @@ All endpoints take `Authorization: Bearer <api key>`. Create keys per device in 
 | `POST` | `/api/v1/jobs/{id}/retry` | run one failed job again (`409` if it isn't failed) |
 | `GET` | `/media/{id}`, `/thumb/{id}` | files. An album has `url: null`; use `/albums/{id}/track/{track}`, `/albums/{id}/cover` and `/albums/{id}/download` |
 
+## Privacy
+
+Drollery has **no telemetry, no analytics and no external resources** in its pages (no CDN, fonts or trackers); the
+whole interface is served from your own server. It only contacts another site when **you** ask it to, and sends the
+minimum:
+
+| When you… | It contacts | What is sent |
+|---|---|---|
+| press "Look up details online" on an album | MusicBrainz, Cover Art Archive | the album title and artist you see in the form |
+| press "Look up on IMDb" on a movie | IMDb's search, and OMDb / TMDB if you entered a key | the title you see in the form, the picked title's id, your key |
+| add a link | the site you pasted (through `yt-dlp` / `gallery-dl`) | a normal download request |
+| use an AI model | the endpoint you configured | the preview image and/or transcript, only for the jobs you enabled |
+
+The client name sent to the lookup services is just `Drollery/<version>`. Your library, accounts and keys stay in the
+data volume.
+
 ## Security notes
 
 - **Use HTTPS** if the site leaves your LAN (a reverse proxy is fine) and set `DROLLERY_COOKIE_SECURE=1`. Passwords and keys otherwise travel unencrypted.
@@ -151,4 +169,4 @@ The English text in the code is the key; a language is a single file, `src/droll
 
 ## License
 
-MIT
+[MIT](LICENSE). Third-party code, assets and online services are listed in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md); to report a security problem see [SECURITY.md](SECURITY.md).

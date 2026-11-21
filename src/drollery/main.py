@@ -71,7 +71,8 @@ async def lifespan(app: FastAPI):
     await asyncio.gather(*tasks, return_exceptions=True)
 
 
-app = FastAPI(title="Drollery", version=__version__, lifespan=lifespan)
+# the interactive API docs are off: they would list every endpoint to anyone who can reach the port (the API is documented in the README)
+app = FastAPI(title="Drollery", version=__version__, lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
 app.add_middleware(UploadRedirects)
 app.include_router(auth_router)
@@ -137,7 +138,7 @@ async def _http_error(request: Request, exc: StarletteHTTPException):
 
 @app.get("/healthz")
 def healthz():
-    return {"ok": True, "version": __version__}
+    return {"ok": True}                      # no version here: anyone can call it (GET /api/v1/me tells a signed-in client the version)
 
 
 # ---------------------------------------------------------------- helpers

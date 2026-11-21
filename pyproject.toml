@@ -5,6 +5,19 @@ description = "Self-hosted library for memes and funny video/audio clips, with p
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
+authors = [{ name = "ScriptKnight" }]
+keywords = ["self-hosted", "memes", "media-library", "fastapi", "htmx", "sqlite", "fts5", "whisper"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Web Environment",
+  "Framework :: FastAPI",
+  "Intended Audience :: End Users/Desktop",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Multimedia",
+]
 dependencies = [
   "fastapi>=0.115",
   "uvicorn>=0.30",
@@ -15,6 +28,11 @@ dependencies = [
   "gallery-dl",
   "segno>=1.6",
 ]
+
+[project.urls]
+Repository = "https://forgejo.scriptknight.de/scriptknight/drollery"
+Issues = "https://forgejo.scriptknight.de/scriptknight/drollery/issues"
+Changelog = "https://forgejo.scriptknight.de/scriptknight/drollery/src/branch/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = ["pytest>=8"]
