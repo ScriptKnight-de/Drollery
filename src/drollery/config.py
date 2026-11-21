@@ -50,6 +50,10 @@ class Settings(BaseModel):
         return self.data_dir / "thumbs"
 
     @property
+    def cards_dir(self) -> Path:
+        return self.data_dir / "cards"
+
+    @property
     def tmp_dir(self) -> Path:
         return self.data_dir / "tmp"
 
@@ -61,7 +65,7 @@ class Settings(BaseModel):
 @lru_cache
 def get_settings() -> Settings:
     data_dir = Path(os.environ.get("DROLLERY_DATA", "data")).resolve()
-    for sub in ("media", "thumbs", "tmp"):
+    for sub in ("media", "thumbs", "cards", "tmp"):
         (data_dir / sub).mkdir(parents=True, exist_ok=True)
     cfg_path = data_dir / "config.toml"
     if not cfg_path.exists():

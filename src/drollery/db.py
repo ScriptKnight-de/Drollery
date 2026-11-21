@@ -26,6 +26,9 @@ CREATE TABLE IF NOT EXISTS items (
   height INTEGER,
   has_audio INTEGER NOT NULL DEFAULT 0,
   has_thumb INTEGER NOT NULL DEFAULT 0,
+  has_card INTEGER NOT NULL DEFAULT 0,              -- a custom, cropped card image exists
+  card_t REAL,                                      -- video snapshot time in seconds
+  card_x REAL, card_y REAL, card_s REAL,            -- crop: left/top as fractions of the frame, side as a fraction of its shorter edge
   source_url TEXT NOT NULL DEFAULT '',
   source_meta TEXT NOT NULL DEFAULT '',
   created_at REAL NOT NULL,
@@ -157,8 +160,20 @@ def _fts_columns(c: sqlite3.Connection) -> list[str]:
     return [r["name"] for r in c.execute("SELECT name FROM pragma_table_info('items_fts')")]
 
 
+CARD_COLUMNS = (("has_card", "INTEGER NOT NULL DEFAULT 0"), ("card_t", "REAL"), ("card_x", "REAL"), ("card_y", "REAL"), ("card_s", "REAL"))
+
+
+def _migrate_items(c: sqlite3.Connection) -> None:
+    have = {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('items')")}
+    if have:                                                      # table exists from an earlier version
+        for col, decl in CARD_COLUMNS:
+            if col not in have:
+                c.execute(f"ALTER TABLE items ADD COLUMN {col} {decl}")
+
+
 def init() -> None:
     with tx() as c:
+        _migrate_items(c)
         if "ai_tags" not in _fts_columns(c) and _fts_columns(c):       # index from before the user/AI tag split
             c.execute("DROP TABLE items_fts")
             rebuild = True

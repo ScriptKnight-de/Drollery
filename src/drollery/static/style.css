@@ -248,6 +248,26 @@ td.clip { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-spa
 .login { display: grid; gap: 16px; padding: 24px; }
 .login p { margin: 0; font-size: 14px; }
 
+/* card image cropper */
+.lead { margin: -8px 0 20px; }
+.cardedit { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 24px; align-items: start; }
+@media (max-width: 900px) { .cardedit { grid-template-columns: 1fr; } }
+.cardedit-main { display: grid; gap: 12px; min-width: 0; }
+.snap { display: grid; gap: 12px; padding: 12px; }
+.snap video { width: 100%; max-height: 40vh; border-radius: 12px; background: #000; }
+.snapbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.nudge { display: inline-flex; gap: 6px; } .snapbar .small b { color: var(--tx); font-weight: 600; }
+.stage { position: relative; width: fit-content; max-width: 100%; margin: 0 auto; border: 2px solid var(--ln); border-radius: 16px; overflow: hidden; background: #000; touch-action: none; line-height: 0; user-select: none; }
+.stage img { display: block; max-width: 100%; max-height: 70vh; min-width: min(100%, 460px); }
+.cropbox { position: absolute; cursor: move; border: 2px solid #fff; border-radius: 6px; box-shadow: 0 0 0 9999px rgba(0,0,0,.58); touch-action: none; outline-offset: 2px; }
+.cropbox::before, .cropbox::after { content: ""; position: absolute; inset: 0; background-image: linear-gradient(rgba(255,255,255,.35) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.35) 1px, transparent 1px); background-size: 33.333% 33.333%; pointer-events: none; }
+.cropbox::after { display: none; }
+.cropbox:focus-visible { outline: 2px solid var(--ac); }
+.previewcard { width: 240px; max-width: 100%; margin: 0 auto; border: 2px solid var(--ln); border-radius: 20px; overflow: hidden; background: var(--s2); line-height: 0; }
+.previewcard canvas { width: 100%; height: auto; display: block; }
+.zoom { display: grid; gap: 6px; font-size: 13px; font-weight: 500; color: var(--tx2); } .zoom input[type=range] { accent-color: var(--ac); padding: 0; border: 0; background: none; }
+.reset-row { margin-top: 16px; }
+
 /* sharing */
 .duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 @media (max-width: 600px) { .duo { grid-template-columns: 1fr; } }

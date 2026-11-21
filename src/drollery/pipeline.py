@@ -38,6 +38,10 @@ def thumb_path(item: dict) -> Path:
     return get_settings().thumbs_dir / f"{item['sha256']}.jpg"
 
 
+def card_path(item: dict) -> Path:
+    return get_settings().cards_dir / f"{item['sha256']}.jpg"
+
+
 def _title_from_name(name: str) -> str:
     return re.sub(r"[\s_]+", " ", Path(name).stem).strip()[:120] or "untitled"
 

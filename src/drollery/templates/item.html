@@ -14,6 +14,7 @@
       <span>{{ item.kind }}</span><span>{{ item.mime }}</span><span>{{ "%.1f"|format(item.size / 1048576) }} MB</span>
       {% if item.width %}<span>{{ item.width }}×{{ item.height }}</span>{% endif %}
       <a href="/media/{{ item.id }}" download="{{ item.original_name }}">{{ icon("download") }}Download</a>
+      {% if item.kind != "audio" %}<a href="/items/{{ item.id }}/card">{{ icon("crop") }}Card image{% if item.has_card %} (custom){% endif %}</a>{% endif %}
       {% if item.source_url %}<a href="{{ item.source_url }}" rel="noreferrer noopener" target="_blank">{{ icon("external") }}Source</a>{% endif %}
     </p>
   </div>

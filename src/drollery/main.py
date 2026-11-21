@@ -20,6 +20,7 @@ from . import __version__, accounts, db, media, pipeline
 from .config import get_settings
 from .deps import LoginRequired, SetupRequired, api_auth, web_auth
 from .routes_auth import router as auth_router
+from .routes_card import files as card_files_router, router as card_router
 from .routes_share import api as share_api_router, manage as share_manage_router, public as share_public_router, share_context, FILE_HEADERS
 from .routes_settings import router as settings_router
 from .web import BASE, render
@@ -68,6 +69,8 @@ app = FastAPI(title="Drollery", version=__version__, lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
 app.include_router(auth_router)
 app.include_router(settings_router)
+app.include_router(card_router)
+app.include_router(card_files_router)
 app.include_router(share_public_router)
 app.include_router(share_manage_router)
 app.include_router(share_api_router)
@@ -132,9 +135,10 @@ async def _save_upload(up: UploadFile) -> tuple[int, bool]:
 
 
 def _public(item: dict) -> dict:
-    out = {k: v for k, v in item.items() if k not in ("sha256", "title_locked", "has_thumb")}
+    out = {k: v for k, v in item.items() if k not in ("sha256", "title_locked", "has_thumb", "has_card", "card_t", "card_x", "card_y", "card_s")}
     out["url"] = f"/media/{item['id']}"
     out["thumb_url"] = f"/thumb/{item['id']}" if item["has_thumb"] else None
+    out["card_url"] = f"/card/{item['id']}" if item["has_card"] else out["thumb_url"]
     return out
 
 
@@ -156,6 +160,7 @@ def _delete_item(item: dict) -> None:
         c.execute("DELETE FROM items WHERE id=?", (item["id"],))
     pipeline.media_path(item).unlink(missing_ok=True)
     pipeline.thumb_path(item).unlink(missing_ok=True)
+    pipeline.card_path(item).unlink(missing_ok=True)
 
 
 # ------------------------------------------------------------------ files

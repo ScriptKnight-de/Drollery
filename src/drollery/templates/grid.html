@@ -2,7 +2,8 @@
 {% for it in items %}
 <a class="tile" href="/items/{{ it.id }}">
   <div class="thumb">
-    {% if it.has_thumb %}<img loading="lazy" src="/thumb/{{ it.id }}" alt="">
+    {% if it.has_card %}<img loading="lazy" src="/card/{{ it.id }}?v={{ it.updated_at|int }}" alt="">
+    {% elif it.has_thumb %}<img loading="lazy" src="/thumb/{{ it.id }}" alt="">
     {% else %}<span class="ph">{{ icon("lute" if it.kind == "audio" else "image") }}</span>{% endif %}
     <span class="chip k-{{ it.kind }}" title="{{ it.kind }}">{{ icon({"image": "image", "video": "film", "audio": "lute"}[it.kind]) }}</span>
   </div>
