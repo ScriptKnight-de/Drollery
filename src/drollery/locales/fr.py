@@ -77,8 +77,6 @@ MESSAGES = {
     "Type": "Type",
     "All": "Tout",
     "Images": "Images",
-    "Video": "Vidéo",
-    "Audio": "Audio",
     "Image": "Image",
     "AI tag": "Tag IA",
     "my tag": "mon tag",
@@ -578,4 +576,10 @@ MESSAGES = {
     "Copy transcript": "Copier la transcription",
     "Could not load the transcript": "La transcription n’a pas pu être chargée",
     "Nothing was said in this track": "Rien n’est dit dans cette piste",
+
+    # ---- categories
+    "Clips": "Clips",
+    "Sounds": "Sons",
+    "Clip": "Clip",
+    "Sound": "Son",
 }

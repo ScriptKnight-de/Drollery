@@ -44,7 +44,15 @@ def _job_type(name: str) -> str:
     return shown if shown != name else name.replace("_", " ")
 
 
-templates.env.globals.update({"_": i18n.t, "job_type": _job_type, "_n": i18n.tn, "lang": i18n.current, "available_languages": i18n.languages, "flag_of": i18n.flag})
+KIND_NAMES = {"image": i18n.N_("Image"), "video": i18n.N_("Clip"), "audio": i18n.N_("Sound"), "album": i18n.N_("Album")}
+
+
+def _kind_label(kind: str) -> str:
+    """What one item of a kind is called in the interface. (The kinds themselves stay image, video, audio and album in the data and the API.)"""
+    return i18n.t(KIND_NAMES.get(kind, kind))
+
+
+templates.env.globals.update({"_": i18n.t, "job_type": _job_type, "kind_label": _kind_label, "_n": i18n.tn, "lang": i18n.current, "available_languages": i18n.languages, "flag_of": i18n.flag})
 
 
 def flash_redirect(url: str, text: str, kind: str = "ok") -> RedirectResponse:

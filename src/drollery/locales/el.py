@@ -72,8 +72,6 @@ MESSAGES = {
     "Type": "Τύπος",
     "All": "Όλα",
     "Images": "Εικόνες",
-    "Video": "Βίντεο",
-    "Audio": "Ήχος",
     "Image": "Εικόνα",
     "AI tag": "Ετικέτα ΤΝ",
     "my tag": "δική μου ετικέτα",
@@ -573,4 +571,10 @@ MESSAGES = {
     "Copy transcript": "Αντιγραφή απομαγνητοφώνησης",
     "Could not load the transcript": "Δεν ήταν δυνατή η φόρτωση της απομαγνητοφώνησης",
     "Nothing was said in this track": "Σε αυτό το κομμάτι δεν λέγεται τίποτα",
+
+    # ---- categories
+    "Clips": "Κλιπ",
+    "Sounds": "Ήχοι",
+    "Clip": "Κλιπ",
+    "Sound": "Ήχος",
 }

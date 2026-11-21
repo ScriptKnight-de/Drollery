@@ -7,7 +7,7 @@
     {% else %}<span class="ph{{ ' k-album' if it.kind == 'album' }}">{{ icon("lute" if it.kind == "audio" else "disc" if it.kind == "album" else "image") }}</span>{% endif %}
     {% set al = album_info.get(it.id) if album_info else none %}
     {% set isbook = al and al.subtype == "audiobook" %}
-    <span class="chip k-{{ it.kind }}" title="{{ _('Audiobook') if isbook else _(it.kind|capitalize) }}">{{ icon("book" if isbook else {"image": "image", "video": "film", "audio": "lute", "album": "disc"}[it.kind]) }}</span>
+    <span class="chip k-{{ it.kind }}" title="{{ _('Audiobook') if isbook else kind_label(it.kind) }}">{{ icon("book" if isbook else {"image": "image", "video": "film", "audio": "lute", "album": "disc"}[it.kind]) }}</span>
   </div>
   <div class="cap">
     <span class="t">{{ it.title }}</span>

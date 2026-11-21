@@ -72,8 +72,6 @@ MESSAGES = {
     "Type": "Typ",
     "All": "Alla",
     "Images": "Bilder",
-    "Video": "Video",
-    "Audio": "Ljud",
     "Image": "Bild",
     "AI tag": "AI-tagg",
     "my tag": "min tagg",
@@ -573,4 +571,10 @@ MESSAGES = {
     "Copy transcript": "Kopiera transkribering",
     "Could not load the transcript": "Transkriberingen kunde inte laddas",
     "Nothing was said in this track": "Inget sägs i det här spåret",
+
+    # ---- categories
+    "Clips": "Klipp",
+    "Sounds": "Ljud",
+    "Clip": "Klipp",
+    "Sound": "Ljud",
 }

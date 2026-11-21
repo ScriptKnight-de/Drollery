@@ -12,7 +12,7 @@
       {% else %}<audio src="/media/{{ item.id }}" controls preload="metadata"></audio>{% endif %}
     </div>
     <p class="meta-line">
-      <span>{{ _(item.kind|capitalize) }}</span><span>{{ item.mime }}</span><span>{{ "%.1f"|format(item.size / 1048576) }} MB</span>
+      <span>{{ kind_label(item.kind) }}</span><span>{{ item.mime }}</span><span>{{ "%.1f"|format(item.size / 1048576) }} MB</span>
       {% if item.width %}<span>{{ item.width }}×{{ item.height }}</span>{% endif %}
       <a href="/media/{{ item.id }}" download="{{ item.original_name }}">{{ icon("download") }}{{ _("Download") }}</a>
       {% if item.kind != "audio" %}<a href="/items/{{ item.id }}/card">{{ icon("crop") }}{{ _("Card image") }}{% if item.has_card %} {{ _("(custom)") }}{% endif %}</a>{% endif %}

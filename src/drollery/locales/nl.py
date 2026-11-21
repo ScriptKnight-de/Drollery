@@ -72,8 +72,6 @@ MESSAGES = {
     "Type": "Soort",
     "All": "Alles",
     "Images": "Afbeeldingen",
-    "Video": "Video",
-    "Audio": "Audio",
     "Image": "Afbeelding",
     "AI tag": "AI-tag",
     "my tag": "mijn tag",
@@ -573,4 +571,10 @@ MESSAGES = {
     "Copy transcript": "Transcriptie kopiëren",
     "Could not load the transcript": "De transcriptie kon niet worden geladen",
     "Nothing was said in this track": "In dit nummer wordt niets gezegd",
+
+    # ---- categories
+    "Clips": "Clips",
+    "Sounds": "Geluiden",
+    "Clip": "Clip",
+    "Sound": "Geluid",
 }
