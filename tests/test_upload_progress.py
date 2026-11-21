@@ -76,12 +76,13 @@ def test_the_picture_and_album_forms_report_their_errors_as_a_page(client):
 
 
 def test_the_big_upload_forms_use_the_progress_bar(client):
-    for url, form_marker in (("/movies/new", 'action="/movies"'), ("/albums/new", 'action="/albums"'), ("/", 'action="/add"')):
+    for url, form_marker in (("/movies/new", 'action="/movies"'), ("/albums/new", 'action="/albums"')):
         page = client.get(url).text
         tag = re.search(r"<form[^>]*%s[^>]*>" % re.escape(form_marker), page).group(0)
         assert "data-upload" in tag, url
         assert 'id="upload-text"' in page and "/static/upload.js" in page and '"uploading": "Uploading"' in page
-    assert 'onchange="this.form.requestSubmit()"' in client.get("/").text         # choosing files starts the upload, through the script
+    home = client.get("/").text                                                      # the library sends through the unified zone, which uses the same engine
+    assert 'id="uz-form"' in home and "/static/uploader.js" in home and 'id="upload-text"' in home and "/static/upload.js" in home
 
 
 def test_the_script_and_styles_are_served(client):

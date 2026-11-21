@@ -1,6 +1,7 @@
-// Upload progress: a form marked data-upload is sent with a script instead of the browser's plain submit, so the bytes
-// can be counted. A bar shows how much has gone, how fast and how long it will take; when the last byte is sent the
-// server still has to store and check the file, which is shown too. Without scripts the form works as before.
+// Upload engine. send() uploads a FormData with a progress bar: how much has gone, how fast, how long it will take, and a
+// Cancel button; when the last byte is sent the server still has to store and check the file, which is shown too.
+// Forms marked data-upload use it automatically (their plain submit is replaced); the library's unified upload zone
+// (uploader.js) calls send() directly. Without scripts the forms work as before.
 (function () {
   var text = {};
   try { text = JSON.parse(document.getElementById("upload-text").textContent); } catch (e) {}
@@ -24,26 +25,27 @@
     return e;
   }
 
-  function build(names) {
-    var p = el("div", "upload-panel"), head = el("div", "up-head"), bar = el("div", "up-bar"), fill = el("div", "up-fill"), cancel = el("button", "btn small", text.cancel || "Cancel");
+  function build(label, host) {
+    var p = el("div", "upload-panel" + (host ? " inline" : "")), head = el("div", "up-head"), bar = el("div", "up-bar"), fill = el("div", "up-fill"), cancel = el("button", "btn small", text.cancel || "Cancel");
     p.setAttribute("role", "status");
     p.setAttribute("aria-live", "polite");
     bar.setAttribute("role", "progressbar");
     bar.setAttribute("aria-valuemin", "0");
     bar.setAttribute("aria-valuemax", "100");
     bar.appendChild(fill);
-    var title = el("b", "up-title", (text.uploading || "Uploading") + (names ? ": " + names : "")), pct = el("span", "up-pct", "0%");
+    var title = el("b", "up-title", (text.uploading || "Uploading") + (label ? ": " + label : "")), pct = el("span", "up-pct", "0%");
     head.appendChild(title); head.appendChild(pct);
     var detail = el("p", "up-detail muted small", "");
     cancel.type = "button";
     p.appendChild(head); p.appendChild(bar); p.appendChild(detail);
     var foot = el("div", "up-foot"); foot.appendChild(cancel); p.appendChild(foot);
-    document.body.appendChild(p);
+    (host || document.body).appendChild(p);
     return { root: p, bar: bar, fill: fill, pct: pct, detail: detail, cancel: cancel, foot: foot, title: title };
   }
 
-  function finish(ui, message, isError) {
+  function finish(ui, message, isError, unlock) {
     busy = false;
+    if (unlock) unlock();
     ui.root.classList.remove("working");
     ui.root.classList.toggle("error", !!isError);
     ui.detail.textContent = message;
@@ -51,23 +53,17 @@
     ui.cancel.onclick = function () { ui.root.remove(); };
   }
 
-  function start(form, submitter) {
-    var data;
-    try { data = new FormData(form, submitter); } catch (e) { data = new FormData(form); }
-    var names = [], total = 0;
-    Array.prototype.forEach.call(form.querySelectorAll("input[type=file]"), function (i) {
-      Array.prototype.forEach.call(i.files, function (f) { names.push(f.name); total += f.size; });
-    });
-    var label = names.length > 2 ? names.slice(0, 2).join(", ") + " +" + (names.length - 2) : names.join(", ");
-    var ui = build(label), samples = [];
+  // o: { url, data (FormData), label, total (bytes, fallback), host (element for an inline bar), lock(), unlock() }
+  function send(o) {
+    var ui = build(o.label, o.host), samples = [];
     ui.root.classList.add("working");
-    form.classList.add("uploading");
+    if (o.lock) o.lock();
     busy = true;
     xhr = new XMLHttpRequest();
-    xhr.open("POST", form.action);
+    xhr.open("POST", o.url);
     xhr.setRequestHeader("X-Drollery-Upload", "1");
     xhr.upload.onprogress = function (e) {
-      var sent = e.lengthComputable ? e.loaded : 0, all = e.lengthComputable ? e.total : total, now = Date.now();
+      var sent = e.lengthComputable ? e.loaded : 0, all = e.lengthComputable ? e.total : (o.total || 0), now = Date.now();
       samples.push([now, sent]);
       while (samples.length > 2 && now - samples[0][0] > 4000) samples.shift();      // speed over the last few seconds
       var first = samples[0], rate = now > first[0] ? (sent - first[1]) / ((now - first[0]) / 1000) : 0;
@@ -85,7 +81,7 @@
     };
     xhr.onload = function () {
       var type = xhr.getResponseHeader("content-type") || "";
-      if (xhr.status === 413) { form.classList.remove("uploading"); finish(ui, text.toolarge || "Too large", true); return; }
+      if (xhr.status === 413) { finish(ui, text.toolarge || "Too large", true, o.unlock); return; }
       if (type.indexOf("application/json") === 0) {
         try {
           var d = JSON.parse(xhr.responseText);
@@ -97,23 +93,32 @@
         document.open(); document.write(xhr.responseText); document.close();
         return;
       }
-      form.classList.remove("uploading");
-      finish(ui, text.failed || "The upload failed", true);
+      finish(ui, text.failed || "The upload failed", true, o.unlock);
     };
-    xhr.onerror = function () { form.classList.remove("uploading"); finish(ui, text.failed || "The upload failed", true); };
-    xhr.onabort = function () { form.classList.remove("uploading"); finish(ui, text.cancelled || "Cancelled", false); };
+    xhr.onerror = function () { finish(ui, text.failed || "The upload failed", true, o.unlock); };
+    xhr.onabort = function () { finish(ui, text.cancelled || "Cancelled", false, o.unlock); };
     ui.cancel.onclick = function () { xhr.abort(); };
-    xhr.send(data);
+    xhr.send(o.data);
+    return ui;
   }
+  window.drolleryUpload = { send: send, size: size, isBusy: function () { return busy; } };
 
+  // forms marked data-upload: send them with the engine
   document.addEventListener("submit", function (e) {
     var form = e.target;
-    if (!form.hasAttribute || !form.hasAttribute("data-upload") || busy) { if (busy && form.hasAttribute && form.hasAttribute("data-upload")) e.preventDefault(); return; }
-    var picked = 0;
-    Array.prototype.forEach.call(form.querySelectorAll("input[type=file]"), function (i) { picked += i.files.length; });
-    if (!picked || !window.XMLHttpRequest || !window.FormData) return;               // nothing to count (a link, say): the plain submit does it
+    if (!form.hasAttribute || !form.hasAttribute("data-upload")) return;
+    if (busy) { e.preventDefault(); return; }
+    var names = [], total = 0;
+    Array.prototype.forEach.call(form.querySelectorAll("input[type=file]"), function (i) {
+      Array.prototype.forEach.call(i.files, function (f) { names.push(f.name); total += f.size; });
+    });
+    if (!names.length || !window.XMLHttpRequest || !window.FormData) return;           // nothing to count (a link, say): the plain submit does it
     e.preventDefault();
-    start(form, e.submitter);
+    var data;
+    try { data = new FormData(form, e.submitter); } catch (err) { data = new FormData(form); }
+    var label = names.length > 2 ? names.slice(0, 2).join(", ") + " +" + (names.length - 2) : names.join(", ");
+    send({ url: form.action, data: data, label: label, total: total,
+           lock: function () { form.classList.add("uploading"); }, unlock: function () { form.classList.remove("uploading"); } });
   });
 
   window.addEventListener("beforeunload", function (e) {

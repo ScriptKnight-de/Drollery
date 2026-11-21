@@ -1,18 +1,7 @@
 {% extends "base.html" %}
 {% from "icons.html" import icon %}
 {% block content %}
-<form class="add" method="post" action="/add" enctype="multipart/form-data" data-upload>
-  <label class="drop">
-    {{ icon("upload") }}<span>{{ _("Drop files or {browse}", browse="<u>" ~ _("browse") ~ "</u>")|safe }}</span>
-    <input type="file" name="files" multiple accept="image/*,video/*,audio/*" onchange="this.form.requestSubmit()">
-  </label>
-  <div class="field">
-    {{ icon("link") }}
-    <input type="url" name="url" placeholder="{{ _('Paste a link') }}" aria-label="{{ _('Link to download') }}">
-    <button class="btn primary" type="submit">{{ _("Add") }}</button>
-  </div>
-</form>
-<p class="add-more"><a class="btn small" href="/albums/new">{{ icon("disc") }}{{ _("Add an album") }}</a> <a class="btn small" href="/movies/new">{{ icon("clapperboard") }}{{ _("Add a movie") }}</a></p>
+{% include "uploader.html" %}
 
 <form class="toolbar" method="get" action="/" hx-get="/" hx-target="#grid" hx-swap="innerHTML"
       hx-trigger="input changed delay:250ms from:#q, change from:.seg" hx-push-url="false">
@@ -42,7 +31,6 @@
 {% endif %}
 
 <section id="grid" class="grid">{% include "grid.html" %}</section>
-{% include "upload_ui.html" %}
 <script src="/static/searchsuggest.js" defer></script>
 <script>
   var drop = document.querySelector(".drop");

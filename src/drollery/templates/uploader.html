@@ -1,0 +1,78 @@
+{% from "icons.html" import icon %}
+{# The one way in for everything: drop or choose files, or paste a link; then confirm what it should become. #}
+<section class="uploader" id="uploader" data-max-upload="{{ max_upload_mb }}" data-max-movie="{{ max_movie_mb }}" data-lookup="{{ 1 if metadata_lookup else 0 }}">
+  <label class="drop uz" id="uz">
+    {{ icon("upload") }}<span>{{ _("Drop files here, browse, or paste a link") }}</span>
+    <input type="file" id="uz-files" multiple accept="image/*,video/*,audio/*,.mp3,.m4a,.m4b,.aac,.flac,.ogg,.oga,.opus,.wav,.zip,application/zip">
+  </label>
+  <div class="field uz-link">
+    {{ icon("link") }}
+    <input type="url" id="uz-url" placeholder="{{ _('Paste a link') }}" aria-label="{{ _('Link to download') }}" autocomplete="off">
+    <button class="btn primary" type="button" id="uz-url-go">{{ _("Add") }}</button>
+  </div>
+
+  <noscript>
+    <form class="add" method="post" action="/add" enctype="multipart/form-data">
+      <input type="file" name="files" multiple> <input type="url" name="url" placeholder="{{ _('Paste a link') }}"> <button class="btn primary" type="submit">{{ _("Add") }}</button>
+    </form>
+    <p class="add-more"><a href="/albums/new">{{ _("Add an album") }}</a> · <a href="/movies/new">{{ _("Add a movie") }}</a></p>
+  </noscript>
+
+  <form class="panel form uz-panel" id="uz-form" hidden aria-labelledby="uz-title">
+    <div class="uz-sum"><b id="uz-title"></b> <button type="button" class="link" id="uz-change">{{ _("Choose other files") }}</button></div>
+    <p class="hint uz-note" id="uz-note" aria-live="polite" hidden></p>
+
+    <fieldset class="uz-types" id="uz-types" aria-label="{{ _('What should this become?') }}">
+      <legend>{{ _("What should this become?") }}</legend>
+      <label data-type="items"><input type="radio" name="uz-type" value="items"><span><b>{{ icon("image") }}{{ _("Separate items") }}</b><small>{{ _("Each file becomes an item of its own") }}</small></span></label>
+      <label data-type="album"><input type="radio" name="uz-type" value="album"><span><b>{{ icon("disc") }}{{ _("Album or audiobook") }}</b><small>{{ _("Several audio files, or one ZIP, behind one card") }}</small></span></label>
+      <label data-type="movie"><input type="radio" name="uz-type" value="movie"><span><b>{{ icon("clapperboard") }}{{ _("Movie, parody or synchro") }}</b><small>{{ _("One video file with the details of a film") }}</small></span></label>
+    </fieldset>
+
+    <div class="uz-fields" data-for="link" hidden>
+      <p class="muted">{{ _("The file at the link is fetched in the background. You can follow it under Jobs") }}</p>
+    </div>
+
+    <div class="uz-fields" data-for="album" hidden>
+      <div class="kindpick" role="radiogroup" aria-label="{{ _('Type') }}">
+        <label><input type="radio" name="uz-album-subtype" value="album" checked> {{ icon("disc") }}{{ _("Music album") }}</label>
+        <label><input type="radio" name="uz-album-subtype" value="audiobook"> {{ icon("book") }}{{ _("Audiobook") }}</label>
+      </div>
+      <div class="duo">
+        <label>{{ _("Title") }} <input data-f="title" maxlength="120"><span class="hint">{{ _("Optional. Taken from the files when left empty") }}</span></label>
+        <label>{{ _("Artist") }} <input data-f="artist" maxlength="120"><span class="hint">{{ _("Optional. Taken from the files when left empty") }}</span></label>
+      </div>
+      <label>{{ _("Description") }} <textarea data-f="description" rows="2" maxlength="2000"></textarea></label>
+      <label>{{ _("Your tags") }} <input data-f="tags" placeholder="{{ _('Separate with spaces') }}" autocomplete="off"></label>
+      <p class="hint">{{ _("A picture among the files becomes the cover") }}</p>
+      {% if metadata_lookup %}<label class="check"><input type="checkbox" data-f="lookup"> {{ _("After adding, look up the album online to fill in its details") }}</label>{% endif %}
+    </div>
+
+    <div class="uz-fields" data-for="movie" hidden>
+      <div class="kindpick" role="radiogroup" aria-label="{{ _('Type') }}">
+        {% for key, label in subtype_names.items() %}<label><input type="radio" name="uz-movie-subtype" value="{{ key }}" {{ "checked" if key == "movie" }}> {{ _(label) }}</label>{% endfor %}
+      </div>
+      <label>{{ _("Title") }} <input data-f="title" maxlength="120" placeholder="{{ _('Taken from the file name when empty') }}"></label>
+      <label>{{ _("Original film") }} <input data-f="original_title" maxlength="200"><span class="hint">{{ _("For a parody or a synchro: the film it makes fun of or dubs") }}</span></label>
+      <label>{{ _("Description") }} <textarea data-f="description" rows="2" maxlength="2000"></textarea></label>
+      <label>{{ _("Your tags") }} <input data-f="tags" placeholder="{{ _('Separate with spaces') }}" autocomplete="off"></label>
+      {% if metadata_lookup %}<label class="check"><input type="checkbox" data-f="lookup"> {{ _("After adding, look the movie up on IMDb to fill in its details") }}</label>{% endif %}
+    </div>
+
+    <div class="actions">
+      <button class="btn primary" type="submit" id="uz-go">{{ icon("upload") }}{{ _("Add") }}</button>
+      <button class="btn" type="button" id="uz-cancel">{{ _("Cancel") }}</button>
+    </div>
+    <div id="uz-progress"></div>
+  </form>
+</section>
+<script type="application/json" id="uploader-text">{{ {
+  "selected": _("Selected: {n} · {size}"),
+  "link": _("Link"),
+  "suggested": _("Suggested"),
+  "mixed": _("These files cannot be added together. A movie is one video file; an album is audio files or a ZIP"),
+  "unsupported": _("This kind of file cannot be added: {name}"),
+  "toolarge": _("A file is larger than the limit of {max}"),
+}|tojson }}</script>
+{% include "upload_ui.html" %}
+<script src="/static/uploader.js" defer></script>

@@ -114,7 +114,7 @@ def test_a_movie_gets_no_automatic_transcription_or_naming(client, clip_bytes):
 def test_movies_have_their_own_filter_card_and_add_form(client, clip_bytes):
     add(client, clip_bytes, title="Spaced Balls", subtype="synchro")
     page = client.get("/", params={"kind": "movie"}).text
-    assert 'value="movie"' in page and "Movies" in page and "/movies/new" in page
+    assert 'value="movie"' in page and "Movies" in page
     tile = page.split('class="tile"')[1].split("</a>")[0]
     assert "k-movie" in tile and "Synchro (dub)" in tile and "Spaced Balls" in tile
     assert client.get("/", params={"kind": "video"}).text.count('class="tile"') == 0              # not mixed up with clips
