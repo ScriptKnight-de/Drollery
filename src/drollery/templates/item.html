@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "icons.html" import icon %}
+{% from "macros.html" import errbox %}
 {% block title %}{{ item.title }} · Drollery{% endblock %}
 {% block content %}
 <a class="back" href="/">{{ icon("arrow-left") }}Library</a>
@@ -102,7 +103,7 @@
     </section>
 
     <details {{ "open" if jobs }}><summary>Background jobs <i>{{ jobs|length }}</i></summary>
-      {% for j in jobs %}<div class="job"><span class="dot {{ j.status }}"></span>{{ j.type }} · {{ j.status }}{% if j.error %}<span class="bad"> — {{ j.error }}</span>{% endif %}{% if j.status == "failed" %}<form method="post" action="/jobs/{{ j.id }}/retry" class="inline"><input type="hidden" name="next" value="/items/{{ item.id }}"><button class="link" type="submit">Retry</button></form>{% endif %}</div>{% endfor %}
+      {% for j in jobs %}<div class="job"><span class="dot {{ j.status }}"></span>{{ j.type }} · {{ j.status }}{{ errbox(j.error) }}{% if j.status == "failed" %}<form method="post" action="/jobs/{{ j.id }}/retry" class="inline"><input type="hidden" name="next" value="/items/{{ item.id }}"><button class="link" type="submit">Retry</button></form>{% endif %}</div>{% endfor %}
       {% if providers.transcribe or providers.describe or providers.ocr %}
       <form method="post" action="/items/{{ item.id }}/reprocess"><button class="btn" type="submit">{{ icon("retry") }}Run again</button></form>
       {% else %}<p class="muted">No AI providers are enabled. See <code>config.toml</code> in the data volume.</p>{% endif %}

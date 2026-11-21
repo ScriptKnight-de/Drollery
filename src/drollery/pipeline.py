@@ -200,7 +200,7 @@ def job_fetch(job: dict) -> None:
             r = _run_tool(["yt-dlp", "--no-playlist", "--no-warnings", "--write-info-json",
                            "--max-filesize", f"{s.max_upload_mb}M",
                            "-o", str(td / "%(title).80B [%(id)s].%(ext)s"), url], s.fetch_timeout)
-            err1 = r.stderr.strip()[-300:]
+            err1 = r.stderr.strip()[-1500:]
             files = [p for p in td.iterdir() if p.suffix != ".json" and not p.name.endswith(".part")]
             for info in td.glob("*.info.json"):
                 try:
@@ -217,7 +217,7 @@ def job_fetch(job: dict) -> None:
                 files = sorted(gdir.iterdir()) if gdir.exists() else []
                 if not files:
                     raise providers.ProviderError(
-                        f"nothing downloadable found. yt-dlp: {err1 or '-'} | gallery-dl: {r.stderr.strip()[-200:] or '-'}")
+                        f"nothing downloadable found. yt-dlp: {err1 or '-'} | gallery-dl: {r.stderr.strip()[-1500:] or '-'}")
         imported = 0
         for f in files[: s.fetch_max_files]:
             try:

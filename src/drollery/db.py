@@ -359,7 +359,7 @@ def finish_job(job_id: int, error: str | None, max_attempts: int, attempts: int)
         if error is None:
             c.execute("UPDATE jobs SET status='done', error='', updated_at=? WHERE id=?", (now, job_id))
         elif attempts >= max_attempts:
-            c.execute("UPDATE jobs SET status='failed', error=?, updated_at=? WHERE id=?", (error[:2000], now, job_id))
+            c.execute("UPDATE jobs SET status='failed', error=?, updated_at=? WHERE id=?", (error[:8000], now, job_id))
         else:
             c.execute("UPDATE jobs SET status='queued', error=?, run_after=?, updated_at=? WHERE id=?",
-                      (error[:2000], now + 30 * attempts, now, job_id))
+                      (error[:8000], now + 30 * attempts, now, job_id))

@@ -37,7 +37,7 @@ def _run(cmd: list[str], timeout: int = 120) -> subprocess.CompletedProcess:
 def probe(path: Path) -> dict:
     r = _run(["ffprobe", "-v", "error", "-print_format", "json", "-show_format", "-show_streams", str(path)])
     if r.returncode != 0:
-        raise MediaError(f"ffprobe failed: {r.stderr.strip()[:300]}")
+        raise MediaError(f"ffprobe failed: {r.stderr.strip()[:2000]}")
     data = json.loads(r.stdout or "{}")
     streams = data.get("streams", [])
     video = next((s for s in streams if s.get("codec_type") == "video"), {})
@@ -65,7 +65,7 @@ def extract_audio(src: Path, dst: Path) -> None:
     r = _run(["ffmpeg", "-y", "-v", "error", "-i", str(src), "-vn", "-ac", "1", "-ar", "16000",
               "-b:a", "32k", str(dst)], timeout=600)
     if r.returncode != 0 or not dst.exists():
-        raise MediaError(f"audio extraction failed: {r.stderr.strip()[:300]}")
+        raise MediaError(f"audio extraction failed: {r.stderr.strip()[:2000]}")
 
 
 def ocr_image(src: Path, dst: Path, kind: str) -> None:
@@ -74,7 +74,7 @@ def ocr_image(src: Path, dst: Path, kind: str) -> None:
     r = _run(["ffmpeg", "-y", "-v", "error", *seek, "-i", str(src), "-frames:v", "1",
               "-vf", "scale='min(1600,iw)':-2", str(dst)])
     if r.returncode != 0 or not dst.exists():
-        raise MediaError(f"frame extraction failed: {r.stderr.strip()[:300]}")
+        raise MediaError(f"frame extraction failed: {r.stderr.strip()[:2000]}")
 
 
 FRAME_MAX = 1600     # width cap of the still the cropper works on
@@ -102,7 +102,7 @@ def frame_jpeg(src: Path, kind: str, t: float = 0.0) -> bytes:
                         "-vf", f"scale='min({FRAME_MAX},iw)':-2", "-f", "image2pipe", "-vcodec", "mjpeg", "-q:v", "3", "-"])
         if r.returncode == 0 and r.stdout:
             return r.stdout
-        last = r.stderr.decode(errors="replace").strip()[:200]
+        last = r.stderr.decode(errors="replace").strip()[:2000]
     raise MediaError(f"could not read a frame: {last}")
 
 
@@ -124,6 +124,6 @@ def make_card(src: Path, dst: Path, kind: str, t: float, x: float, y: float, s: 
         if r.returncode == 0 and tmp.exists():
             tmp.replace(dst)
             return
-        err = r.stderr.strip()[:200]
+        err = r.stderr.strip()[:2000]
     tmp.unlink(missing_ok=True)
     raise MediaError(f"could not render the card image: {err}")

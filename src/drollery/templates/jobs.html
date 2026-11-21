@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "icons.html" import icon %}
+{% from "macros.html" import errbox %}
 {% block title %}Jobs · Drollery{% endblock %}
 {% block content %}
 <a class="back" href="/">{{ icon("arrow-left") }}Back to library</a>
@@ -16,7 +17,7 @@
   <tr><td class="mono">{{ j.id }}</td><td>{{ j.type }}</td>
       <td><span class="dot {{ j.status }}"></span>{{ j.status }}{% if j.attempts > 1 %} <span class="mono muted">×{{ j.attempts }}</span>{% endif %}</td>
       <td class="clip">{% if j.item_id %}<a href="/items/{{ j.item_id }}">{{ j.label or j.item_id }}</a>{% else %}{{ j.label }}{% endif %}</td>
-      <td class="bad clip" title="{{ j.error }}">{{ j.error }}</td>
+      <td class="errcell">{{ errbox(j.error) }}</td>
       <td class="actions">{% if j.status == "failed" %}<div class="acts">
         <form method="post" action="/jobs/{{ j.id }}/retry"><input type="hidden" name="next" value="/jobs"><button class="btn small" type="submit" aria-label="Retry job {{ j.id }}">{{ icon("retry") }}Retry</button></form>
       </div>{% endif %}</td></tr>

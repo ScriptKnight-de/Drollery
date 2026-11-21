@@ -108,3 +108,52 @@ def test_retry_needs_a_login_and_has_an_api_endpoint(client):
     assert r.status_code == 202 and r.json() == {"job_id": jid, "status": "queued"}
     assert anon.post(f"/api/v1/jobs/{jid}/retry", headers=auth).status_code == 409          # no longer failed
     assert anon.post("/api/v1/jobs/99999/retry", headers=auth).status_code == 404
+
+
+# ---------------------------------------------------- reading the whole error
+
+def test_the_whole_error_is_available_in_the_list_and_on_the_item_page(client):
+    long_error = "MediaError: audio extraction failed: " + " ".join(f"line{i}-detail" for i in range(120))      # ~1.4 kB
+    item_id, jid = make_failed_job(client, 1)
+    with db.tx() as c:
+        c.execute("UPDATE jobs SET error=? WHERE id=?", (long_error, jid))
+    for page in (client.get("/jobs").text, client.get(f"/items/{item_id}").text):
+        assert '<details class="errbox">' in page and "Click to read the whole message" in page
+        assert "<pre>" + long_error + "</pre>" in page                      # the whole message, untruncated, in a scrollable block
+        assert f'data-copy="{long_error}"' in page and "Copy error" in page
+
+
+def test_error_text_is_escaped_not_executed(client):
+    item_id, jid = make_failed_job(client, 1)
+    with db.tx() as c:
+        c.execute("UPDATE jobs SET error=? WHERE id=?", ('<script>alert(1)</script> & "quoted"', jid))
+    page = client.get("/jobs").text
+    assert "<script>alert(1)</script>" not in page and "&lt;script&gt;alert(1)&lt;/script&gt;" in page
+
+
+def test_long_errors_are_stored_and_returned_in_full(client):
+    item_id, jid = make_failed_job(client, 1)
+    big = "x" * 5000                                                         # used to be cut at 2000 characters
+    with db.tx() as c:
+        c.execute("UPDATE jobs SET status='running', attempts=3 WHERE id=?", (jid,))
+    db.finish_job(jid, big, max_attempts=3, attempts=3)
+    got = next(j for j in client.get("/api/v1/jobs").json()["jobs"] if j["id"] == jid)
+    assert got["error"] == big
+    with db.tx() as c:
+        c.execute("UPDATE jobs SET status='running' WHERE id=?", (jid,))
+    db.finish_job(jid, "y" * 20000, max_attempts=3, attempts=3)
+    assert len(row(jid)["error"]) == 8000                                    # a sane upper bound
+
+
+def test_tool_errors_keep_their_detail(monkeypatch, tmp_path):
+    """ffmpeg's message used to be cut at 300 characters, losing the useful part."""
+    import subprocess
+    from drollery import media
+    detail = "[out#0/mp3] " + "reason " * 200                                # ~1.4 kB
+    monkeypatch.setattr(media, "_run", lambda cmd, timeout=120: subprocess.CompletedProcess(cmd, 1, "", detail))
+    try:
+        media.extract_audio(tmp_path / "in.mp4", tmp_path / "out.mp3")
+    except media.MediaError as e:
+        assert detail.strip() in str(e) and len(str(e)) > 1200
+    else:
+        raise AssertionError("expected a MediaError")

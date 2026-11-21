@@ -49,7 +49,7 @@ def _command(template: str, input_path: Path, langs: str = "") -> str:
     except FileNotFoundError:
         raise ProviderError(f"program not found: {args[0]}") from None
     if r.returncode != 0:
-        raise ProviderError(f"{args[0]} failed: {r.stderr.strip()[:300]}")
+        raise ProviderError(f"{args[0]} failed: {r.stderr.strip()[:2000]}")
     return r.stdout.strip()
 
 
@@ -86,7 +86,7 @@ def parse_json(text: str) -> dict:
     """LLMs wrap JSON in prose or code fences; pull out the first object."""
     m = re.search(r"\{.*\}", text, flags=re.S)
     if not m:
-        raise ProviderError(f"model did not return JSON: {text[:200]!r}")
+        raise ProviderError(f"model did not return JSON: {text[:1000]!r}")
     try:
         return json.loads(m.group(0))
     except json.JSONDecodeError as e:
