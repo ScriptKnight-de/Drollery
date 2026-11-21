@@ -20,7 +20,7 @@
   :root:not([data-theme="dark"]) {
     color-scheme: light;
     --bg: #fbf7ef; --s1: #ffffff; --s2: #f1ebdd;
-    --chip: #2b2733; --chip-ring: rgba(0,0,0,0); --chip-x: #e5383b; --chip-fld: #ffffff;
+    --chip: #0b0b0d; --chip-ring: rgba(255,255,255,.22); --chip-x: #e5383b; --chip-fld: #ffffff;
     --ln: rgba(40,30,10,.12); --ln2: rgba(40,30,10,.26);
     --tx: #26222e; --tx2: #5e586c; --tx3: #8b8499;
     --ac-ink: color-mix(in srgb, var(--ac), black 42%);
@@ -35,7 +35,7 @@
 :root[data-theme="light"] {
   color-scheme: light;
   --bg: #fbf7ef; --s1: #ffffff; --s2: #f1ebdd;
-  --chip: #2b2733; --chip-ring: rgba(0,0,0,0); --chip-x: #e5383b; --chip-fld: #ffffff;
+  --chip: #0b0b0d; --chip-ring: rgba(255,255,255,.22); --chip-x: #e5383b; --chip-fld: #ffffff;
   --ln: rgba(40,30,10,.12); --ln2: rgba(40,30,10,.26);
   --tx: #26222e; --tx2: #5e586c; --tx3: #8b8499;
   --ac-ink: color-mix(in srgb, var(--ac), black 42%);
