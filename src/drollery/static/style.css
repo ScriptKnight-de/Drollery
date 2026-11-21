@@ -227,6 +227,7 @@ kbd { color: var(--tx3); border: 2px solid var(--ln); border-radius: 6px; paddin
 .foot-bar a:hover, .foot-bar a:focus-visible { color: var(--tx); text-decoration: none; }
 .foot-bar a:hover b { color: var(--ac-ink); border-bottom-style: solid; }
 @media (prefers-reduced-motion: reduce) { .foot { transition: none; } }
+.ic.ic-brand { fill: currentColor; stroke: none; }
 .about .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; }
 .legal { max-width: 720px; }
 .legal h1 { margin-top: 0; }

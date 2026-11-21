@@ -1,11 +1,12 @@
 {% extends "settings_base.html" %}
+{% from "icons.html" import brand %}
 {% block settings %}
 <section class="panel stack about">
   <h2>{{ _("About Drollery") }}</h2>
   <p class="muted">{{ _("Drollery is free and open source, made by ScriptKnight. If you find it useful, you can support its development.") }}</p>
   <p class="actions">
-    <a class="btn primary" href="{{ kofi_url }}" target="_blank" rel="noopener noreferrer">{{ icon("heart") }}{{ _("Support on Ko-fi") }}</a>
-    <a class="btn" href="{{ github_url }}" target="_blank" rel="noopener noreferrer">{{ icon("github") }}{{ _("ScriptKnight on GitHub") }}</a>
+    <a class="btn primary" href="{{ kofi_url }}" target="_blank" rel="noopener noreferrer">{{ brand("kofi") }}{{ _("Support on Ko-fi") }}</a>
+    <a class="btn" href="{{ github_url }}" target="_blank" rel="noopener noreferrer">{{ brand("github") }}{{ _("ScriptKnight on GitHub") }}</a>
   </p>
   <p class="hint">{{ _("Version {version}", version=version) }}</p>
 </section>
