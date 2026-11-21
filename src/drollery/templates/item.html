@@ -39,7 +39,7 @@
       {% else %}<p class="muted">No AI providers are enabled. See <code>config.toml</code> in the data volume.</p>{% endif %}
     </details>
 
-    <form method="post" action="/items/{{ item.id }}/delete" onsubmit="return confirm('Delete this item permanently?')">
+    <form method="post" action="/items/{{ item.id }}/delete" onsubmit="return confirm('Feed this item to the dragon? It cannot be undone.')">
       <button class="btn danger" type="submit">{{ icon("trash") }}Delete</button>
     </form>
   </div>

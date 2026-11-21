@@ -3,8 +3,8 @@
 <a class="tile" href="/items/{{ it.id }}">
   <div class="thumb">
     {% if it.has_thumb %}<img loading="lazy" src="/thumb/{{ it.id }}" alt="">
-    {% else %}<span class="ph">{{ icon("music" if it.kind == "audio" else "image") }}</span>{% endif %}
-    <span class="chip k-{{ it.kind }}" title="{{ it.kind }}">{{ icon({"image": "image", "video": "film", "audio": "music"}[it.kind]) }}</span>
+    {% else %}<span class="ph">{{ icon("lute" if it.kind == "audio" else "image") }}</span>{% endif %}
+    <span class="chip k-{{ it.kind }}" title="{{ it.kind }}">{{ icon({"image": "image", "video": "film", "audio": "lute"}[it.kind]) }}</span>
   </div>
   <div class="cap">
     <span class="t">{{ it.title }}</span>
@@ -13,13 +13,13 @@
 </a>
 {% else %}
 <div class="empty">
-  {% include "marginalia.svg" %}
+  {% include "doodles/" ~ (["knight-snail","dragon-treasure","wizard","princess-tower","king-queen","burglar","forest","castle"]|random) ~ ".svg" %}
   {% if q or tag or kind %}
-  <h2>Nothing matches</h2>
+  <h2>No loot found</h2>
   <p>Try fewer words, or clear the filter</p>
   {% else %}
-  <h2>No items yet</h2>
-  <p>Drop a file or paste a link to start your library</p>
+  <h2>The treasury is empty</h2>
+  <p>Drop a file or paste a link to fill the chest</p>
   {% endif %}
 </div>
 {% endfor %}

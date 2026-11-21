@@ -1,11 +1,14 @@
 {% extends "base.html" %}
 {% block title %}Sign in · Drollery{% endblock %}
 {% block content %}
+<div class="login-wrap">
+<div class="doodle">{% include "doodles/castle.svg" %}</div>
 <form class="panel login" method="post" action="/login">
-  <h1>Sign in</h1>
-  <p class="muted">Enter the access token from your <code>.env</code> file</p>
+  <h1>Halt! Who goes there?</h1>
+  <p class="muted">Show the royal seal: the access token from your <code>.env</code> file</p>
   {% if error %}<p class="bad" role="alert">That token is not valid</p>{% endif %}
   <input type="password" name="token" placeholder="Access token" aria-label="Access token" autofocus required>
   <button class="btn primary" type="submit">Sign in</button>
 </form>
+</div>
 {% endblock %}

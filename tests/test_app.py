@@ -69,6 +69,18 @@ def test_web_pages_render(client):
     assert client.get("/jobs").status_code == 200
 
 
+def test_friendly_404_for_browsers_json_for_api(client):
+    page = client.get("/items/999", headers={"accept": "text/html"})
+    assert page.status_code == 404 and "Nothing here" in page.text
+    api = client.get("/api/v1/items/999", headers={"accept": "text/html"})
+    assert api.status_code == 404 and api.json()["detail"] == "item not found"
+
+
+def test_empty_state_has_a_doodle(client):
+    html = client.get("/").text
+    assert "treasury is empty" in html and "<svg" in html
+
+
 def test_token_auth(tmp_path, monkeypatch):
     monkeypatch.setenv("DROLLERY_DATA", str(tmp_path))
     monkeypatch.setenv("DROLLERY_TOKEN", "s3cret")

@@ -11,9 +11,11 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import __version__, db, media, pipeline
 from .config import get_settings
@@ -88,6 +90,15 @@ def web_auth(request: Request) -> None:
 @app.exception_handler(LoginRequired)
 async def _login_redirect(request: Request, exc: LoginRequired):
     return RedirectResponse("/login", status_code=303)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def _http_error(request: Request, exc: StarletteHTTPException):
+    """Browsers get a friendly 404 page; the API and media routes keep JSON errors."""
+    if (exc.status_code == 404 and "text/html" in request.headers.get("accept", "")
+            and not request.url.path.startswith(("/api/", "/media/", "/thumb/"))):
+        return templates.TemplateResponse(request, "404.html", _ctx(), status_code=404)
+    return await http_exception_handler(request, exc)
 
 
 @app.get("/healthz")

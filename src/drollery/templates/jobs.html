@@ -6,6 +6,7 @@
   <h1>Background jobs</h1>
   <form method="post" action="/jobs/retry-failed"><button class="btn" type="submit">{{ icon("retry") }}Retry failed</button></form>
 </div>
+{% if jobs %}
 <div class="panel flush">
 <table>
   <thead><tr><th>#</th><th>Type</th><th>Status</th><th>For</th><th>Error</th></tr></thead>
@@ -15,8 +16,11 @@
       <td><span class="dot {{ j.status }}"></span>{{ j.status }}{% if j.attempts > 1 %} <span class="mono muted">×{{ j.attempts }}</span>{% endif %}</td>
       <td class="clip">{% if j.item_id %}<a href="/items/{{ j.item_id }}">{{ j.label or j.item_id }}</a>{% else %}{{ j.label }}{% endif %}</td>
       <td class="bad clip">{{ j.error }}</td></tr>
-  {% else %}<tr><td colspan="5" class="muted">No jobs yet</td></tr>{% endfor %}
+  {% endfor %}
   </tbody>
 </table>
 </div>
+{% else %}
+<div class="empty">{% include "doodles/wizard.svg" %}<h2>The scribes are idle</h2><p>Background jobs appear here when you add links or enable AI</p></div>
+{% endif %}
 {% endblock %}

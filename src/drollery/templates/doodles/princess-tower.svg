@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 112" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M8 100H232" opacity=".4"/>
+  <!-- tower -->
+  <path d="M152 100V46H188V100"/><path d="M148 46L170 16L192 46Z"/><path d="M170 16V5L181 9L170 12"/>
+  <path d="M160 80V60a10 10 0 0 1 20 0V80Z"/>
+  <circle cx="170" cy="64" r="5"/><path d="M165 59l2.5-4 2.5 3 2.5-3 2.5 4"/>
+  <path d="M175 68C180 78 172 88 176 98"/><path d="M164 74L156 66"/>
+  <!-- prince -->
+  <circle cx="80" cy="58" r="6"/><path d="M74 53l3-5 3 4 3-4 3 5Z"/>
+  <path d="M72 66H88L92 92H68Z"/><path d="M74 92v8M86 92v8"/>
+  <path d="M88 68C98 74 100 88 96 98"/><path d="M88 72L104 62"/><circle cx="106" cy="60" r="3"/><path d="M104 64l-4 6"/>
+  <path d="M130 50C122 44 122 36 128 36C130 36 131 38 130 40C131 38 132 36 134 36C140 36 140 44 130 50Z"/>
+  <path d="M120 30v6M117 33h6M200 60v6M197 63h6"/>
+</svg>

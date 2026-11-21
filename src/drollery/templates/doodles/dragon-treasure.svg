@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 112" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M8 100H232" opacity=".4"/>
+  <!-- chest + coins + sparkles -->
+  <path d="M18 100V80H62V100"/><path d="M18 80C18 66 62 66 62 80"/><path d="M18 80H62"/>
+  <path d="M30 71V100M50 71V100"/><rect x="37" y="76" width="6" height="8" rx="1"/>
+  <ellipse cx="74" cy="98" rx="6" ry="2"/><ellipse cx="83" cy="97" rx="6" ry="2"/><ellipse cx="78" cy="94" rx="6" ry="2"/>
+  <path d="M40 46V58M34 52H46M22 58v6M19 61h6M70 66v6M67 69h6"/>
+  <!-- dragon -->
+  <path d="M122 100C120 80 136 68 158 68C180 68 194 82 194 100"/>
+  <path d="M132 100c0-4 8-4 8 0M172 100c0-4 8-4 8 0"/>
+  <path d="M128 76C118 68 116 58 118 50M138 70C132 62 130 54 132 48"/>
+  <path d="M118 51C108 54 98 52 92 47C90 42 96 38 104 36C112 34 124 34 130 38C134 42 133 46 132 49"/><path d="M92 47L108 47"/><path d="M99 44h.01"/>
+  <path d="M124 36l2-8 4 8"/><path d="M118 62l-5-2M121 68l-5 0"/><circle cx="122" cy="42" r="1.4"/>
+  <path d="M88 46C82 42 78 47 72 44C77 51 83 53 88 50"/>
+  <path d="M162 70C158 56 164 44 176 34C176 42 182 44 186 44C186 52 192 54 197 54C190 60 188 68 186 76"/><path d="M176 34C174 46 172 58 170 70M186 44C182 54 180 62 178 72"/>
+  <path d="M194 100C206 100 216 94 220 82"/><path d="M214 86L224 80L222 92"/>
+</svg>

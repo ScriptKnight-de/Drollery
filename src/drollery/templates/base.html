@@ -13,13 +13,14 @@
       if (a) r.dataset.accent = a;
     } catch (e) {}
   </script>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
   <link rel="stylesheet" href="/static/style.css">
   <script src="/static/htmx.min.js" defer></script>
 </head>
 <body>
 <header class="top">
   <div class="top-in">
-    <a class="brand" href="/">Drollery</a>
+    <a class="brand" href="/">{{ icon("castle") }}<span>Drollery</span></a>
     <nav>
       <a class="nav-link" href="/jobs">{{ icon("list") }}<span>Jobs</span></a>
       {% if auth_enabled %}<form method="post" action="/logout"><button class="nav-link" type="submit">{{ icon("logout") }}<span>Log out</span></button></form>{% endif %}
@@ -44,6 +45,7 @@
   </div>
 </header>
 <main>{% block content %}{% endblock %}</main>
+<div class="skyline" aria-hidden="true"></div>
 <script>
   (function () {
     var root = document.documentElement, menu = document.getElementById("theme-menu");

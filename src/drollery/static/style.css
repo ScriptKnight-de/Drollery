@@ -43,7 +43,7 @@
 :root[data-accent="lime"]   { --ac: #b6d83c; } :root[data-accent="orange"] { --ac: #ffa033; }
 
 * { box-sizing: border-box; }
-body { margin: 0; color: var(--tx); font: 400 16px/24px var(--sans); -webkit-font-smoothing: antialiased; min-height: 100vh;
+body { margin: 0; color: var(--tx); font: 400 16px/24px var(--sans); -webkit-font-smoothing: antialiased; min-height: 100vh; display: flex; flex-direction: column;
   background-color: var(--bg);
   background-image: radial-gradient(color-mix(in srgb, var(--ac) 22%, transparent) 1.2px, transparent 1.6px);
   background-size: 24px 24px; }
@@ -61,7 +61,9 @@ code, .mono, kbd { font-family: var(--mono); font-size: 13px; }
 .top { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 2px solid var(--ln); }
 .top-in { max-width: 1280px; margin: 0 auto; padding: 0 24px; height: 60px; display: flex; align-items: center; justify-content: space-between; }
 .brand { position: relative; font: 500 24px/28px var(--serif); color: var(--tx); letter-spacing: .01em; }
+.brand { display: inline-flex; align-items: center; gap: 8px; }
 .brand:hover { text-decoration: none; }
+.brand .ic { width: 24px; height: 24px; color: var(--ac); stroke-width: 1.6; }
 .brand::after { content: ""; position: absolute; left: 0; right: 0; bottom: -6px; height: 6px; background: var(--ac);
   -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='6' viewBox='0 0 12 6'%3E%3Cpath d='M0 3Q3 0 6 3T12 3' fill='none' stroke='black' stroke-width='1.6'/%3E%3C/svg%3E") repeat-x;
           mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='6' viewBox='0 0 12 6'%3E%3Cpath d='M0 3Q3 0 6 3T12 3' fill='none' stroke='black' stroke-width='1.6'/%3E%3C/svg%3E") repeat-x; }
@@ -74,7 +76,11 @@ nav form { margin: 0; }
 .icon-btn { width: 36px; padding: 0; justify-content: center; color: var(--ac-ink); }
 .icon-btn .ic { width: 20px; height: 20px; }
 .icon-btn::-webkit-details-marker { display: none; }
-main { max-width: 1280px; margin: 0 auto; padding: 24px; }
+main { max-width: 1280px; width: 100%; margin: 0 auto; padding: 24px; flex: 1; }
+
+/* skyline strip: tiny medieval scenery along the bottom edge, tinted by the highlight */
+.skyline { flex: none; height: 56px; margin-top: 40px; opacity: .45; background: var(--ac);
+  -webkit-mask: url("/static/skyline.svg") repeat-x center bottom / auto 56px; mask: url("/static/skyline.svg") repeat-x center bottom / auto 56px; }
 
 /* appearance menu */
 .menu { position: relative; margin-left: 4px; }
@@ -216,7 +222,9 @@ th, td { padding: 12px 20px; border-bottom: 2px solid var(--ln); line-height: 20
 tbody tr:last-child td { border-bottom: 0; }
 tbody tr:hover { background: var(--s2); }
 td.clip { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.login { max-width: 360px; margin: 96px auto; display: grid; gap: 16px; padding: 24px; }
+.login-wrap { max-width: 360px; margin: 48px auto; }
+.doodle svg { width: 100%; height: auto; color: var(--ac); margin-bottom: 16px; }
+.login { display: grid; gap: 16px; padding: 24px; }
 .login p { margin: 0; font-size: 14px; }
 
 @media (max-width: 600px) {
