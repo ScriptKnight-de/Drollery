@@ -598,7 +598,6 @@ MESSAGES = {
     "Are you sure?": "Är du säker?",
     "Confirm": "Bekräfta",
     "Give the person a name": "Ge personen ett namn",
-    "The age must be a whole number from 0 to 130": "Åldern måste vara ett heltal från 0 till 130",
     "The link must start with http:// or https://": "Länken måste börja med http:// eller https://",
     "Female": "Kvinna",
     "Male": "Man",
@@ -634,4 +633,6 @@ MESSAGES = {
     "Not specified": "Inte angivet",
     "Back": "Tillbaka",
     "Not added to any item yet": "Har inte lagts till på något objekt än",
+    "Birthday": "Födelsedag",
+    "The birthday must be a real date in the past": "Födelsedagen måste vara ett riktigt datum i det förflutna",
 }

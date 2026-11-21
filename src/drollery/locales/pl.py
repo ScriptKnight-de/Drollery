@@ -612,7 +612,6 @@ MESSAGES = {
     "Are you sure?": "Na pewno?",
     "Confirm": "Potwierdź",
     "Give the person a name": "Podaj nazwę osoby",
-    "The age must be a whole number from 0 to 130": "Wiek musi być liczbą całkowitą od 0 do 130",
     "The link must start with http:// or https://": "Link musi zaczynać się od http:// lub https://",
     "Female": "Kobieta",
     "Male": "Mężczyzna",
@@ -648,4 +647,6 @@ MESSAGES = {
     "Not specified": "Nie podano",
     "Back": "Wstecz",
     "Not added to any item yet": "Nie dodano jeszcze do żadnego elementu",
+    "Birthday": "Urodziny",
+    "The birthday must be a real date in the past": "Data urodzin musi być prawdziwą datą z przeszłości",
 }

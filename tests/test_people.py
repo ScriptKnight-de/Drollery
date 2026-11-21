@@ -1,4 +1,4 @@
-import re
+from datetime import date
 
 import pytest
 
@@ -13,8 +13,14 @@ def item_id(client):
     return client.post("/api/v1/items", files={"file": ("pic.png", png(40), "image/png")}).json()["id"]
 
 
+def born(years: int) -> str:
+    """A birthday that makes someone exactly `years` old today, whatever today is."""
+    t = date.today()
+    return date(t.year - years, t.month, 1).isoformat()
+
+
 def make(client, name="Ada Lovelace", **extra):
-    data = {"name": name, "age": "36", "gender": "female", "link": "https://social.example/ada", **extra}
+    data = {"name": name, "birthday": born(36), "gender": "female", "link": "https://social.example/ada", **extra}
     return client.post("/people", data=data, follow_redirects=False)
 
 
@@ -26,17 +32,17 @@ def pid_of(name):
 # ------------------------------------------------------------- creating
 
 def test_a_person_is_created_with_all_details_and_a_picture(client):
-    r = client.post("/people", data={"name": "  Ada   Lovelace ", "age": "36", "gender": "female", "link": "https://social.example/ada"},
+    r = client.post("/people", data={"name": "  Ada   Lovelace ", "birthday": born(36), "gender": "female", "link": "https://social.example/ada"},
                     files={"picture": ("face.png", two_color_png(120, 60), "image/png")})
     assert r.status_code == 200 and "Ada Lovelace added" in r.text
     pid = pid_of("Ada Lovelace")
     with db.tx() as c:
         p = people.get(c, pid)
-    assert (p["age"], p["gender"], p["link"], p["has_picture"]) == (36, "female", "https://social.example/ada", 1)
+    assert (p["birthday"], p["age"], p["gender"], p["link"], p["has_picture"]) == (born(36), 36, "female", "https://social.example/ada", 1)
     pic = client.get(f"/people/{pid}/picture")
     assert pic.status_code == 200 and pic.headers["content-type"] == "image/jpeg" and pic.content[:2] == b"\xff\xd8"
     page = client.get(f"/people/{pid}").text
-    assert "Ada Lovelace" in page and "36" in page and "Female" in page and 'href="https://social.example/ada"' in page
+    assert "Ada Lovelace" in page and born(36) in page and "<dt>Age</dt><dd>36</dd>" in page and "Female" in page and 'href="https://social.example/ada"' in page
 
 
 def test_only_a_name_is_required(client):
@@ -44,14 +50,15 @@ def test_only_a_name_is_required(client):
     assert r.status_code == 200
     with db.tx() as c:
         p = people.get(c, pid_of("Just A Name"))
-    assert p["age"] is None and p["gender"] == "" and p["link"] == "" and p["has_picture"] == 0
+    assert p["birthday"] == "" and p["age"] is None and p["gender"] == "" and p["link"] == "" and p["has_picture"] == 0
 
 
 @pytest.mark.parametrize("data,message", [
     ({"name": "  "}, "Give the person a name"),
-    ({"name": "X", "age": "abc"}, "whole number"),
-    ({"name": "X", "age": "131"}, "whole number"),
-    ({"name": "X", "age": "-1"}, "whole number"),
+    ({"name": "X", "birthday": "not a date"}, "real date"),
+    ({"name": "X", "birthday": "2023-02-30"}, "real date"),
+    ({"name": "X", "birthday": "2999-01-01"}, "real date"),
+    ({"name": "X", "birthday": "1700-01-01"}, "real date"),
     ({"name": "X", "link": "javascript:alert(1)"}, "must start with http"),
     ({"name": "X", "link": "ftp://example.org"}, "must start with http"),
 ])
@@ -98,7 +105,7 @@ def test_creating_for_a_missing_item_is_a_404(client):
 
 def test_search_matches_anywhere_in_the_name_and_starts_first(client):
     for n in ("Ada Lovelace", "Lovely Rita", "Mike Love", "50% Off", "Zed"):
-        client.post("/people", data={"name": n, "age": "30" if n == "Zed" else "", "gender": "male" if n == "Zed" else ""})
+        client.post("/people", data={"name": n, "birthday": born(30) if n == "Zed" else "", "gender": "male" if n == "Zed" else ""})
     names = lambda q: [p["name"] for p in client.get("/people/search", params={"q": q}).json()]
     assert names("love") == ["Lovely Rita", "Ada Lovelace", "Mike Love"]
     assert names("LOVE")[0] == "Lovely Rita" and names("") == [] and names("nobody") == []
@@ -169,7 +176,7 @@ def test_items_are_found_by_the_names_of_their_people_and_follow_renames(client,
     client.post(f"/items/{item_id}/people", data={"person_id": pid})
     found = lambda q: [i["id"] for i in client.get("/api/v1/items", params={"q": q}).json()["items"]]
     assert found("lovelace") == [item_id]
-    client.post(f"/people/{pid}", data={"name": "Ada King", "age": "36", "gender": "female", "link": ""})
+    client.post(f"/people/{pid}", data={"name": "Ada King", "birthday": born(36), "gender": "female", "link": ""})
     assert found("lovelace") == [] and found("king") == [item_id]
     client.post(f"/items/{item_id}/people/{pid}/remove")
     assert found("king") == []
@@ -178,7 +185,7 @@ def test_items_are_found_by_the_names_of_their_people_and_follow_renames(client,
 def test_editing_a_person_keeps_or_replaces_the_picture(client):
     client.post("/people", data={"name": "Ada"}, files={"picture": ("a.png", two_color_png(), "image/png")})
     pid = pid_of("Ada")
-    client.post(f"/people/{pid}", data={"name": "Ada", "age": "40"})
+    client.post(f"/people/{pid}", data={"name": "Ada", "birthday": born(40)})
     with db.tx() as c:
         p = people.get(c, pid)
     assert p["age"] == 40 and p["has_picture"] == 1                       # untouched when no new file is sent
@@ -212,8 +219,35 @@ def test_deleting_asks_in_the_app(client):
     assert "data-confirm=" in page.split("/delete")[1].split(">")[0] and "onsubmit" not in page
 
 
-def test_the_header_links_to_the_people_list(client):
-    assert 'href="/people"' in client.get("/").text
+def test_people_live_in_the_settings_not_in_the_header(client):
+    header = client.get("/").text.split("</header>")[0]
+    assert 'href="/people"' not in header
+    page = client.get("/people").text
+    assert 'class="tabs"' in page and 'href="/people" class="on"' in page and "New person" in page
+
+
+def test_the_age_is_worked_out_from_the_birthday():
+    d = date(2025, 6, 15)
+    assert people.age_of("2000-06-15", d) == 25 and people.age_of("2000-06-16", d) == 24 and people.age_of("2000-06-14", d) == 25
+    assert people.age_of("2024-02-29", date(2025, 2, 28)) == 0 and people.age_of("2024-02-29", date(2025, 3, 1)) == 1
+    assert people.age_of("", d) is None and people.age_of("garbage", d) is None
+
+
+def test_the_date_field_is_offered_instead_of_an_age(client):
+    form = client.get("/people/new").text
+    assert 'type="date" name="birthday"' in form and 'name="age"' not in form
+
+
+def test_an_old_age_column_is_dropped_on_upgrade(client):
+    with db.tx() as c:
+        c.execute("DROP TABLE item_people")
+        c.execute("DROP TABLE people")
+        c.execute("CREATE TABLE people (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER, gender TEXT NOT NULL DEFAULT '', link TEXT NOT NULL DEFAULT '', has_picture INTEGER NOT NULL DEFAULT 0, created_at REAL NOT NULL, updated_at REAL NOT NULL)")
+        c.execute("INSERT INTO people(name, age, created_at, updated_at) VALUES ('Old', 50, 0, 0)")
+        db._migrate_people(c)
+        cols = {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('people')")}
+        assert "birthday" in cols and "age" not in cols
+        assert c.execute("SELECT name, birthday FROM people").fetchone()["birthday"] == ""
 
 
 def test_people_need_a_login(client):

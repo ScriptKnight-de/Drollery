@@ -9,6 +9,7 @@
   <div>
     <h1>{{ person.name }}</h1>
     <dl class="facts-inline">
+      {% if person.birthday %}<dt>{{ _("Birthday") }}</dt><dd>{{ person.birthday }}</dd>{% endif %}
       {% if person.age is not none %}<dt>{{ _("Age") }}</dt><dd>{{ person.age }}</dd>{% endif %}
       {% if person.gender in genders %}<dt>{{ _("Gender") }}</dt><dd>{{ _(genders[person.gender]) }}</dd>{% endif %}
       {% if person.link %}<dt>{{ _("Social media link") }}</dt><dd><a href="{{ person.link }}" rel="noreferrer noopener" target="_blank">{{ icon("external") }}{{ person.link|replace("https://", "")|replace("http://", "")|truncate(48, True) }}</a></dd>{% endif %}

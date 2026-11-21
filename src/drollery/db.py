@@ -66,7 +66,7 @@ CREATE VIRTUAL TABLE IF NOT EXISTS tracks_fts USING fts5(
 CREATE TABLE IF NOT EXISTS people (                  -- creators and other people involved; one record for everything they appear on
   id INTEGER PRIMARY KEY,
   name TEXT NOT NULL,
-  age INTEGER,
+  birthday TEXT NOT NULL DEFAULT '',                   -- YYYY-MM-DD; the age is worked out from it
   gender TEXT NOT NULL DEFAULT '',
   link TEXT NOT NULL DEFAULT '',                       -- a social media page
   has_picture INTEGER NOT NULL DEFAULT 0,
@@ -245,6 +245,14 @@ def _migrate_tracks(c: sqlite3.Connection) -> None:
         c.execute("ALTER TABLE tracks ADD COLUMN transcribed_at REAL")
 
 
+def _migrate_people(c: sqlite3.Connection) -> None:
+    have = {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('people')")}
+    if have and "birthday" not in have:
+        c.execute("ALTER TABLE people ADD COLUMN birthday TEXT NOT NULL DEFAULT ''")
+    if "age" in have:                                         # a plain age cannot be turned into a date; it is dropped
+        c.execute("ALTER TABLE people DROP COLUMN age")
+
+
 def init() -> None:
     with tx() as c:
         _migrate_items(c)
@@ -252,6 +260,7 @@ def init() -> None:
         _migrate_shares(c)
         _migrate_albums(c)
         _migrate_tracks(c)
+        _migrate_people(c)
         if "ai_tags" not in _fts_columns(c) and _fts_columns(c):       # index from before the user/AI tag split
             c.execute("DROP TABLE items_fts")
             rebuild = True

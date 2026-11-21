@@ -599,7 +599,6 @@ MESSAGES = {
     "Are you sure?": "Bist du sicher?",
     "Confirm": "Bestätigen",
     "Give the person a name": "Gib der Person einen Namen",
-    "The age must be a whole number from 0 to 130": "Das Alter muss eine ganze Zahl von 0 bis 130 sein",
     "The link must start with http:// or https://": "Der Link muss mit http:// oder https:// beginnen",
     "Female": "Weiblich",
     "Male": "Männlich",
@@ -635,4 +634,6 @@ MESSAGES = {
     "Not specified": "Keine Angabe",
     "Back": "Zurück",
     "Not added to any item yet": "Noch keinem Eintrag hinzugefügt",
+    "Birthday": "Geburtstag",
+    "The birthday must be a real date in the past": "Der Geburtstag muss ein echtes Datum in der Vergangenheit sein",
 }

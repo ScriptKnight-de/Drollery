@@ -1,7 +1,7 @@
 <label>{{ _("Name") }} <input name="name" value="{{ form.name }}" maxlength="120" required autofocus></label>
 <label>{{ _("Picture") }} <input type="file" name="picture" accept="image/*"></label>
 <div class="duo">
-  <label>{{ _("Age") }} <input type="number" name="age" value="{{ form.age }}" min="0" max="130" inputmode="numeric"></label>
+  <label>{{ _("Birthday") }} <input type="date" name="birthday" value="{{ form.birthday }}" min="1890-01-01" max="{{ today }}"></label>
   <label>{{ _("Gender") }}
     <select name="gender">
       <option value="">{{ _("Not specified") }}</option>

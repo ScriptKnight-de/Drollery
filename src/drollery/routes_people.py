@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import tempfile
+from datetime import date
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
@@ -61,9 +62,9 @@ async def _save_picture(person_id: int, up: UploadFile | None) -> bool:
 
 
 def _form(p: dict | None = None, **over) -> dict:
-    base = {"name": "", "age": "", "gender": "", "link": ""}
+    base = {"name": "", "birthday": "", "gender": "", "link": ""}
     if p:
-        base.update({"name": p["name"], "age": "" if p["age"] is None else p["age"], "gender": p["gender"], "link": p["link"]})
+        base.update({"name": p["name"], "birthday": p["birthday"], "gender": p["gender"], "link": p["link"]})
     base.update(over)
     return base
 
@@ -74,12 +75,12 @@ def _form(p: dict | None = None, **over) -> dict:
 def people_page(request: Request):
     with db.tx() as c:
         rows = people.everyone(c)
-    return render(request, "people.html", rows=rows)
+    return render(request, "people.html", rows=rows, tab="people")
 
 
 @router.get("/people/new")
 def new_page(request: Request, item: int = 0, name: str = ""):
-    return render(request, "person_new.html", form=_form(name=name[:people.MAX_NAME]), item=item if item > 0 else 0, genders=GENDER_LABELS)
+    return render(request, "person_new.html", form=_form(name=name[:people.MAX_NAME]), item=item if item > 0 else 0, genders=GENDER_LABELS, today=date.today().isoformat())
 
 
 @router.get("/people/search")
@@ -93,13 +94,13 @@ def search(q: str = ""):
 
 
 @router.post("/people")
-async def create(request: Request, name: str = Form(""), age: str = Form(""), gender: str = Form(""), link: str = Form(""),
+async def create(request: Request, name: str = Form(""), birthday: str = Form(""), gender: str = Form(""), link: str = Form(""),
                  item: int = Form(0), picture: UploadFile | None = File(default=None)):
-    form = _form(name=name, age=age, gender=gender, link=link)
+    form = _form(name=name, birthday=birthday, gender=gender, link=link)
     if item > 0:
         _item_exists(item)
     try:
-        data = people.clean(name, age, gender, link)
+        data = people.clean(name, birthday, gender, link)
         with db.tx() as c:
             pid = people.create(c, data)
         try:
@@ -111,7 +112,7 @@ async def create(request: Request, name: str = Form(""), age: str = Form(""), ge
                 people.delete(c, pid)                       # nothing half-made is left behind
             raise
     except people.PersonError as e:
-        return render(request, "person_new.html", status_code=422, form=form, item=item if item > 0 else 0, genders=GENDER_LABELS, error=t(str(e)))
+        return render(request, "person_new.html", status_code=422, form=form, item=item if item > 0 else 0, genders=GENDER_LABELS, today=date.today().isoformat(), error=t(str(e)))
     if item > 0:
         with db.tx() as c:
             people.link(c, item, pid)
@@ -125,16 +126,16 @@ def person_page(request: Request, person_id: int):
     with db.tx() as c:
         items = db.search(c, "", "", "", 200, 0, "", person_id)
         album_info = albums.summaries(c, [i["id"] for i in items if i["kind"] == "album"])
-    return render(request, "person.html", person=p, form=_form(p), items=items, album_info=album_info, genders=GENDER_LABELS,
+    return render(request, "person.html", person=p, form=_form(p), items=items, album_info=album_info, genders=GENDER_LABELS, today=date.today().isoformat(),
                   q="", tag="", kind="", src="", track_hits={}, more=False, page=0)
 
 
 @router.post("/people/{person_id}")
-async def save(request: Request, person_id: int, name: str = Form(""), age: str = Form(""), gender: str = Form(""), link: str = Form(""),
+async def save(request: Request, person_id: int, name: str = Form(""), birthday: str = Form(""), gender: str = Form(""), link: str = Form(""),
                remove_picture: str = Form(""), picture: UploadFile | None = File(default=None)):
     p = _person(person_id)
     try:
-        data = people.clean(name, age, gender, link)
+        data = people.clean(name, birthday, gender, link)
         got = await _save_picture(person_id, picture)
     except people.PersonError as e:
         return flash_redirect(f"/people/{person_id}", t(str(e)), "error")

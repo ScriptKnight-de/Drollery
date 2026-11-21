@@ -598,7 +598,6 @@ MESSAGES = {
     "Are you sure?": "Είσαι σίγουρος;",
     "Confirm": "Επιβεβαίωση",
     "Give the person a name": "Δώσε όνομα στο άτομο",
-    "The age must be a whole number from 0 to 130": "Η ηλικία πρέπει να είναι ακέραιος αριθμός από 0 έως 130",
     "The link must start with http:// or https://": "Ο σύνδεσμος πρέπει να αρχίζει με http:// ή https://",
     "Female": "Γυναίκα",
     "Male": "Άνδρας",
@@ -634,4 +633,6 @@ MESSAGES = {
     "Not specified": "Δεν ορίστηκε",
     "Back": "Πίσω",
     "Not added to any item yet": "Δεν έχει προστεθεί ακόμη σε κανένα στοιχείο",
+    "Birthday": "Γενέθλια",
+    "The birthday must be a real date in the past": "Τα γενέθλια πρέπει να είναι πραγματική ημερομηνία στο παρελθόν",
 }

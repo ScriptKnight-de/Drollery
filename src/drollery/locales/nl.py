@@ -598,7 +598,6 @@ MESSAGES = {
     "Are you sure?": "Weet je het zeker?",
     "Confirm": "Bevestigen",
     "Give the person a name": "Geef de persoon een naam",
-    "The age must be a whole number from 0 to 130": "De leeftijd moet een geheel getal van 0 tot 130 zijn",
     "The link must start with http:// or https://": "De link moet beginnen met http:// of https://",
     "Female": "Vrouw",
     "Male": "Man",
@@ -634,4 +633,6 @@ MESSAGES = {
     "Not specified": "Niet opgegeven",
     "Back": "Terug",
     "Not added to any item yet": "Nog aan geen enkel item toegevoegd",
+    "Birthday": "Verjaardag",
+    "The birthday must be a real date in the past": "De verjaardag moet een echte datum in het verleden zijn",
 }

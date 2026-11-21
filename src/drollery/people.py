@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import re
 import time
+from datetime import date
 from pathlib import Path
 
 from . import db, media
@@ -21,42 +22,62 @@ def picture_path(person_id: int) -> Path:
     return get_settings().media_dir / "people" / f"{int(person_id)}.jpg"
 
 
-def clean(name: str, age: str | int | None, gender: str, link: str) -> dict:
+def parse_birthday(text: str) -> date | None:
+    try:
+        return date.fromisoformat((text or "").strip())
+    except ValueError:
+        return None
+
+
+def age_of(birthday: str, today: date | None = None) -> int | None:
+    """Whole years since the birthday (None when there is no valid birthday)."""
+    born = parse_birthday(birthday)
+    if born is None:
+        return None
+    today = today or date.today()
+    return today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+
+
+def _row(r) -> dict:
+    d = dict(r)
+    d["age"] = age_of(d.get("birthday", ""))
+    return d
+
+
+def clean(name: str, birthday: str, gender: str, link: str) -> dict:
     name = re.sub(r"\s+", " ", (name or "").strip())
     if not name:
         raise PersonError(N_("Give the person a name"))
-    age_val = None
-    if str(age or "").strip():
-        try:
-            age_val = int(str(age).strip())
-        except ValueError:
-            raise PersonError(N_("The age must be a whole number from 0 to 130")) from None
-        if not 0 <= age_val <= 130:
-            raise PersonError(N_("The age must be a whole number from 0 to 130"))
+    birthday = (birthday or "").strip()
+    if birthday:
+        born = parse_birthday(birthday)
+        if born is None or born > date.today() or (age_of(birthday) or 0) > 130:
+            raise PersonError(N_("The birthday must be a real date in the past"))
+        birthday = born.isoformat()
     gender = (gender or "").strip().lower()
     if gender and gender not in GENDERS:
         gender = ""
     link = (link or "").strip()
     if link and (not re.match(r"^https?://[^\s]+$", link, re.I) or len(link) > MAX_LINK):
         raise PersonError(N_("The link must start with http:// or https://"))
-    return {"name": name[:MAX_NAME], "age": age_val, "gender": gender, "link": link}
+    return {"name": name[:MAX_NAME], "birthday": birthday, "gender": gender, "link": link}
 
 
 def create(c, data: dict) -> int:
     now = time.time()
-    return c.execute("INSERT INTO people(name,age,gender,link,created_at,updated_at) VALUES (?,?,?,?,?,?)",
-                     (data["name"], data["age"], data["gender"], data["link"], now, now)).lastrowid
+    return c.execute("INSERT INTO people(name,birthday,gender,link,created_at,updated_at) VALUES (?,?,?,?,?,?)",
+                     (data["name"], data["birthday"], data["gender"], data["link"], now, now)).lastrowid
 
 
 def update(c, person_id: int, data: dict) -> None:
-    c.execute("UPDATE people SET name=?, age=?, gender=?, link=?, updated_at=? WHERE id=?",
-              (data["name"], data["age"], data["gender"], data["link"], time.time(), person_id))
+    c.execute("UPDATE people SET name=?, birthday=?, gender=?, link=?, updated_at=? WHERE id=?",
+              (data["name"], data["birthday"], data["gender"], data["link"], time.time(), person_id))
     reindex_items_of(c, person_id)                                      # a new name changes how their items are found
 
 
 def get(c, person_id: int) -> dict | None:
     row = c.execute("SELECT * FROM people WHERE id=?", (person_id,)).fetchone()
-    return dict(row) if row else None
+    return _row(row) if row else None
 
 
 def _like(text: str) -> str:
@@ -71,22 +92,22 @@ def search(c, q: str, limit: int = 8) -> list[dict]:
     rows = c.execute("SELECT * FROM people WHERE name LIKE ? ESCAPE '\\' COLLATE NOCASE "
                      "ORDER BY (name LIKE ? ESCAPE '\\' COLLATE NOCASE) DESC, name COLLATE NOCASE LIMIT ?",
                      (f"%{_like(q)}%", f"{_like(q)}%", limit)).fetchall()
-    return [dict(r) for r in rows]
+    return [_row(r) for r in rows]
 
 
 def by_name(c, name: str) -> list[dict]:
-    return [dict(r) for r in c.execute("SELECT * FROM people WHERE name = ? COLLATE NOCASE ORDER BY id", (name.strip(),))]
+    return [_row(r) for r in c.execute("SELECT * FROM people WHERE name = ? COLLATE NOCASE ORDER BY id", (name.strip(),))]
 
 
 def everyone(c) -> list[dict]:
     rows = c.execute("SELECT p.*, (SELECT COUNT(*) FROM item_people ip WHERE ip.person_id=p.id) AS items "
                      "FROM people p ORDER BY p.name COLLATE NOCASE").fetchall()
-    return [dict(r) for r in rows]
+    return [_row(r) for r in rows]
 
 
 def of_item(c, item_id: int) -> list[dict]:
     rows = c.execute("SELECT p.* FROM people p JOIN item_people ip ON ip.person_id=p.id WHERE ip.item_id=? ORDER BY ip.rowid", (item_id,)).fetchall()
-    return [dict(r) for r in rows]
+    return [_row(r) for r in rows]
 
 
 def link(c, item_id: int, person_id: int) -> bool:
