@@ -319,7 +319,12 @@ def test_applying_everything(client, album, fake):
 
 def test_the_details_panel_is_for_albums_that_have_details(client, album, fake):
     aid, _ = album
-    assert 'id="details"' not in client.get(f"/items/{aid}").text                               # nothing was looked up yet
+    page = client.get(f"/items/{aid}").text                                                      # nothing was looked up yet: only what the album itself knows
+    box = page.split('id="details"')[1].split("</section>")[0]
+    assert "<dd>Album</dd>" in box and "<dt>Tracks</dt><dd>3 tracks</dd>" in box and "<dt>Duration</dt>" in box and "<dt>Size</dt>" in box and " MB</dd>" in box
+    for lookup_only in ("Release date", "Record label", "Catalog number", "Genres", "Barcode", "MusicBrainz"):
+        assert lookup_only not in box
+    assert "<span>3 tracks</span>" not in page and "3 tracks" not in page.split('class="meta-line"')[1].split("</p>")[0]          # no longer under the cover
     with db.tx() as c:                                                                           # an album looked up in the first version: only year and label
         c.execute("UPDATE albums SET year='1987', label='Old Label', mbid=? WHERE item_id=?", (REL, aid))
     page = client.get(f"/items/{aid}").text
@@ -479,3 +484,16 @@ def test_an_older_database_gets_the_new_album_columns(tmp_path):
     db._migrate_albums(con)
     row = con.execute("SELECT * FROM albums").fetchone()
     assert (row["year"], row["label"], row["mbid"], row["details"]) == ("", "", "", "") and row["artist"] == "x"
+
+
+def test_the_basics_sit_in_the_details_box_in_the_right_order(client, mp3s):
+    from test_album import make_mp3
+    upload(client, [mp3s["one"], mp3s["two"]], subtype="audiobook")
+    aid = album_id(client)
+    box = client.get(f"/items/{aid}").text.split('id="details"')[1].split("</section>")[0]
+    order = [box.index(x) for x in ("<dt>Type</dt>", "<dt>Chapters</dt>", "<dt>Duration</dt>", "<dt>Size</dt>")]
+    assert order == sorted(order) and "<dd>Audiobook</dd>" in box and "<dd>2 chapters</dd>" in box
+    with db.tx() as c:                                                                           # after a lookup the release's own type replaces the plain one, with no second "Type" row
+        c.execute("UPDATE albums SET details=?, mbid=? WHERE item_id=?", ('{"type": ["Album", "Live"], "date": "1999"}', REL, aid))
+    box = client.get(f"/items/{aid}").text.split('id="details"')[1].split("</section>")[0]
+    assert box.count("<dt>Type</dt>") == 1 and "<dd>Album · Live</dd>" in box and "<dt>Release date</dt>" in box

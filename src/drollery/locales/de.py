@@ -582,4 +582,8 @@ MESSAGES = {
     # ---- gifs
     "GIFs": "GIFs",
     "GIF": "GIF",
+
+    # ---- album facts
+    "Duration": "Dauer",
+    "Size": "Größe",
 }

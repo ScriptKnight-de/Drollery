@@ -66,10 +66,6 @@
         {% else %}<div class="nocover">{{ icon("book" if isbook else "disc") }}</div>{% endif %}
       </div>
       <p class="meta-line">
-        <span>{{ _("Audiobook") if isbook else _("Album") }}</span>
-        <span>{{ _n("{n} chapter", "{n} chapters", tracks|length) if isbook else _n("{n} track", "{n} tracks", tracks|length) }}</span>
-        {% if item.duration %}<span>{{ item.duration|clock }}</span>{% endif %}
-        <span>{{ "%.1f"|format(item.size / 1048576) }} MB</span>
         <a href="/albums/{{ item.id }}/download">{{ icon("download") }}{{ _("Download all") }}</a>
         {% if metadata_lookup %}<a href="/albums/{{ item.id }}/lookup?run=1">{{ icon("search") }}{{ _("Look up details online") }}</a>{% endif %}
       {% if item.has_thumb %}<a href="/items/{{ item.id }}/card">{{ icon("crop") }}{{ _("Card image") }}{% if item.has_card %} {{ _("(custom)") }}{% endif %}</a>{% endif %}
@@ -82,24 +78,25 @@
       {% else %}<p class="hint">{{ _("None yet. Add your own below") }}</p>{% endif %}
     </div>
 
-    {% if facts %}
     <section class="panel stack facts" id="details">
       <h2>{{ _("Details") }}</h2>
       <dl>
+        <dt>{{ _("Type") }}</dt><dd>{% if facts.type %}{% for ty in facts.type %}{{ _(ty) }}{% if not loop.last %} · {% endif %}{% endfor %}{% else %}{{ _("Audiobook") if isbook else _("Album") }}{% endif %}</dd>
+        <dt>{{ _("Chapters") if isbook else _("Tracks") }}</dt><dd>{{ _n("{n} chapter", "{n} chapters", tracks|length) if isbook else _n("{n} track", "{n} tracks", tracks|length) }}</dd>
+        {% if item.duration %}<dt>{{ _("Duration") }}</dt><dd>{{ item.duration|clock }}</dd>{% endif %}
+        <dt>{{ _("Size") }}</dt><dd>{{ "%.1f"|format(item.size / 1048576) }} MB</dd>
         {% if facts.date %}<dt>{{ _("Release date") }}</dt><dd>{{ facts.date }}</dd>{% endif %}
         {% if facts.original_date %}<dt>{{ _("Original release") }}</dt><dd>{{ facts.original_date }}</dd>{% endif %}
         {% if facts.label %}<dt>{{ _("Record label") }}</dt><dd>{{ facts.label }}</dd>{% endif %}
         {% if facts.catalog %}<dt>{{ _("Catalog number") }}</dt><dd>{{ facts.catalog }}</dd>{% endif %}
         {% if facts.country %}<dt>{{ _("Country") }}</dt><dd>{{ _("Worldwide") if facts.country == "XW" else _("Europe") if facts.country == "XE" else facts.country }}</dd>{% endif %}
         {% if facts.format %}<dt>{{ _("Format") }}</dt><dd>{{ facts.format }}</dd>{% endif %}
-        {% if facts.type %}<dt>{{ _("Type") }}</dt><dd>{% for ty in facts.type %}{{ _(ty) }}{% if not loop.last %} · {% endif %}{% endfor %}</dd>{% endif %}
         {% if facts.genres %}<dt>{{ _("Genres") }}</dt><dd class="chips">{% for g in facts.genres %}<a href="/?q={{ g|urlencode }}">{{ g }}</a>{% endfor %}</dd>{% endif %}
         {% if facts.language_name %}<dt>{{ _("Language") }}</dt><dd>{{ facts.language_name }}</dd>{% endif %}
         {% if facts.barcode %}<dt>{{ _("Barcode") }}</dt><dd>{{ facts.barcode }}</dd>{% endif %}
       </dl>
       {% if album.mbid %}<p class="hint"><a href="{{ item.source_url }}" target="_blank" rel="noopener noreferrer">{{ icon("external") }}{{ _("Details from MusicBrainz") }}</a></p>{% endif %}
     </section>
-    {% endif %}
 
     <form method="post" action="/items/{{ item.id }}/edit" class="panel form">
       <label>{{ _("Title") }} <input name="title" value="{{ item.title }}" maxlength="120"></label>
