@@ -38,7 +38,13 @@ def _clock(seconds) -> str:
 
 
 templates.env.filters["clock"] = _clock
-templates.env.globals.update({"_": i18n.t, "_n": i18n.tn, "lang": i18n.current, "available_languages": i18n.languages, "flag_of": i18n.flag})
+def _job_type(name: str) -> str:
+    """The name of a kind of job: translated when there is a translation, else readable (transcribe_track -> transcribe track)."""
+    shown = i18n.t(name)
+    return shown if shown != name else name.replace("_", " ")
+
+
+templates.env.globals.update({"_": i18n.t, "job_type": _job_type, "_n": i18n.tn, "lang": i18n.current, "available_languages": i18n.languages, "flag_of": i18n.flag})
 
 
 def flash_redirect(url: str, text: str, kind: str = "ok") -> RedirectResponse:

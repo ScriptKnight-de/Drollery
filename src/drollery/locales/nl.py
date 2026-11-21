@@ -554,4 +554,16 @@ MESSAGES = {
     "Europe": "Europa",
     "Details from MusicBrainz": "Gegevens van MusicBrainz",
     "Release details": "Gegevens van de uitgave",
+
+    # ---- transcribing album tracks
+    "Transcription queued for {n} track": ("Transcriptie in de wachtrij gezet voor {n} nummer", "Transcriptie in de wachtrij gezet voor {n} nummers"),
+    "No transcription model is set up. Add one under Settings › AI models": "Er is geen transcriptiemodel ingesteld. Voeg er een toe onder Instellingen › AI-modellen",
+    "Nothing to transcribe: every track is done or already waiting": "Niets te transcriberen: elk nummer is klaar of wacht al",
+    "{done} of {n} track transcribed": ("{done} van {n} nummer getranscribeerd", "{done} van {n} nummers getranscribeerd"),
+    "{n} waiting": "{n} wachtend",
+    "{n} failed": "{n} mislukt",
+    "Transcribe tracks": "Nummers transcriberen",
+    "Transcribe all again": "Alles opnieuw transcriberen",
+    "Runs one track at a time in the background and takes about as long as the audio itself. Everything said becomes searchable.": "Draait nummer voor nummer op de achtergrond en duurt ongeveer zo lang als de audio zelf. Alles wat gezegd wordt, wordt doorzoekbaar.",
+    "transcribe_track": "nummer transcriberen",
 }

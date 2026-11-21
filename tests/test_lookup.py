@@ -313,8 +313,8 @@ def test_applying_everything(client, album, fake):
     with db.tx() as c:
         assert albums.facts(albums.get(c, aid))["tracks"] == 4
     for q in ("RR 4711", "satire", "4012345678905"):                                              # the new facts are searchable
-        assert f'href="/items/{aid}"' in client.get("/", params={"q": q}).text, q
-    assert f'href="/items/{aid}"' in client.get("/", params={"q": "Remastered"}).text and f'href="/items/{aid}"' in client.get("/", params={"q": "royal records"}).text
+        assert f'href="/items/{aid}' in client.get("/", params={"q": q}).text, q
+    assert f'href="/items/{aid}' in client.get("/", params={"q": "Remastered"}).text and f'href="/items/{aid}' in client.get("/", params={"q": "royal records"}).text
 
 
 def test_the_details_panel_is_for_albums_that_have_details(client, album, fake):

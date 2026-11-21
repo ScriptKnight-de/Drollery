@@ -54,9 +54,15 @@ CREATE TABLE IF NOT EXISTS tracks (
   original_name TEXT NOT NULL DEFAULT '',
   mime TEXT NOT NULL,
   size INTEGER NOT NULL DEFAULT 0,
-  duration REAL
+  duration REAL,
+  transcript TEXT NOT NULL DEFAULT '',                -- what is said in the track (speech-to-text)
+  transcribed_at REAL                                 -- NULL = not transcribed yet
 );
 CREATE INDEX IF NOT EXISTS tracks_item ON tracks(item_id, position);
+CREATE VIRTUAL TABLE IF NOT EXISTS tracks_fts USING fts5(
+  title, transcript,
+  tokenize = 'unicode61 remove_diacritics 2', prefix = '2 3'
+);
 CREATE TABLE IF NOT EXISTS tags (
   item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
   tag TEXT NOT NULL,
@@ -214,12 +220,21 @@ def _migrate_albums(c: sqlite3.Connection) -> None:
             c.execute(f"ALTER TABLE albums ADD COLUMN {col} TEXT NOT NULL DEFAULT ''")
 
 
+def _migrate_tracks(c: sqlite3.Connection) -> None:
+    have = {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('tracks')")}
+    if have and "transcript" not in have:
+        c.execute("ALTER TABLE tracks ADD COLUMN transcript TEXT NOT NULL DEFAULT ''")
+    if have and "transcribed_at" not in have:
+        c.execute("ALTER TABLE tracks ADD COLUMN transcribed_at REAL")
+
+
 def init() -> None:
     with tx() as c:
         _migrate_items(c)
         _migrate_users(c)
         _migrate_shares(c)
         _migrate_albums(c)
+        _migrate_tracks(c)
         if "ai_tags" not in _fts_columns(c) and _fts_columns(c):       # index from before the user/AI tag split
             c.execute("DROP TABLE items_fts")
             rebuild = True
@@ -229,6 +244,8 @@ def init() -> None:
         if rebuild:
             for (item_id,) in c.execute("SELECT id FROM items").fetchall():
                 reindex(c, item_id)
+        # tracks of albums made before the track index existed
+        c.execute("INSERT INTO tracks_fts(rowid,title,transcript) SELECT id,title,transcript FROM tracks WHERE id NOT IN (SELECT rowid FROM tracks_fts)")
         # jobs left 'running' by a crash/restart go back to the queue
         c.execute("UPDATE jobs SET status='queued' WHERE status='running'")
         c.execute("DELETE FROM sessions WHERE expires_at < ?", (time.time(),))
@@ -258,11 +275,18 @@ def reindex(c: sqlite3.Connection, item_id: int) -> None:
                 source += " " + " ".join(str(d.get(k, "")) for k in ("catalog", "barcode", "country")) + " " + " ".join(d.get("genres", []))
             except (ValueError, TypeError, AttributeError):
                 pass
-        transcript += " " + " ".join(r["title"] for r in c.execute("SELECT title FROM tracks WHERE item_id=? ORDER BY position", (item_id,)))
+        parts = c.execute("SELECT title, transcript FROM tracks WHERE item_id=? ORDER BY position", (item_id,)).fetchall()
+        transcript += " " + " ".join(f"{r['title']} {r['transcript']}" for r in parts)       # track titles and everything said in the tracks
     c.execute(
         "INSERT INTO items_fts(rowid,title,description,tags,ai_tags,transcript,ocr,source) VALUES (?,?,?,?,?,?,?,?)",
         (item_id, row["title"], row["description"], user_tags, ai_tags, transcript, row["ocr"], source),
     )
+
+
+def reindex_tracks(c: sqlite3.Connection, item_id: int) -> None:
+    """Refresh the track-level search index of one album (titles and transcripts)."""
+    c.execute("DELETE FROM tracks_fts WHERE rowid IN (SELECT id FROM tracks WHERE item_id=?)", (item_id,))
+    c.execute("INSERT INTO tracks_fts(rowid,title,transcript) SELECT id,title,transcript FROM tracks WHERE item_id=?", (item_id,))
 
 
 def normalize_tag(tag: str) -> str:

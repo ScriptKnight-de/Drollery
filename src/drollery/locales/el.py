@@ -554,4 +554,16 @@ MESSAGES = {
     "Europe": "Ευρώπη",
     "Details from MusicBrainz": "Λεπτομέρειες από το MusicBrainz",
     "Release details": "Λεπτομέρειες κυκλοφορίας",
+
+    # ---- transcribing album tracks
+    "Transcription queued for {n} track": ("Μπήκε στην ουρά η απομαγνητοφώνηση για {n} κομμάτι", "Μπήκε στην ουρά η απομαγνητοφώνηση για {n} κομμάτια"),
+    "No transcription model is set up. Add one under Settings › AI models": "Δεν έχει ρυθμιστεί μοντέλο απομαγνητοφώνησης. Πρόσθεσε ένα στις Ρυθμίσεις › Μοντέλα ΤΝ",
+    "Nothing to transcribe: every track is done or already waiting": "Τίποτα για απομαγνητοφώνηση: κάθε κομμάτι είναι έτοιμο ή περιμένει ήδη",
+    "{done} of {n} track transcribed": ("{done} από {n} κομμάτι απομαγνητοφωνήθηκε", "{done} από {n} κομμάτια απομαγνητοφωνήθηκαν"),
+    "{n} waiting": "{n} σε αναμονή",
+    "{n} failed": "{n} απέτυχαν",
+    "Transcribe tracks": "Απομαγνητοφώνηση κομματιών",
+    "Transcribe all again": "Επανάληψη απομαγνητοφώνησης όλων",
+    "Runs one track at a time in the background and takes about as long as the audio itself. Everything said becomes searchable.": "Εκτελείται ένα κομμάτι τη φορά στο παρασκήνιο και διαρκεί περίπου όσο και ο ίδιος ο ήχος. Ό,τι λέγεται γίνεται αναζητήσιμο.",
+    "transcribe_track": "απομαγνητοφώνηση κομματιού",
 }

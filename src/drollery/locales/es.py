@@ -554,4 +554,16 @@ MESSAGES = {
     "Europe": "Europa",
     "Details from MusicBrainz": "Detalles de MusicBrainz",
     "Release details": "Detalles de la edición",
+
+    # ---- transcribing album tracks
+    "Transcription queued for {n} track": ("Transcripción en cola para {n} pista", "Transcripción en cola para {n} pistas"),
+    "No transcription model is set up. Add one under Settings › AI models": "No hay ningún modelo de transcripción configurado. Añade uno en Ajustes › Modelos de IA",
+    "Nothing to transcribe: every track is done or already waiting": "Nada que transcribir: todas las pistas están hechas o ya esperan",
+    "{done} of {n} track transcribed": ("{done} de {n} pista transcrita", "{done} de {n} pistas transcritas"),
+    "{n} waiting": "{n} en espera",
+    "{n} failed": "{n} fallidas",
+    "Transcribe tracks": "Transcribir pistas",
+    "Transcribe all again": "Transcribir todo de nuevo",
+    "Runs one track at a time in the background and takes about as long as the audio itself. Everything said becomes searchable.": "Se ejecuta pista a pista en segundo plano y tarda aproximadamente lo mismo que el audio. Todo lo que se dice se vuelve buscable.",
+    "transcribe_track": "transcripción de pista",
 }

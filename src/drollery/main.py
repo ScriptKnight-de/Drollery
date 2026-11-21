@@ -179,6 +179,7 @@ def _get_or_404(item_id: int) -> dict:
 def _delete_item(item: dict) -> None:
     with db.tx() as c:
         c.execute("DELETE FROM items_fts WHERE rowid=?", (item["id"],))
+        c.execute("DELETE FROM tracks_fts WHERE rowid IN (SELECT id FROM tracks WHERE item_id=?)", (item["id"],))
         c.execute("DELETE FROM items WHERE id=?", (item["id"],))
     pipeline.media_path(item).unlink(missing_ok=True)
     if item["kind"] == "album":
@@ -298,9 +299,11 @@ def home(request: Request, q: str = "", kind: str = "", tag: str = "", src: str 
         items = db.search(c, q, kind, tag, PAGE, page * PAGE, src)
         counts = {r["kind"]: r["n"] for r in c.execute("SELECT kind, COUNT(*) n FROM items GROUP BY kind")}
         pending = c.execute("SELECT COUNT(*) FROM jobs WHERE status IN ('queued','running')").fetchone()[0]
-        album_info = albums.summaries(c, [i["id"] for i in items if i["kind"] == "album"])
+        album_ids = [i["id"] for i in items if i["kind"] == "album"]
+        album_info = albums.summaries(c, album_ids)
+        track_hits = albums.track_hits(c, q, album_ids) if q.strip() else {}
     tpl = "grid.html" if request.headers.get("hx-request") and not request.headers.get("hx-boosted") else "index.html"
-    return render(request, tpl, items=items, q=q, kind=kind, tag=tag, src=src, page=page, more=len(items) == PAGE, counts=counts, pending=pending, album_info=album_info)
+    return render(request, tpl, items=items, q=q, kind=kind, tag=tag, src=src, page=page, more=len(items) == PAGE, counts=counts, pending=pending, album_info=album_info, track_hits=track_hits)
 
 
 @app.post("/add", dependencies=[Depends(web_auth)])
@@ -326,7 +329,9 @@ def item_page(request: Request, item_id: int):
     with db.tx() as c:
         jobs = [dict(r) for r in c.execute("SELECT * FROM jobs WHERE item_id=? ORDER BY id DESC", (item_id,))]
         if item["kind"] == "album":
-            return render(request, "album.html", item=item, album=albums.get(c, item_id), facts=albums.facts(albums.get(c, item_id)), tracks=albums.tracks_of(c, item_id), **share_context(request, item))
+            q = request.query_params.get("q", "")
+            return render(request, "album.html", item=item, album=albums.get(c, item_id), facts=albums.facts(albums.get(c, item_id)),
+                          transcription=albums.transcription_state(c, item_id), matches=albums.matching_track_ids(c, q, item_id) if q.strip() else set(), q=q, tracks=albums.tracks_of(c, item_id), **share_context(request, item))
     return render(request, "item.html", item=item, jobs=jobs, **share_context(request, item))
 
 
@@ -384,6 +389,10 @@ def jobs_page(request: Request):
             "ORDER BY jobs.id DESC LIMIT 100")]
     for r in rows:
         r["label"] = json.loads(r["payload"]).get("url", "") if r["type"] == "fetch" else (r["item_title"] or "")
+        if r["type"] == "transcribe_track":                       # "Album title · Track title"
+            with db.tx() as c:
+                tr = c.execute("SELECT title FROM tracks WHERE id=?", (json.loads(r["payload"]).get("track_id", 0),)).fetchone()
+            r["label"] = f"{r['label']} · {tr['title']}" if tr else r["label"]
     return render(request, "jobs.html", jobs=rows)
 
 

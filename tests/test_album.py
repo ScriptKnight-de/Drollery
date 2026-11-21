@@ -171,7 +171,7 @@ def test_the_library_shows_one_card_per_album_and_finds_it(client, mp3s):
     assert client.get("/", params={"kind": "album"}).text.count('class="tile"') == 1
     assert client.get("/", params={"kind": "video"}).text.count('class="tile"') == 0
     for q in ("Cheese Wizard", "jesters", "satire", "fanfare"):                       # track title, artist, tag
-        assert f'href="/items/{aid}"' in client.get("/", params={"q": q}).text, q
+        assert f'href="/items/{aid}' in client.get("/", params={"q": q}).text, q
     assert client.get("/api/v1/items").json()["items"][0]["url"] is None
 
 
@@ -212,7 +212,7 @@ def test_rename_and_reorder_tracks(client, mp3s):
         tracks = albums.tracks_of(c, aid)
     assert [t["id"] for t in tracks] == [ids[1], ids[2], ids[0]] and [t["position"] for t in tracks] == [1, 2, 3]
     assert tracks[0]["title"] == "Taxes Are Funny" and tracks[2]["title"] == "Opening Fanfare"      # a blank title keeps the old one
-    assert f'href="/items/{aid}"' in client.get("/", params={"q": "Taxes Funny"}).text           # the search sees the new title
+    assert f'href="/items/{aid}' in client.get("/", params={"q": "Taxes Funny"}).text           # the search sees the new title
     r = client.post(f"/albums/{aid}/tracks", data={f"pos_{ids[0]}": "banana"})
     assert r.status_code == 200
     assert client.post("/albums/99999/tracks", data={}).status_code == 404
@@ -224,7 +224,7 @@ def test_edit_the_artist_and_the_card_image(client, mp3s):
     client.post(f"/items/{aid}/edit", data={"title": "Frog Opera", "artist": "Kermit", "description": "", "tags": "frog"})
     with db.tx() as c:
         assert albums.get(c, aid)["artist"] == "Kermit" and db.get_item(c, aid)["title"] == "Frog Opera"
-    assert f'href="/items/{aid}"' in client.get("/", params={"q": "kermit"}).text
+    assert f'href="/items/{aid}' in client.get("/", params={"q": "kermit"}).text
     page = client.get(f"/items/{aid}/card")
     assert page.status_code == 200 and client.get(f"/items/{aid}/frame").status_code == 200
     r = client.post(f"/items/{aid}/card", data={"t": 0, "x": 0, "y": 0, "s": 0.5})

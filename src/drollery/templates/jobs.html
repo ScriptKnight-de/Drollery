@@ -14,7 +14,7 @@
   <thead><tr><th>#</th><th>{{ _("Type") }}</th><th>{{ _("Status") }}</th><th>{{ _("For") }}</th><th>{{ _("Error") }}</th><th></th></tr></thead>
   <tbody>
   {% for j in jobs %}
-  <tr><td class="mono">{{ j.id }}</td><td>{{ _(j.type) }}</td>
+  <tr><td class="mono">{{ j.id }}</td><td>{{ job_type(j.type) }}</td>
       <td><span class="dot {{ j.status }}"></span>{{ _(j.status) }}{% if j.attempts > 1 %} <span class="mono muted">×{{ j.attempts }}</span>{% endif %}</td>
       <td class="clip">{% if j.item_id %}<a href="/items/{{ j.item_id }}">{{ j.label or j.item_id }}</a>{% else %}{{ j.label }}{% endif %}</td>
       <td class="errcell">{{ errbox(j.error) }}</td>

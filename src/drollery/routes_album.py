@@ -9,11 +9,11 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, Uplo
 from fastapi.responses import FileResponse, RedirectResponse, Response
 from starlette.background import BackgroundTask
 
-from . import albums, db, i18n, metadata
+from . import aisettings, albums, db, i18n, metadata, pipeline
 from .albums import AlbumError, Upload
 from .config import get_settings
 from .deps import api_auth, web_auth
-from .i18n import t
+from .i18n import t, tn
 from .metadata import MetadataError
 from .web import flash_redirect, render
 
@@ -56,7 +56,11 @@ async def _make(files_in: list[UploadFile], cover_in: list[UploadFile], title: s
         covers = await _spool(cover_in, work / "cover") if cover_in and any(c.filename for c in cover_in) else []
         if covers and not albums._is_image(covers[0].name):
             raise AlbumError(t("The cover must be a picture"))
-        return await asyncio.to_thread(albums.create_album, ups, work, covers[0] if covers else None, title, artist, subtype, description, parse_tags(tags))
+        item_id, created = await asyncio.to_thread(albums.create_album, ups, work, covers[0] if covers else None, title, artist, subtype, description, parse_tags(tags))
+        if created:                                    # queue speech-to-text for every track, if a model is set up
+            with db.tx() as c:
+                pipeline.plan_jobs(c, item_id)
+        return item_id, created
 
 
 # ------------------------------------------------------------------ pages
@@ -110,6 +114,21 @@ async def rescan(item_id: int):
         raise HTTPException(404, "album not found")
     await asyncio.to_thread(albums.rescan, item_id)
     return flash_redirect(f"/items/{item_id}#tracks", t("Order and titles read from the files again"))
+
+
+@router.post("/albums/{item_id}/transcribe")
+def transcribe(item_id: int, redo: str = Form("")):
+    """Queue speech-to-text for the tracks of an album: those without a transcript, or every track again."""
+    with db.tx() as c:
+        item = db.get_item(c, item_id)
+        if item is None or item["kind"] != "album":
+            raise HTTPException(404, "album not found")
+        if not aisettings.enabled("transcribe"):
+            return flash_redirect(f"/items/{item_id}#tracks", t("No transcription model is set up. Add one under Settings › AI models"), "error")
+        n = pipeline.plan_track_jobs(c, item_id, redo=bool(redo))
+    if not n:
+        return flash_redirect(f"/items/{item_id}#tracks", t("Nothing to transcribe: every track is done or already waiting"))
+    return flash_redirect(f"/items/{item_id}#tracks", tn("Transcription queued for {n} track", "Transcription queued for {n} tracks", n))
 
 
 # ---------------------------------------------------------- online lookup

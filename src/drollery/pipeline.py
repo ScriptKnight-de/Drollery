@@ -80,12 +80,33 @@ def import_file(src: Path, original_name: str, source_url: str = "", source_meta
     return item_id, True
 
 
+def plan_track_jobs(c, item_id: int, redo: bool = False) -> int:
+    """Queue speech-to-text for the tracks of an album that have none yet (all of them with redo), skipping tracks that
+    are already waiting. Returns how many jobs were queued."""
+    waiting = set()
+    for (payload,) in c.execute("SELECT payload FROM jobs WHERE item_id=? AND type='transcribe_track' AND status IN ('queued','running')", (item_id,)):
+        try:
+            waiting.add(int(json.loads(payload).get("track_id", 0)))
+        except (ValueError, TypeError, AttributeError):
+            pass
+    n = 0
+    for row in c.execute("SELECT id, transcribed_at FROM tracks WHERE item_id=? ORDER BY position", (item_id,)).fetchall():
+        if row["id"] in waiting or (row["transcribed_at"] is not None and not redo):
+            continue
+        db.enqueue(c, "transcribe_track", item_id, json.dumps({"track_id": row["id"]}))
+        n += 1
+    return n
+
+
 def plan_jobs(c, item_id: int) -> list[str]:
     """Queue the background jobs that the enabled providers can do for this item."""
     item = db.get_item(c, item_id)
     queued = []
     if item["kind"] == "album":
-        return queued                        # an album is many tracks; there is nothing to transcribe or describe as a whole
+        # an album is many tracks: nothing to describe as a whole, but every track can be transcribed so its words are searchable
+        if aisettings.enabled("transcribe"):
+            queued += ["transcribe_track"] * plan_track_jobs(c, item_id)
+        return queued
     has_speech = item["kind"] != "image" and item["has_audio"] and aisettings.enabled("transcribe")
     if has_speech:
         queued.append("transcribe")          # transcribe chains into describe when it finishes
@@ -118,6 +139,30 @@ def job_transcribe(job: dict) -> None:
         db.reindex(c, item["id"])
         if aisettings.enabled("describe"):
             db.enqueue(c, "describe", item["id"])
+
+
+def _chunk_seconds(cfg) -> int:
+    """Length of the pieces a track is cut into: well inside the model's timeout, so a long track never times out."""
+    return int(max(60, min(300, cfg.timeout * 0.5)))
+
+
+def job_transcribe_track(job: dict) -> None:
+    from . import albums
+    s = get_settings()
+    track_id = int(json.loads(job["payload"] or "{}").get("track_id", 0))
+    with db.tx() as c:
+        item = db.get_item(c, job["item_id"])
+        row = c.execute("SELECT * FROM tracks WHERE id=? AND item_id=?", (track_id, job["item_id"])).fetchone()
+    if item is None or row is None:
+        return                                           # the album or the track is gone; nothing left to do
+    cfg = aisettings.provider("transcribe")
+    with tempfile.TemporaryDirectory(dir=s.tmp_dir) as td:
+        parts = media.split_audio(albums.track_path(item, dict(row)), Path(td), _chunk_seconds(cfg))
+        text = " ".join(piece for piece in (providers.transcribe(cfg, p) for p in parts) if piece)
+    with db.tx() as c:
+        c.execute("UPDATE tracks SET transcript=?, transcribed_at=? WHERE id=?", (text, time.time(), track_id))
+        db.reindex_tracks(c, item["id"])
+        db.reindex(c, item["id"])
 
 
 def job_describe(job: dict) -> None:
@@ -232,7 +277,7 @@ def job_fetch(job: dict) -> None:
             raise providers.ProviderError(f"downloaded files were not recognised as images, video or audio: {names}")
 
 
-HANDLERS = {"fetch": job_fetch, "transcribe": job_transcribe, "describe": job_describe}
+HANDLERS = {"fetch": job_fetch, "transcribe": job_transcribe, "describe": job_describe, "transcribe_track": job_transcribe_track}
 
 
 def run_job(job: dict) -> None:

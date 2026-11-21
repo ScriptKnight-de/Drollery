@@ -97,6 +97,50 @@ def summary(d: dict) -> list[str]:
     return [x for x in out if x]
 
 
+_HIT_START, _HIT_END = "\x02", "\x03"
+
+
+def _marked(snippet: str):
+    """A search snippet with its matches in <mark>; everything else is escaped, so spoken text can never inject markup."""
+    from markupsafe import Markup, escape
+    return Markup(str(escape(snippet)).replace(_HIT_START, "<mark>").replace(_HIT_END, "</mark>"))
+
+
+def track_hits(c, q: str, item_ids: list[int], per_album: int = 2) -> dict[int, list[dict]]:
+    """For a search: which tracks of the given albums contain what was searched for, with a short snippet of the words around it."""
+    match = db.fts_query(q)
+    if not match or not item_ids:
+        return {}
+    marks = ",".join("?" * len(item_ids))
+    rows = c.execute(
+        f"SELECT tracks.item_id, tracks.id, tracks.title, tracks.position, snippet(tracks_fts, -1, ?, ?, '…', 14) AS snip "
+        f"FROM tracks_fts JOIN tracks ON tracks.id = tracks_fts.rowid WHERE tracks_fts MATCH ? AND tracks.item_id IN ({marks}) "
+        f"ORDER BY tracks.item_id, bm25(tracks_fts, 5, 1), tracks.position", (_HIT_START, _HIT_END, match, *item_ids)).fetchall()
+    out: dict[int, list[dict]] = {}
+    for r in rows:
+        hits = out.setdefault(r["item_id"], [])
+        if len(hits) < per_album:
+            hits.append({"id": r["id"], "title": r["title"], "snippet": _marked(r["snip"] or "")})
+    return out
+
+
+def matching_track_ids(c, q: str, item_id: int) -> set[int]:
+    match = db.fts_query(q)
+    if not match:
+        return set()
+    return {r[0] for r in c.execute("SELECT tracks.id FROM tracks_fts JOIN tracks ON tracks.id = tracks_fts.rowid "
+                                    "WHERE tracks_fts MATCH ? AND tracks.item_id=?", (match, item_id))}
+
+
+def transcription_state(c, item_id: int) -> dict:
+    """How far the speech-to-text of an album is: tracks done, waiting in the queue, and failed."""
+    total, done = c.execute("SELECT COUNT(*), COUNT(transcribed_at) FROM tracks WHERE item_id=?", (item_id,)).fetchone()
+    jobs = c.execute("SELECT status, COUNT(*) FROM jobs WHERE item_id=? AND type='transcribe_track' AND status IN ('queued','running','failed') "
+                     "GROUP BY status", (item_id,)).fetchall()
+    by = {r[0]: r[1] for r in jobs}
+    return {"total": total, "done": done, "waiting": by.get("queued", 0) + by.get("running", 0), "failed": by.get("failed", 0)}
+
+
 def tracks_of(c, item_id: int) -> list[dict]:
     return [dict(r) for r in c.execute("SELECT * FROM tracks WHERE item_id=? ORDER BY position", (item_id,))]
 
@@ -320,6 +364,7 @@ def create_album(uploads: list[Upload], work: Path, cover: Upload | None = None,
                           (item_id, n, r["title"], filename, Path(r["up"].name).name, mime, r["up"].path.stat().st_size, r["info"]["duration"]))
             if tags:
                 db.set_user_tags(c, item_id, tags)
+            db.reindex_tracks(c, item_id)
             db.reindex(c, item_id)
         return item_id, True
     except BaseException:
@@ -352,6 +397,7 @@ def rescan(item_id: int) -> None:
         if info is not None and not info["artist"]:
             c.execute("UPDATE albums SET artist=? WHERE item_id=?", (_most_common(_artist_tag(r["info"]) for r in rows)[:120], item_id))
         c.execute("UPDATE items SET updated_at=? WHERE id=?", (time.time(), item_id))
+        db.reindex_tracks(c, item_id)
         db.reindex(c, item_id)
 
 
@@ -363,6 +409,7 @@ def save_tracks(c, item_id: int, titles: dict[int, str], order: dict[int, int]) 
         title = (titles.get(t["id"], t["title"]) or "").strip()[:120] or t["title"]
         c.execute("UPDATE tracks SET position=?, title=? WHERE id=?", (n, title, t["id"]))
     c.execute("UPDATE items SET updated_at=? WHERE id=?", (time.time(), item_id))
+    db.reindex_tracks(c, item_id)
     db.reindex(c, item_id)
 
 

@@ -14,16 +14,29 @@
       <h2 class="with-icon">{{ icon("music") }}{{ _("Chapters") if isbook else _("Tracks") }}</h2>
       <ol class="tracklist" id="tracklist">
         {% for tr in tracks %}
-        <li data-track data-src="/albums/{{ item.id }}/track/{{ tr.id }}" data-title="{{ tr.title }}">
+        <li id="t{{ tr.id }}" data-track {% if tr.id in matches %}class="match"{% endif %} data-src="/albums/{{ item.id }}/track/{{ tr.id }}" data-title="{{ tr.title }}">
           <button type="button" class="play" aria-pressed="false" aria-label="{{ _('Play') }}: {{ tr.title }}" title="{{ _('Play') }}">{{ icon("play") }}</button>
           <span class="num">{{ tr.position }}</span>
           <span class="name" title="{{ tr.title }}">{{ tr.title }}</span>
           <span class="dur">{{ tr.duration|clock if tr.duration else "" }}</span>
           <button type="button" class="play share" data-share-track="{{ tr.id }}" aria-label="{{ _('Share this chapter') if isbook else _('Share this track') }}: {{ tr.title }}" title="{{ _('Share this chapter') if isbook else _('Share this track') }}">{{ icon("share") }}</button>
           <a class="muted" href="/albums/{{ item.id }}/track/{{ tr.id }}" download="{{ tr.original_name }}" aria-label="{{ _('Download') }}: {{ tr.title }}" title="{{ _('Download') }}">{{ icon("download") }}</a>
+          {% if tr.transcript %}<details class="tr-text"{% if tr.id in matches %} open{% endif %}><summary>{{ _("Transcript") }}</summary><p class="pre">{{ tr.transcript }}</p></details>{% endif %}
         </li>
         {% endfor %}
       </ol>
+      {% if providers.transcribe or transcription.done %}
+      <div class="transcribe">
+        <p class="muted small">{{ _n("{done} of {n} track transcribed", "{done} of {n} tracks transcribed", transcription.total, done=transcription.done) }}{% if transcription.waiting %} · <a href="/jobs">{{ _("{n} waiting", n=transcription.waiting) }}</a>{% endif %}{% if transcription.failed %} · <a href="/jobs">{{ _("{n} failed", n=transcription.failed) }}</a>{% endif %}</p>
+        {% if providers.transcribe %}
+        <form method="post" action="/albums/{{ item.id }}/transcribe" class="inline-actions">
+          {% if transcription.done < transcription.total %}<button class="btn small" type="submit">{{ icon("zap") }}{{ _("Transcribe tracks") }}</button>{% endif %}
+          {% if transcription.done %}<button class="btn small" type="submit" name="redo" value="1">{{ icon("retry") }}{{ _("Transcribe all again") }}</button>{% endif %}
+        </form>
+        <p class="hint">{{ _("Runs one track at a time in the background and takes about as long as the audio itself. Everything said becomes searchable.") }}</p>
+        {% endif %}
+      </div>
+      {% endif %}
       <details>
         <summary>{{ _("Rename and reorder") }}</summary>
         <form class="trackedit" method="post" action="/albums/{{ item.id }}/tracks">

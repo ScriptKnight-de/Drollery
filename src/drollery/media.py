@@ -85,6 +85,17 @@ def extract_audio(src: Path, dst: Path) -> None:
         raise MediaError(f"audio extraction failed: {r.stderr.strip()[:2000]}")
 
 
+def split_audio(src: Path, dst_dir: Path, seconds: int) -> list[Path]:
+    """Cut a long recording into mono 16 kHz MP3 pieces of at most `seconds`, in order. A transcription server answers one
+    piece in a fraction of its timeout, so a track of any length can be transcribed."""
+    r = _run(["ffmpeg", "-y", "-v", "error", "-i", str(src), "-vn", "-ac", "1", "-ar", "16000", "-b:a", "32k",
+              "-f", "segment", "-segment_time", str(max(10, int(seconds))), "-reset_timestamps", "1", str(dst_dir / "part%04d.mp3")], timeout=1800)
+    parts = sorted(dst_dir.glob("part*.mp3"))
+    if r.returncode != 0 or not parts:
+        raise MediaError(f"audio extraction failed: {r.stderr.strip()[:2000]}")
+    return parts
+
+
 FRAME_MAX = 1600     # width cap of the still the cropper works on
 CARD_SIZE = 480      # edge of the square card image
 

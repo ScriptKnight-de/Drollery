@@ -554,4 +554,16 @@ MESSAGES = {
     "Europe": "Europa",
     "Details from MusicBrainz": "Uppgifter från MusicBrainz",
     "Release details": "Utgåvans uppgifter",
+
+    # ---- transcribing album tracks
+    "Transcription queued for {n} track": ("Transkribering köad för {n} spår", "Transkribering köad för {n} spår"),
+    "No transcription model is set up. Add one under Settings › AI models": "Ingen transkriberingsmodell är inställd. Lägg till en under Inställningar › AI-modeller",
+    "Nothing to transcribe: every track is done or already waiting": "Inget att transkribera: varje spår är klart eller väntar redan",
+    "{done} of {n} track transcribed": ("{done} av {n} spår transkriberat", "{done} av {n} spår transkriberade"),
+    "{n} waiting": "{n} väntar",
+    "{n} failed": "{n} misslyckades",
+    "Transcribe tracks": "Transkribera spår",
+    "Transcribe all again": "Transkribera allt igen",
+    "Runs one track at a time in the background and takes about as long as the audio itself. Everything said becomes searchable.": "Körs ett spår i taget i bakgrunden och tar ungefär lika lång tid som ljudet självt. Allt som sägs blir sökbart.",
+    "transcribe_track": "transkribering av spår",
 }

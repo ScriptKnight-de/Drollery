@@ -271,6 +271,16 @@ audio::-webkit-media-controls-panel { background-color: var(--s1); }
 .play.share:hover { color: var(--ac-ink); border-color: var(--ln2); }
 .play .on { display: none; } .play[aria-pressed="true"] .on { display: block; } .play[aria-pressed="true"] .off { display: none; }
 .tracklist li.playing .play:not(.share) { background: var(--ac); border-color: var(--ac); color: var(--ac-on); }
+.tracklist li.match { background: color-mix(in srgb, var(--ac) 10%, var(--s1)); }
+.tracklist .tr-text { grid-column: 1 / -1; margin: 0 0 4px 36px; font-size: 13px; }
+.tracklist .tr-text summary { color: var(--tx3); cursor: pointer; }
+.tracklist .tr-text p { margin: 8px 0 0; max-height: 260px; overflow: auto; color: var(--tx2); }
+.transcribe { display: grid; gap: 8px; margin-top: 12px; }
+.transcribe p { margin: 0; }
+.transcribe form { display: flex; gap: 8px; flex-wrap: wrap; }
+.hit { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 6px; font-size: 12px; line-height: 16px; color: var(--tx2); }
+.hit b { font-weight: 500; color: var(--tx); }
+.hit mark { background: color-mix(in srgb, var(--ac) 35%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; }
 .trackedit { display: grid; gap: 8px; margin-top: 12px; }
 .trackedit .row { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 8px; }
 .facts dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 8px 16px; margin: 0; font-size: 14px; }
