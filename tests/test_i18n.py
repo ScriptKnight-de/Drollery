@@ -244,6 +244,7 @@ def test_every_page_renders_in_every_language(client, code):
     for url in ("/", f"/items/{item}", f"/items/{album}", "/albums/new", "/jobs", "/settings/profile", "/settings/security", "/settings/keys", "/settings/ai", "/settings/shares", "/settings/about"):
         r = client.get(url)
         assert r.status_code == 200 and f'lang="{code}"' in r.text, (code, url)
+        assert "&lt;code" not in r.text and "&lt;u&gt;" not in r.text and "&lt;b " not in r.text, (code, url)      # inline markup in a translation must not show as text
         text = re.sub(r"<script.*?</script>|<style.*?</style>|<pre.*?</pre>|<code.*?</code>|data-[\w-]+=\"[^\"]*\"", "", r.text, flags=re.S)
         assert not re.search(r"\{(n|name|base|url|id|tag|title|when|path|file|link|target|browse|t)\}", text), (code, url)
     menu = client.get("/").text.split('id="lang-menu"')[1].split("</details>")[0]

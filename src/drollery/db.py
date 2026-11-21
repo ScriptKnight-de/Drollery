@@ -109,6 +109,7 @@ CREATE TABLE IF NOT EXISTS shares (
   id INTEGER PRIMARY KEY,
   token TEXT NOT NULL UNIQUE,                       -- unguessable capability in the public URL (stored so the link can be shown again)
   item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+  track_id INTEGER REFERENCES tracks(id) ON DELETE CASCADE,   -- an album share: NULL = the whole album, else just this track
   label TEXT NOT NULL DEFAULT '',
   created_by INTEGER,
   created_at REAL NOT NULL,
@@ -195,10 +196,17 @@ def _migrate_users(c: sqlite3.Connection) -> None:
         c.execute("ALTER TABLE users ADD COLUMN language TEXT NOT NULL DEFAULT ''")
 
 
+def _migrate_shares(c: sqlite3.Connection) -> None:
+    have = {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('shares')")}
+    if have and "track_id" not in have:
+        c.execute("ALTER TABLE shares ADD COLUMN track_id INTEGER REFERENCES tracks(id) ON DELETE CASCADE")
+
+
 def init() -> None:
     with tx() as c:
         _migrate_items(c)
         _migrate_users(c)
+        _migrate_shares(c)
         if "ai_tags" not in _fts_columns(c) and _fts_columns(c):       # index from before the user/AI tag split
             c.execute("DROP TABLE items_fts")
             rebuild = True

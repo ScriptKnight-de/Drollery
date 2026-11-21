@@ -459,7 +459,6 @@ MESSAGES = {
     "Album created": "Albumet skapat",
     "That album is already in the library": "Det albumet finns redan i biblioteket",
     "Tracks saved": "Spåren sparade",
-    "Albums cannot be shared yet": "Album kan inte delas än",
     "{n} chapter": ("{n} kapitel", "{n} kapitel"),
     "{n} track": ("{n} spår", "{n} spår"),
     "Audiobook": "Ljudbok",
@@ -486,4 +485,17 @@ MESSAGES = {
     "Optional. Without one, Drollery uses a picture from the ZIP or from the first track that carries one": "Valfritt. Utan bild använder Drollery en från ZIP-filen eller från första spåret som har en",
     "Create album": "Skapa album",
     "Albums": "Album",
+
+    # ---- sharing albums
+    "What to share": "Vad som ska delas",
+    "The whole album": "Hela albumet",
+    "The whole audiobook": "Hela ljudboken",
+    "Track: {title}": "Spår: {title}",
+    "Chapter: {title}": "Kapitel: {title}",
+    "Copy ZIP link": "Kopiera ZIP-länk",
+    "From the album “{album}”": "Från albumet ”{album}”",
+    "From the audiobook “{album}”": "Från ljudboken ”{album}”",
+    "Share this track": "Dela det här spåret",
+    "Share this chapter": "Dela det här kapitlet",
+    "That track does not exist": "Det spåret finns inte",
 }

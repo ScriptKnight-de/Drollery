@@ -55,12 +55,13 @@ def state(share: dict, now: float | None = None) -> dict:
     return {"kind": "active", "text": t("Expires in {when}", when=humanize(share["expires_at"] - now))}
 
 
-def create(item_id: int, user_id: int | None, expires_in: int | None, label: str = "") -> dict:
+def create(item_id: int, user_id: int | None, expires_in: int | None, label: str = "", track_id: int | None = None) -> dict:
+    """track_id is for albums: None shares the whole album, an id shares only that track."""
     token = security.new_token(24)
     now = time.time()
     with db.tx() as c:
-        cur = c.execute("INSERT INTO shares(token,item_id,label,created_by,created_at,expires_at) VALUES (?,?,?,?,?,?)",
-                        (token, item_id, label.strip()[:80], user_id, now, now + expires_in if expires_in else None))
+        cur = c.execute("INSERT INTO shares(token,item_id,track_id,label,created_by,created_at,expires_at) VALUES (?,?,?,?,?,?,?)",
+                        (token, item_id, track_id, label.strip()[:80], user_id, now, now + expires_in if expires_in else None))
         row = c.execute("SELECT * FROM shares WHERE id=?", (cur.lastrowid,)).fetchone()
     return decorate(dict(row))
 
@@ -72,14 +73,16 @@ def decorate(share: dict) -> dict:
 
 def for_item(item_id: int) -> list[dict]:
     with db.tx() as c:
-        rows = c.execute("SELECT * FROM shares WHERE item_id=? ORDER BY id DESC", (item_id,)).fetchall()
+        rows = c.execute("SELECT shares.*, tracks.title AS track_title FROM shares LEFT JOIN tracks ON tracks.id = shares.track_id "
+                         "WHERE shares.item_id=? ORDER BY shares.id DESC", (item_id,)).fetchall()
     return [decorate(dict(r)) for r in rows]
 
 
 def all_shares() -> list[dict]:
     with db.tx() as c:
-        rows = c.execute("SELECT shares.*, items.title AS item_title, items.kind AS item_kind FROM shares "
-                         "JOIN items ON items.id = shares.item_id ORDER BY shares.id DESC").fetchall()
+        rows = c.execute("SELECT shares.*, items.title AS item_title, items.kind AS item_kind, tracks.title AS track_title FROM shares "
+                         "JOIN items ON items.id = shares.item_id LEFT JOIN tracks ON tracks.id = shares.track_id "
+                         "ORDER BY shares.id DESC").fetchall()
     return [decorate(dict(r)) for r in rows]
 
 
@@ -141,8 +144,12 @@ def file_slug(item: dict) -> str:
 
 def urls(request: Request, share: dict, item: dict) -> dict:
     base = public_base(request)
-    return {"page": f"{base}/s/{share['token']}", "raw": f"{base}/s/{share['token']}/raw/{file_slug(item)}",
-            "thumb": f"{base}/s/{share['token']}/thumb"}
+    tok = share["token"]
+    if item["kind"] == "album":        # no single file: a track share links the track itself, a whole-album share links a ZIP
+        raw = f"{base}/s/{tok}/track/{share['track_id']}" if share.get("track_id") else f"{base}/s/{tok}/download"
+    else:
+        raw = f"{base}/s/{tok}/raw/{file_slug(item)}"
+    return {"page": f"{base}/s/{tok}", "raw": raw, "thumb": f"{base}/s/{tok}/thumb"}
 
 
 def valid_public_url(value: str) -> bool:

@@ -45,7 +45,7 @@
 
 <section class="panel stack">
   <h2>{{ _("Using a key") }}</h2>
-  <p class="muted">{{ _("Server address for the extension or app: {url}. Send the key as a bearer token:", url="<code>" ~ base_url|e ~ "</code>")|safe }}</p>
+  <p class="muted">{{ _("Server address for the extension or app: {url}. Send the key as a bearer token:", url="<code>%s</code>"|format(base_url|e))|safe }}</p>
   <pre class="snippet">curl -H "Authorization: Bearer drl_…" {{ base_url }}/api/v1/me
 curl -H "Authorization: Bearer drl_…" -X POST -H "Content-Type: application/json" \
      -d '{"url":"https://example.com/funny.mp4"}' {{ base_url }}/api/v1/ingest</pre>

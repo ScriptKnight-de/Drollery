@@ -459,7 +459,6 @@ MESSAGES = {
     "Album created": "Album gemaakt",
     "That album is already in the library": "Dat album staat al in de bibliotheek",
     "Tracks saved": "Nummers opgeslagen",
-    "Albums cannot be shared yet": "Albums kunnen nog niet worden gedeeld",
     "{n} chapter": ("{n} hoofdstuk", "{n} hoofdstukken"),
     "{n} track": ("{n} nummer", "{n} nummers"),
     "Audiobook": "Luisterboek",
@@ -486,4 +485,17 @@ MESSAGES = {
     "Optional. Without one, Drollery uses a picture from the ZIP or from the first track that carries one": "Optioneel. Zonder afbeelding gebruikt Drollery er een uit het ZIP-bestand of uit het eerste nummer dat er een heeft",
     "Create album": "Album maken",
     "Albums": "Albums",
+
+    # ---- sharing albums
+    "What to share": "Wat je wilt delen",
+    "The whole album": "Het hele album",
+    "The whole audiobook": "Het hele luisterboek",
+    "Track: {title}": "Nummer: {title}",
+    "Chapter: {title}": "Hoofdstuk: {title}",
+    "Copy ZIP link": "ZIP-link kopiëren",
+    "From the album “{album}”": "Van het album “{album}”",
+    "From the audiobook “{album}”": "Uit het luisterboek “{album}”",
+    "Share this track": "Dit nummer delen",
+    "Share this chapter": "Dit hoofdstuk delen",
+    "That track does not exist": "Dat nummer bestaat niet",
 }

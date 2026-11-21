@@ -3,7 +3,7 @@
 {% block settings %}
 <section class="panel stack">
   <h2>{{ _("Public address") }}</h2>
-  <p class="muted">{{ _("Share links are built from this address. Leave it empty to use the address you are browsing with now ({base})", base="<code>" ~ public_base|e ~ "</code>")|safe }}</p>
+  <p class="muted">{{ _("Share links are built from this address. Leave it empty to use the address you are browsing with now ({base})", base="<code>%s</code>"|format(public_base|e))|safe }}</p>
   {% if env_public %}<p class="hint">{{ _("DROLLERY_PUBLIC_URL is set in the environment and takes priority over this field") }}</p>{% endif %}
   <form class="form row" method="post" action="/settings/shares/public-url">
     <label>{{ _("Address") }} <input name="public_url" value="{{ public_url }}" placeholder="https://memes.example.org" inputmode="url"></label>
@@ -23,7 +23,7 @@
   <tbody>
   {% for sh in rows %}
   <tr>
-    <td class="clip"><a href="/items/{{ sh.item_id }}#share">{{ sh.item_title }}</a></td>
+    <td class="clip"><a href="/items/{{ sh.item_id }}#share">{{ sh.item_title }}</a>{% if sh.track_title %}<span class="muted"> · {{ sh.track_title }}</span>{% elif sh.item_kind == "album" %}<span class="muted"> · {{ _("The whole album") }}</span>{% endif %}</td>
     <td class="muted">{{ sh.label or "—" }}</td>
     <td><span class="status {{ sh.state.kind }}">{{ sh.state.text }}</span></td>
     <td class="muted">{{ sh.views }}</td>

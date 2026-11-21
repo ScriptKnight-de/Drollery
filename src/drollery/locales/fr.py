@@ -464,7 +464,6 @@ MESSAGES = {
     "Album created": "Album créé",
     "That album is already in the library": "Cet album est déjà dans la bibliothèque",
     "Tracks saved": "Pistes enregistrées",
-    "Albums cannot be shared yet": "Les albums ne peuvent pas encore être partagés",
     "{n} chapter": ("{n} chapitre", "{n} chapitres"),
     "{n} track": ("{n} piste", "{n} pistes"),
     "Audiobook": "Livre audio",
@@ -491,4 +490,17 @@ MESSAGES = {
     "Optional. Without one, Drollery uses a picture from the ZIP or from the first track that carries one": "Facultatif. Sans image, Drollery utilise celle du ZIP ou de la première piste qui en contient une",
     "Create album": "Créer l’album",
     "Albums": "Albums",
+
+    # ---- sharing albums
+    "What to share": "Quoi partager",
+    "The whole album": "L’album entier",
+    "The whole audiobook": "Le livre audio entier",
+    "Track: {title}": "Piste : {title}",
+    "Chapter: {title}": "Chapitre : {title}",
+    "Copy ZIP link": "Copier le lien du ZIP",
+    "From the album “{album}”": "De l’album « {album} »",
+    "From the audiobook “{album}”": "Du livre audio « {album} »",
+    "Share this track": "Partager cette piste",
+    "Share this chapter": "Partager ce chapitre",
+    "That track does not exist": "Cette piste n’existe pas",
 }

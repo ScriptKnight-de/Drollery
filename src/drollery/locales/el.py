@@ -459,7 +459,6 @@ MESSAGES = {
     "Album created": "Το άλμπουμ δημιουργήθηκε",
     "That album is already in the library": "Αυτό το άλμπουμ υπάρχει ήδη στη βιβλιοθήκη",
     "Tracks saved": "Τα κομμάτια αποθηκεύτηκαν",
-    "Albums cannot be shared yet": "Τα άλμπουμ δεν μπορούν ακόμη να κοινοποιηθούν",
     "{n} chapter": ("{n} κεφάλαιο", "{n} κεφάλαια"),
     "{n} track": ("{n} κομμάτι", "{n} κομμάτια"),
     "Audiobook": "Ηχητικό βιβλίο",
@@ -486,4 +485,17 @@ MESSAGES = {
     "Optional. Without one, Drollery uses a picture from the ZIP or from the first track that carries one": "Προαιρετικό. Χωρίς εικόνα, το Drollery χρησιμοποιεί μία από το ZIP ή από το πρώτο κομμάτι που έχει",
     "Create album": "Δημιουργία άλμπουμ",
     "Albums": "Άλμπουμ",
+
+    # ---- sharing albums
+    "What to share": "Τι θα κοινοποιηθεί",
+    "The whole album": "Ολόκληρο το άλμπουμ",
+    "The whole audiobook": "Ολόκληρο το ηχητικό βιβλίο",
+    "Track: {title}": "Κομμάτι: {title}",
+    "Chapter: {title}": "Κεφάλαιο: {title}",
+    "Copy ZIP link": "Αντιγραφή συνδέσμου ZIP",
+    "From the album “{album}”": "Από το άλμπουμ «{album}»",
+    "From the audiobook “{album}”": "Από το ηχητικό βιβλίο «{album}»",
+    "Share this track": "Κοινοποίηση αυτού του κομματιού",
+    "Share this chapter": "Κοινοποίηση αυτού του κεφαλαίου",
+    "That track does not exist": "Αυτό το κομμάτι δεν υπάρχει",
 }

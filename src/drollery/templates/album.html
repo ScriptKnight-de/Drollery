@@ -11,7 +11,7 @@
       {% else %}<div class="nocover">{{ icon("book" if isbook else "disc") }}</div>{% endif %}
     </div>
     <div class="player">
-      <p class="nowplaying" id="now" aria-live="polite"></p>
+      <p class="nowplaying" id="now" aria-live="polite" data-label="{{ _('Now playing') }}"></p>
       <audio id="player" controls preload="none"></audio>
     </div>
     <p class="meta-line">
@@ -55,6 +55,7 @@
           <span class="num">{{ tr.position }}</span>
           <span class="name" title="{{ tr.title }}">{{ tr.title }}</span>
           <span class="dur">{{ tr.duration|clock if tr.duration else "" }}</span>
+          <button type="button" class="play share" data-share-track="{{ tr.id }}" aria-label="{{ _('Share this chapter') if isbook else _('Share this track') }}: {{ tr.title }}" title="{{ _('Share this chapter') if isbook else _('Share this track') }}">{{ icon("share") }}</button>
           <a class="muted" href="/albums/{{ item.id }}/track/{{ tr.id }}" download="{{ tr.original_name }}" aria-label="{{ _('Download') }}: {{ tr.title }}" title="{{ _('Download') }}">{{ icon("download") }}</a>
         </li>
         {% endfor %}
@@ -74,32 +75,14 @@
       </details>
     </section>
 
+    {% include "share_panel.html" %}
+
     <form method="post" action="/items/{{ item.id }}/delete" onsubmit="return confirm({{ _('Feed this item to the dragon? It cannot be undone.')|tojson|forceescape }})">
       <button class="btn danger" type="submit">{{ icon("trash") }}{{ _("Delete") }}</button>
     </form>
   </div>
 </div>
 <script src="/static/tagfield.js" defer></script>
-<script>
-  (function () {
-    var audio = document.getElementById("player"), now = document.getElementById("now"), label = {{ _("Now playing")|tojson }};
-    var rows = Array.prototype.slice.call(document.querySelectorAll("#tracklist [data-track]")), cur = -1;
-    function mark() {
-      rows.forEach(function (r, k) {
-        r.classList.toggle("playing", k === cur);
-        r.querySelector(".play").setAttribute("aria-pressed", String(k === cur && !audio.paused));
-      });
-      now.innerHTML = "";
-      if (cur >= 0) { var b = document.createElement("b"); b.textContent = rows[cur].dataset.title; now.append(label + ": ", b); }
-    }
-    function start(i) { if (i < 0 || i >= rows.length) return; cur = i; audio.src = rows[i].dataset.src; audio.play(); mark(); }
-    rows.forEach(function (r, i) {
-      r.querySelector(".play").addEventListener("click", function () {
-        if (i !== cur) start(i); else if (audio.paused) audio.play(); else audio.pause();
-      });
-    });
-    audio.addEventListener("play", mark); audio.addEventListener("pause", mark);
-    audio.addEventListener("ended", function () { if (cur + 1 < rows.length) start(cur + 1); else mark(); });
-  })();
-</script>
+<script src="/static/player.js" defer></script>
+<script src="/static/sharepanel.js" defer></script>
 {% endblock %}

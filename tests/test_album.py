@@ -174,13 +174,10 @@ def test_the_library_shows_one_card_per_album_and_finds_it(client, mp3s):
     assert client.get("/api/v1/items").json()["items"][0]["url"] is None
 
 
-def test_albums_have_no_single_file_and_cannot_be_shared(client, mp3s):
+def test_albums_have_no_single_media_file(client, mp3s):
     upload(client, [mp3s["one"]])
     aid = album_id(client)
-    assert client.get(f"/media/{aid}").status_code == 404
-    blocked = client.post(f"/items/{aid}/shares", data={"preset": "never", "next": f"/items/{aid}"})
-    assert "cannot be shared" in blocked.text
-    assert client.post(f"/api/v1/items/{aid}/shares", json={}).status_code == 422
+    assert client.get(f"/media/{aid}").status_code == 404                 # an album has tracks, not one file
 
 
 def test_play_a_track_download_all_and_the_auth_wall(client, anon, mp3s):

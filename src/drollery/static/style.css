@@ -244,7 +244,7 @@ kbd { color: var(--tx3); border: 2px solid var(--ln); border-radius: 6px; paddin
 .nowplaying { margin: 0; font-size: 14px; line-height: 20px; color: var(--tx2); min-height: 20px; }
 .nowplaying b { color: var(--tx); font-weight: 500; }
 .tracklist { list-style: none; margin: 0; padding: 0; display: grid; }
-.tracklist li { display: grid; grid-template-columns: 36px 28px minmax(0, 1fr) auto auto; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px dashed var(--ln); border-radius: 12px; font-size: 14px; }
+.tracklist li { display: grid; grid-template-columns: 36px 28px minmax(0, 1fr) auto auto auto; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px dashed var(--ln); border-radius: 12px; font-size: 14px; }
 .tracklist li:first-child { border-top: 0; }
 .tracklist li.playing { background: color-mix(in srgb, var(--ac) 16%, var(--s1)); border-top-color: transparent; }
 .tracklist .num { color: var(--tx3); font-variant-numeric: tabular-nums; text-align: right; }
@@ -253,8 +253,11 @@ kbd { color: var(--tx3); border: 2px solid var(--ln); border-radius: 6px; paddin
 .play { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 2px solid var(--ln2); border-radius: 50%; background: var(--s1); color: var(--tx); cursor: pointer; }
 .play:hover { border-color: var(--ac); color: var(--ac-ink); }
 .play .ic { width: 14px; height: 14px; fill: currentColor; stroke: none; }
+.play.share { width: 28px; height: 28px; border-color: transparent; background: none; color: var(--tx3); }
+.play.share .ic { fill: none; stroke: currentColor; stroke-width: 1.5; width: 16px; height: 16px; }
+.play.share:hover { color: var(--ac-ink); border-color: var(--ln2); }
 .play .on { display: none; } .play[aria-pressed="true"] .on { display: block; } .play[aria-pressed="true"] .off { display: none; }
-.tracklist li.playing .play { background: var(--ac); border-color: var(--ac); color: var(--ac-on); }
+.tracklist li.playing .play:not(.share) { background: var(--ac); border-color: var(--ac); color: var(--ac-on); }
 .trackedit { display: grid; gap: 8px; margin-top: 12px; }
 .trackedit .row { display: grid; grid-template-columns: 64px minmax(0, 1fr); gap: 8px; }
 .kindpick { display: flex; gap: 16px; flex-wrap: wrap; }
@@ -354,6 +357,7 @@ td.clip { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-spa
 .status.active { border-color: var(--ok); color: var(--ok); }
 .status.expired, .status.revoked { color: var(--bad); border-color: var(--bad); }
 .share { max-width: 860px; margin: 0 auto; display: grid; gap: 16px; }
+.share .cover { max-width: 420px; width: 100%; justify-self: center; }
 .share h1 { margin-top: 4px; } .share p { margin: 0; }
 .share .frame img, .share .frame video { max-height: 78vh; }
 

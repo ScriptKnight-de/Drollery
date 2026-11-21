@@ -1,10 +1,16 @@
 """Sharing: public pages and files behind unguessable links, plus the owner's tools to create, list and revoke them."""
 from __future__ import annotations
 
+import tempfile
+from pathlib import Path
+
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 
-from . import accounts, db, pipeline, shares
+from starlette.background import BackgroundTask
+
+from . import accounts, albums, db, pipeline, shares
+from .config import get_settings
 from .deps import api_auth, client_ip, web_auth
 from .i18n import t, tn
 from .web import flash_redirect, render
@@ -46,8 +52,65 @@ def share_page(request: Request, token: str):
         return _gone(request, share)
     if request.method == "GET":
         shares.count_view(share["id"])
-    resp = render(request, "share.html", share=share, item=item, urls=shares.urls(request, share, item), slug=shares.file_slug(item))
+    if item["kind"] == "album":
+        with db.tx() as c:
+            tracks, album = albums.tracks_of(c, item["id"]), albums.get(c, item["id"])
+        track = next((x for x in tracks if x["id"] == share["track_id"]), None) if share["track_id"] else None
+        if share["track_id"] and track is None:
+            raise HTTPException(404, "Not found")
+        resp = render(request, "share_album.html", share=share, item=item, album=album, track=track, tracks=[track] if track else tracks,
+                      urls=shares.urls(request, share, item))
+    else:
+        resp = render(request, "share.html", share=share, item=item, urls=shares.urls(request, share, item), slug=shares.file_slug(item))
     resp.headers.update(PAGE_HEADERS)
+    return resp
+
+
+def _counts_as_view(request: Request, token: str) -> bool:
+    rng = request.headers.get("range", "")
+    from_our_page = f"/s/{token}" in request.headers.get("referer", "")
+    return request.method == "GET" and (not rng or rng.startswith("bytes=0-")) and not from_our_page
+
+
+@public.api_route("/s/{token}/track/{track_id}", methods=["GET", "HEAD"])
+def share_track(request: Request, token: str, track_id: int, download: int = 0):
+    """One track of a shared album. A share of a single track serves only that track."""
+    share, item = _resolve(request, token)
+    if not shares.is_open(share):
+        raise HTTPException(410, "This link has expired or was revoked")
+    if item["kind"] != "album" or (share["track_id"] and share["track_id"] != track_id):
+        raise HTTPException(404, "Not found")
+    with db.tx() as c:
+        row = c.execute("SELECT * FROM tracks WHERE id=? AND item_id=?", (track_id, item["id"])).fetchone()
+    path = albums.track_path(item, dict(row)) if row else None
+    if row is None or not path.exists():
+        raise HTTPException(404, "Not found")
+    if _counts_as_view(request, token):
+        shares.count_view(share["id"])
+    resp = FileResponse(path, media_type=row["mime"], filename=row["original_name"] or "track",
+                        content_disposition_type="attachment" if download else "inline")
+    resp.headers.update(FILE_HEADERS)
+    return resp
+
+
+@public.api_route("/s/{token}/download", methods=["GET", "HEAD"])
+def share_download(request: Request, token: str):
+    """The whole shared album as a ZIP (only for a share of the whole album)."""
+    share, item = _resolve(request, token)
+    if not shares.is_open(share):
+        raise HTTPException(410, "This link has expired or was revoked")
+    if item["kind"] != "album" or share["track_id"]:
+        raise HTTPException(404, "Not found")
+    with db.tx() as c:
+        tracks = albums.tracks_of(c, item["id"])
+    if _counts_as_view(request, token):
+        shares.count_view(share["id"])
+    tmp = tempfile.NamedTemporaryFile(dir=get_settings().tmp_dir, suffix=".zip", delete=False)
+    tmp.close()
+    albums.build_zip(item, tracks, Path(tmp.name))
+    resp = FileResponse(tmp.name, media_type="application/zip", filename=f"{albums.safe_filename(item['title'])}.zip",
+                        background=BackgroundTask(lambda: Path(tmp.name).unlink(missing_ok=True)))
+    resp.headers.update(FILE_HEADERS)
     return resp
 
 
@@ -59,9 +122,7 @@ def share_raw(request: Request, token: str, name: str, download: int = 0):
     path = pipeline.media_path(item)
     if not path.exists():
         raise HTTPException(404, "File missing")
-    rng = request.headers.get("range", "")
-    from_our_page = f"/s/{token}" in request.headers.get("referer", "")
-    if request.method == "GET" and (not rng or rng.startswith("bytes=0-")) and not from_our_page:
+    if _counts_as_view(request, token):
         shares.count_view(share["id"])                    # a direct hit (embed, chat preview, download); not the page's own <img>
     resp = FileResponse(path, media_type=item["mime"], filename=item["original_name"] or shares.file_slug(item),
                         content_disposition_type="attachment" if download else "inline")
@@ -91,20 +152,33 @@ def share_context(request: Request, item: dict) -> dict:
     return {"shares": items_shares, "share_presets": shares.PRESET_LABELS, "public_base": shares.public_base(request)}
 
 
+def _track_in_album(item_id: int, raw) -> int | None:
+    try:
+        tid = int(str(raw).strip())
+    except ValueError:
+        return None
+    with db.tx() as c:
+        row = c.execute("SELECT id FROM tracks WHERE id=? AND item_id=?", (tid, item_id)).fetchone()
+    return row["id"] if row else None
+
+
 @manage.post("/items/{item_id}/shares")
 def create_share(request: Request, item_id: int, preset: str = Form("7d"), amount: int = Form(0), unit: str = Form("hours"),
-                 label: str = Form(""), next: str = Form("")):
+                 label: str = Form(""), next: str = Form(""), track: str = Form("")):
     back = shares.safe_next(next, f"/items/{item_id}")
     with db.tx() as c:
         found = db.get_item(c, item_id)
         if found is None:
             raise HTTPException(404, "item not found")
-    if found["kind"] == "album":
-        return flash_redirect(back, t("Albums cannot be shared yet"), "error")
+    track_id = None
+    if found["kind"] == "album" and track.strip():             # an album can be shared whole (no track) or one track at a time
+        track_id = _track_in_album(item_id, track)
+        if track_id is None:
+            return flash_redirect(back + "#share", t("That track does not exist"), "error")
     seconds, err = shares.expiry_seconds(preset, amount, unit)
     if err:
         return flash_redirect(back + "#share", err, "error")
-    shares.create(item_id, request.state.user["id"], seconds, label)
+    shares.create(item_id, request.state.user["id"], seconds, label, track_id)
     return flash_redirect(back + "#share", t("Link created. Copy it below") if seconds else t("Permanent link created. Copy it below"))
 
 
@@ -152,7 +226,7 @@ def purge(request: Request):
 
 def _share_json(request: Request, share: dict, item: dict) -> dict:
     u = shares.urls(request, share, item)
-    return {"id": share["id"], "item_id": share["item_id"], "label": share["label"], "url": u["page"], "file_url": u["raw"],
+    return {"id": share["id"], "item_id": share["item_id"], "track_id": share.get("track_id"), "label": share["label"], "url": u["page"], "file_url": u["raw"],
             "created_at": share["created_at"], "expires_at": share["expires_at"], "permanent": share["expires_at"] is None,
             "status": share["state"]["kind"], "views": share["views"]}
 
@@ -173,16 +247,21 @@ def api_list_shares(request: Request, item_id: int):
 
 @api.post("/items/{item_id}/shares", status_code=201)
 async def api_create_share(request: Request, item_id: int):
-    """Body: {"expires_in": seconds or null for a permanent link, "label": "optional"}."""
+    """Body: {"expires_in": seconds or null for a permanent link, "label": "optional", "track_id": for an album: one track, else the whole album}."""
     item = _item_or_404(item_id)
-    if item["kind"] == "album":
-        raise HTTPException(422, "albums cannot be shared yet")
     body = await request.json() if request.headers.get("content-length", "0") != "0" else {}
     expires_in = body.get("expires_in")
     if expires_in is not None:
         if not isinstance(expires_in, int) or isinstance(expires_in, bool) or not shares.MIN_SECONDS <= expires_in <= shares.MAX_SECONDS:
             raise HTTPException(422, "expires_in must be a number of seconds between 60 and 31536000, or null for a permanent link")
-    share = shares.create(item_id, request.state.user["id"], expires_in, str(body.get("label", "")))
+    track_id = None
+    if body.get("track_id") is not None:
+        if item["kind"] != "album" or isinstance(body["track_id"], bool):
+            raise HTTPException(422, "track_id is only for albums")
+        track_id = _track_in_album(item_id, body["track_id"])
+        if track_id is None:
+            raise HTTPException(422, "that track is not in this album")
+    share = shares.create(item_id, request.state.user["id"], expires_in, str(body.get("label", "")), track_id)
     return JSONResponse(_share_json(request, share, item), status_code=201)
 
 

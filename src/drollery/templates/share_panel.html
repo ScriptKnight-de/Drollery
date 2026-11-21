@@ -1,0 +1,53 @@
+{% from "icons.html" import icon %}
+<section class="panel stack" id="share">
+  <h2 class="with-icon">{{ icon("share") }}{{ _("Share") }}</h2>
+  <p class="muted">{{ _("Anyone with a link can see this item, no account needed. Make it temporary, or permanent until you revoke it") }}</p>
+  <form class="form" method="post" action="/items/{{ item.id }}/shares#share" id="share-form">
+    <input type="hidden" name="next" value="/items/{{ item.id }}">
+    {% if item.kind == "album" %}{% set isbook = album and album.subtype == "audiobook" %}
+    <label>{{ _("What to share") }}
+      <select name="track" id="sh-track">
+        <option value="">{{ _("The whole audiobook") if isbook else _("The whole album") }}</option>
+        {% for tr in tracks %}<option value="{{ tr.id }}">{{ tr.position }}. {{ tr.title }}</option>{% endfor %}
+      </select>
+    </label>
+    {% endif %}
+    <div class="duo">
+      <label>{{ _("Link works for") }}
+        <select name="preset" id="sh-preset">{% for k, l in share_presets %}<option value="{{ k }}" {{ "selected" if k == "7d" }}>{{ _(l) }}</option>{% endfor %}</select>
+      </label>
+      <label>{{ _("Label") }} <input name="label" maxlength="80" placeholder="{{ _('Optional, e.g. For Alex') }}"></label>
+    </div>
+    <div class="duo" id="sh-custom" hidden>
+      <label>{{ _("For") }} <input type="number" name="amount" min="1" max="525600" value="2"></label>
+      <label>{{ _("Unit") }} <select name="unit"><option value="minutes">{{ _("minutes") }}</option><option value="hours" selected>{{ _("hours") }}</option><option value="days">{{ _("days") }}</option></select></label>
+    </div>
+    <div class="actions"><button class="btn primary" type="submit">{{ icon("plus") }}{{ _("Create link") }}</button></div>
+  </form>
+  {% if shares %}
+  <ul class="links">
+    {% for sh in shares %}
+    <li class="{{ sh.state.kind }}">
+      <div class="meta-row">
+        <b>{{ sh.label or _("Link") }}</b>
+        {% if item.kind == "album" %}<span class="muted small">{% if sh.track_id %}{{ _("Chapter: {title}", title=sh.track_title) if album and album.subtype == "audiobook" else _("Track: {title}", title=sh.track_title) }}{% else %}{{ _("The whole audiobook") if album and album.subtype == "audiobook" else _("The whole album") }}{% endif %}</span>{% endif %}
+        <span class="status {{ sh.state.kind }}">{{ sh.state.text }}</span>
+        <span class="muted small">{{ _n("{n} view", "{n} views", sh.views) }}</span>
+      </div>
+      {% if sh.state.kind in ("permanent", "active") %}
+      <p class="keyline small">{{ sh.urls.page }}</p>
+      <div class="actions">
+        <button class="btn small" type="button" data-copy="{{ sh.urls.page }}">{{ icon("copy") }}{{ _("Copy link") }}</button>
+        <button class="btn small" type="button" data-copy="{{ sh.urls.raw }}">{{ icon("copy") }}{{ _("Copy ZIP link") if item.kind == "album" and not sh.track_id else _("Copy file link") }}</button>
+        <a class="btn small" href="/s/{{ sh.token }}" target="_blank" rel="noopener">{{ icon("external") }}{{ _("Open") }}</a>
+        <form method="post" action="/shares/{{ sh.id }}/revoke"><input type="hidden" name="next" value="/items/{{ item.id }}"><button class="btn small danger" type="submit">{{ _("Revoke") }}</button></form>
+      </div>
+      {% else %}
+      <div class="actions"><form method="post" action="/shares/{{ sh.id }}/delete"><input type="hidden" name="next" value="/items/{{ item.id }}"><button class="btn small" type="submit">{{ icon("trash") }}{{ _("Remove") }}</button></form></div>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+  <p class="hint">{{ _("Links use {base}.", base="<code>%s</code>"|format(public_base|e))|safe }} {% if "localhost" in public_base or "192.168." in public_base or "10." in public_base[:12] %}{{ _("That address only works on your network. To share beyond it, set a public address under {link}.", link='<a href="/settings/shares">' ~ _("Settings › Shares") ~ '</a>')|safe }}{% endif %}</p>
+</section>
