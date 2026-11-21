@@ -21,8 +21,45 @@ OMDB = {"Response": "True", "Title": "The Invented Quest", "Year": "1987", "Rate
         "imdbRating": "7.9", "imdbVotes": "123,456", "imdbID": TT, "Type": "movie"}
 
 
+TMDB_KEY = "0123456789abcdef0123456789abcdef"
+TMDB_SEARCH = {"results": [
+    {"media_type": "movie", "id": 603, "title": "Das Leben des Brian", "original_title": "Monty Quest's Life of Gwyn", "release_date": "1979-11-17",
+     "overview": "Ein Mann wird fuer einen Messias gehalten. " * 6, "poster_path": "/poster.jpg"},
+    {"media_type": "tv", "id": 1399, "name": "Die erfundene Serie", "original_name": "Die erfundene Serie", "first_air_date": "2011-04-17", "overview": "x"},
+    {"media_type": "person", "id": 5, "name": "Not a title"},
+    {"media_type": "movie", "id": "bad", "title": "Broken"},
+]}
+TMDB_MOVIE = {"id": 603, "title": "Das Leben des Brian", "original_title": "Monty Quest's Life of Gwyn", "release_date": "1979-11-17", "runtime": 94,
+              "overview": "Ein Mann wird aus Versehen fuer einen Messias gehalten.", "genres": [{"id": 35, "name": "Komoedie"}, {"id": 12, "name": "Abenteuer"}],
+              "spoken_languages": [{"english_name": "English", "name": "Englisch"}], "production_countries": [{"name": "Vereinigtes Koenigreich"}],
+              "vote_average": 7.84, "vote_count": 5000, "poster_path": "/poster.jpg", "imdb_id": TT,
+              "credits": {"cast": [{"name": f"Darsteller {n}"} for n in range(12)], "crew": [{"name": "Cy Director", "job": "Director"}, {"name": "Wanda Writer", "job": "Writer"}]},
+              "external_ids": {"imdb_id": TT}}
+
+
 class Fake:
+    def tmdb(self, path, params, req):
+        self.tmdb_calls.append({"path": path, "params": dict(params)})
+        if params.get("api_key") != TMDB_KEY:
+            return httpx.Response(401, json={"status_message": "Invalid API key"}, request=req)
+        if path == "/search/multi":
+            return httpx.Response(200, json=TMDB_SEARCH, request=req)
+        if path == f"/find/{TT}":
+            return httpx.Response(200, json={"movie_results": [{"id": 603}], "tv_results": []}, request=req)
+        if path.startswith("/find/"):
+            return httpx.Response(200, json={"movie_results": [], "tv_results": []}, request=req)
+        if path == "/movie/603":
+            return httpx.Response(200, json=self.tmdb_movie, request=req)
+        if path == "/movie/999":                                           # known to TMDB only: no IMDb id
+            return httpx.Response(200, json={**self.tmdb_movie, "id": 999, "imdb_id": "", "external_ids": {}, "title": "Nur TMDB"}, request=req)
+        if path == "/tv/1399":
+            return httpx.Response(200, json={"id": 1399, "name": "Die erfundene Serie", "first_air_date": "2011-04-17", "episode_run_time": [55], "created_by": [{"name": "Serien Macher"}],
+                                             "genres": [{"name": "Drama"}], "overview": "Serie", "vote_count": 0, "external_ids": {"imdb_id": ""}, "credits": {}}, request=req)
+        return httpx.Response(404, json={}, request=req)
+
     def __init__(self):
+        self.tmdb_calls = []
+        self.tmdb_movie = TMDB_MOVIE
         self.calls = []
         self.omdb = OMDB
         self.omdb_status = 200
@@ -33,10 +70,12 @@ class Fake:
         req = httpx.Request("GET", url)
         if url.startswith(imdb.SUGGEST):
             q = url.rsplit("/", 1)[1].removesuffix(".json")
-            body = SUGGEST if "quest" in q.lower() or q == TT else {"d": []}
+            body = SUGGEST if "quest" in q.lower() or q in (TT, "tt0000999") else {"d": []}
             return httpx.Response(200, json=body, request=req)
         if url == imdb.OMDB:
             return httpx.Response(self.omdb_status, json=self.omdb, request=req)
+        if url.startswith(imdb.TMDB):
+            return self.tmdb(url[len(imdb.TMDB):], params or {}, req)
         if url == POSTER:
             return httpx.Response(200, content=self.poster, headers={"content-type": "image/png"}, request=req)
         return httpx.Response(404, request=req)
@@ -143,7 +182,7 @@ def test_a_movie_can_be_shared_and_cropped_like_a_video(client, clip_bytes):
 
 # ---------------------------------------------------------- the lookup
 
-def test_search_reads_the_suggestion_service_and_skips_things_that_are_not_titles(fake):
+def test_search_reads_the_suggestion_service_and_skips_things_that_are_not_titles(client, fake):
     found = imdb.search("The Invented Quest")
     assert [c.imdb_id for c in found] == [TT, "tt0000999"]
     first = found[0]
@@ -368,3 +407,161 @@ def test_every_item_page_has_a_share_button_that_jumps_to_the_share_panel(client
     page = client.get(f"/items/{movie_id(client)}").text
     bar = page.split('class="toolbar"')[1].split("</div>")[0]
     assert 'href="#share"' in bar and "Share" in bar and 'id="share"' in page
+
+
+# ------------------------------------------------- the lookup in the language of the tool (TMDB)
+
+def set_language(client, code):
+    client.post("/language", data={"language": code, "next": "/"})
+
+
+def use_tmdb(client, key=TMDB_KEY):
+    return client.post("/settings/lookup/tmdb", data={"tmdb_key": key})
+
+
+def test_the_languages_map_to_tmdbs_codes():
+    assert [imdb.locale(c) for c in ("de", "en", "es", "fr", "it", "nl", "pl", "sv", "el", "xx")] == \
+        ["de-DE", "en-US", "es-ES", "fr-FR", "it-IT", "nl-NL", "pl-PL", "sv-SE", "el-GR", "en-US"]
+
+
+def test_the_tmdb_key_is_checked_stored_and_never_shown(client):
+    assert "does not look like a TMDB key" in client.post("/settings/lookup/tmdb", data={"tmdb_key": "short"}).text
+    r = use_tmdb(client)
+    assert "TMDB key saved" in r.text and TMDB_KEY not in r.text and imdb.has_tmdb()
+    page = client.get("/settings/lookup").text
+    assert TMDB_KEY not in page and "Movies in your language (TMDB)" in page and "A key is saved. Movies are looked up in English" in page
+    assert "key removed" in client.post("/settings/lookup/tmdb", data={"remove": "1"}).text and not imdb.has_tmdb()
+
+
+def test_without_a_tmdb_key_a_german_tool_says_the_results_are_english(client, clip_bytes, fake):
+    add(client, clip_bytes, title="Mine")
+    mid = movie_id(client)
+    set_language(client, "de")
+    page = client.get(f"/movies/{mid}/lookup", params={"run": 1, "q": "The Invented Quest"}).text
+    assert "Diese Ergebnisse sind auf Englisch" in page and "Deutsch" in page and "The Invented Quest" in page
+    set_language(client, "en")
+    assert "These results are in English" not in client.get(f"/movies/{mid}/lookup", params={"run": 1, "q": "The Invented Quest"}).text
+
+
+def test_with_a_tmdb_key_the_search_is_in_the_selected_language(client, clip_bytes, fake):
+    use_tmdb(client)
+    add(client, clip_bytes, title="Mine")
+    mid = movie_id(client)
+    set_language(client, "de")
+    page = client.get(f"/movies/{mid}/lookup", params={"run": 1, "q": "Brian"}).text
+    call = fake.tmdb_calls[0]
+    assert call["path"] == "/search/multi" and call["params"]["language"] == "de-DE" and call["params"]["query"] == "Brian"
+    assert not any(c["url"].startswith(imdb.SUGGEST) for c in fake.calls)                      # IMDb's English search is not used
+    assert "Das Leben des Brian" in page and "(1979)" in page and "Monty Quest&#39;s Life of Gwyn" in page and "Die erfundene Serie" in page
+    assert f'href="/movies/{mid}/lookup/m603"' in page and f'href="/movies/{mid}/lookup/t1399"' in page and "Not a title" not in page and "Broken" not in page
+    assert "Serie" in page and "These results are in English" not in page and "Diese Ergebnisse sind auf Englisch" not in page
+    assert TMDB_KEY not in page
+
+
+def test_the_language_follows_the_tool_and_answers_are_cached_per_language(client, clip_bytes, fake):
+    use_tmdb(client)
+    add(client, clip_bytes, title="Mine")
+    mid = movie_id(client)
+    for code, expect in (("de", "de-DE"), ("fr", "fr-FR"), ("en", "en-US"), ("de", "de-DE")):
+        set_language(client, code)
+        client.get(f"/movies/{mid}/lookup", params={"run": 1, "q": "Brian"})
+    assert [c["params"]["language"] for c in fake.tmdb_calls] == ["de-DE", "fr-FR", "en-US"]    # the second German search came from the cache
+
+
+def test_the_review_shows_german_details_with_a_tmdb_rating(client, clip_bytes, fake):
+    use_tmdb(client)
+    add(client, clip_bytes, title="Mine")
+    mid = movie_id(client)
+    set_language(client, "de")
+    page = client.get(f"/movies/{mid}/lookup/m603").text
+    for want in ("Ein Mann wird aus Versehen", "Komoedie, Abenteuer", "Cy Director", "Darsteller 0", "Darsteller 7", "7.8 / 10", "TMDB-Bewertung", "94", "Englisch", "Vereinigtes Koenigreich", "Von TMDB"):
+        assert want in page, want
+    assert "Darsteller 8" not in page and TMDB_KEY not in page                                  # the cast is cut at eight
+    call = next(c for c in fake.tmdb_calls if c["path"] == "/movie/603")
+    assert call["params"]["language"] == "de-DE" and call["params"]["append_to_response"] == "credits,external_ids"
+
+
+def test_an_imdb_id_is_found_on_tmdb_and_keeps_its_imdb_link(client, clip_bytes, fake):
+    use_tmdb(client)
+    add(client, clip_bytes, title="Mine")
+    mid = movie_id(client)
+    set_language(client, "de")
+    client.post(f"/movies/{mid}/lookup/{TT}", data={"details": "1", "title": "1", "plot": "1"})
+    assert any(c["path"] == f"/find/{TT}" for c in fake.tmdb_calls)
+    with db.tx() as c:
+        item, m = db.get_item(c, mid), movies.get(c, mid)
+    assert item["title"] == "Das Leben des Brian" and "Messias" in item["description"] and m["imdb_id"] == TT and item["source_url"] == f"https://www.imdb.com/title/{TT}/"
+    f = movies.facts(m)
+    assert f["genres"] == ["Komoedie", "Abenteuer"] and f["rating"] == 7.8 and f["rating_source"] == "TMDB" and f["runtime"] == 94
+    page = client.get(f"/items/{mid}").text
+    assert "<dt>TMDB-Bewertung</dt>" in page and f'href="https://www.imdb.com/title/{TT}/"' in page
+
+
+def test_an_omdb_key_adds_the_imdb_rating_to_tmdb_details(client, clip_bytes, fake):
+    use_tmdb(client)
+    client.post("/settings/lookup", data={"omdb_key": "abc12345"})
+    add(client, clip_bytes, title="Mine")
+    mid = movie_id(client)
+    page = client.get(f"/movies/{mid}/lookup/m603").text
+    assert "7.9 / 10" in page and "IMDb rating" in page and "TMDB rating" not in page and "Ein Mann wird" in page     # German plot, IMDb's rating
+    assert "abc12345" not in page
+
+
+def test_a_title_tmdb_does_not_know_falls_back_to_imdb(client, clip_bytes, fake):
+    use_tmdb(client)
+    add(client, clip_bytes, title="Mine")
+    mid = movie_id(client)
+    page = client.get(f"/movies/{mid}/lookup/tt0000999").text                                # TMDB's find has nothing for this id
+    assert "&lt;script&gt;alert(1)&lt;/script&gt;" in page and "<script>alert(1)</script>" not in page
+
+
+def test_a_title_only_tmdb_knows_is_kept_with_a_tmdb_link(client, clip_bytes, fake):
+    use_tmdb(client)
+    add(client, clip_bytes, title="Mine")
+    mid = movie_id(client)
+    client.post(f"/movies/{mid}/lookup/m999", data={"details": "1"})
+    with db.tx() as c:
+        item, m = db.get_item(c, mid), movies.get(c, mid)
+    assert m["imdb_id"] == "" and item["source_url"] == "https://www.themoviedb.org/movie/999"
+    page = client.get(f"/items/{mid}").text
+    assert 'href="https://www.themoviedb.org/movie/999"' in page and "<dt>Source</dt>" in page
+
+
+def test_a_series_is_looked_up_too(client, clip_bytes, fake):
+    use_tmdb(client)
+    add(client, clip_bytes, title="Mine")
+    mid = movie_id(client)
+    page = client.get(f"/movies/{mid}/lookup/t1399").text
+    assert "Serien Macher" in page and "55" in page and "Drama" in page
+
+
+def test_a_tmdb_reference_needs_the_key_and_only_valid_references_are_accepted(client, clip_bytes, fake):
+    add(client, clip_bytes, title="Mine")
+    mid = movie_id(client)
+    assert "no match" in client.get(f"/movies/{mid}/lookup/m603", follow_redirects=True).text          # no key: nothing to ask
+    use_tmdb(client)
+    for bad in ("m0x", "x603", "603", "tt12", "m1234567890", "tv1"):
+        assert "not a valid IMDb title" in client.get(f"/movies/{mid}/lookup/{bad}", follow_redirects=True).text, bad
+    assert client.get(f"/movies/{mid}/lookup/../etc").status_code == 404
+
+
+def test_tmdb_problems_are_explained_without_the_key(client, clip_bytes, fake):
+    add(client, clip_bytes, title="Mine")
+    mid = movie_id(client)
+    use_tmdb(client, "ffffffffffffffffffffffffffffffff")                                              # well formed, but not the key the fake knows
+    page = client.get(f"/movies/{mid}/lookup", params={"run": 1, "q": "Brian"}).text
+    assert "TMDB did not accept the key" in page and "ffffffffffffffffffffffffffffffff" not in page
+
+
+def test_the_poster_comes_only_from_the_image_hosts(client, clip_bytes, fake):
+    assert imdb._host_ok("https://image.tmdb.org/t/p/w500/x.jpg") and imdb._host_ok("https://m.media-amazon.com/x.jpg")
+    assert not imdb._host_ok("https://tmdb.org.evil.example/x.jpg") and not imdb._host_ok("http://image.tmdb.org/x.jpg")
+
+
+def test_tmdb_is_credited_where_its_data_is_shown(client, clip_bytes, fake):
+    credit = "This product uses the TMDB API but is not endorsed or certified by TMDB."
+    assert credit in client.get("/settings/lookup").text
+    use_tmdb(client)
+    add(client, clip_bytes, title="Mine")
+    mid = movie_id(client)
+    assert credit in client.get(f"/movies/{mid}/lookup/m603").text

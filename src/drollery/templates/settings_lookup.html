@@ -7,6 +7,22 @@
   {% if not enabled %}<p class="note error">{{ _("Online lookup is switched off in the configuration file") }}</p>{% endif %}
 </section>
 
+<form class="panel form" method="post" action="/settings/lookup/tmdb" autocomplete="off">
+  <h2>{{ _("Movies in your language (TMDB)") }}</h2>
+  <p class="muted">{{ _("IMDb and OMDb only know English titles and plots. TMDB gives the title, plot, genres, cast and poster in the language selected for Drollery, and finds a movie by its IMDb id. It needs a free key (the 32-character API key).") }}
+    <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener noreferrer">{{ icon("external") }}{{ _("Get a free key") }}</a></p>
+  <p class="hint">This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+  <p>{% if has_tmdb %}<span class="dot done"></span>{{ _("A key is saved. Movies are looked up in {language}", language=language_name) }}{% else %}<span class="dot idle"></span>{{ _("No key yet. Movie lookups are in English") }}{% endif %}</p>
+  <label>{{ _("TMDB key") }}
+    <input type="password" name="tmdb_key" maxlength="40" autocomplete="new-password" placeholder="{{ _('Paste the key here') if not has_tmdb else _('Paste a new key to replace it') }}">
+    <span class="hint">{{ _("The key is only stored on this server and is never shown again") }}</span>
+  </label>
+  <div class="actions">
+    <button class="btn primary" type="submit">{{ icon("check") }}{{ _("Save key") }}</button>
+    {% if has_tmdb %}<button class="btn" type="submit" name="remove" value="1">{{ icon("trash") }}{{ _("Remove key") }}</button>{% endif %}
+  </div>
+</form>
+
 <form class="panel form" method="post" action="/settings/lookup" autocomplete="off">
   <h2>{{ _("Movie details (OMDb)") }}</h2>
   <p class="muted">{{ _("IMDb's search finds a movie, its year, main cast and poster without any account. For the plot, genres, directors, the full cast, the rating and the runtime, Drollery asks OMDb, which serves IMDb's data. It needs a free key.") }}

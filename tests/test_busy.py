@@ -60,12 +60,12 @@ def test_the_movie_lookup_steps_are_marked(client, movie, monkeypatch):
     monkeypatch.setattr(metadata, "_sleep", lambda s: None)
     metadata._cache.clear()
     results = client.get(f"/movies/{movie}/lookup", params={"run": 1, "q": "The Invented Quest"}).text
-    assert 'data-busy="Searching IMDb…"' in tag(results, f'action="/movies/{movie}/lookup"')
+    assert 'data-busy="Searching for the movie…"' in tag(results, f'action="/movies/{movie}/lookup"')
     assert 'data-busy="Loading the title details…"' in tag(results, "lookup-pick")
     review = client.get(f"/movies/{movie}/lookup/{TT}").text
     assert 'data-busy="Applying the changes…"' in tag(review, f'action="/movies/{movie}/lookup/{TT}"')
     bar = client.get(f"/items/{movie}").text.split('class="toolbar"')[1].split("</div>")[0]
-    assert 'data-busy="Searching IMDb…"' in tag(bar, "/lookup?run=1")
+    assert 'data-busy="Searching for the movie…"' in tag(bar, "/lookup?run=1")
 
 
 def test_the_popup_has_a_loading_text_and_the_scripts_wire_it_up(client, album):

@@ -2,14 +2,16 @@
 {% from "icons.html" import icon %}
 {% block title %}{{ _("Review the changes") }} · Drollery{% endblock %}
 {% block content %}
-<a class="back" href="/movies/{{ item.id }}/lookup?run=1&q={{ info.title|urlencode }}" data-busy="{{ _('Searching IMDb…') }}">{{ icon("arrow-left") }}{{ _("Back to the results") }}</a>
+<a class="back" href="/movies/{{ item.id }}/lookup?run=1&q={{ info.title|urlencode }}" data-busy="{{ _('Searching for the movie…') }}">{{ icon("arrow-left") }}{{ _("Back to the results") }}</a>
 <div class="page-head"><h1>{{ _("Review the changes") }}</h1></div>
-<p class="muted lead">{{ _("Tick what should be taken over from IMDb. Nothing changes until you apply.") }} <a href="{{ info.url }}" target="_blank" rel="noopener noreferrer">{{ icon("external") }}IMDb</a></p>
+<p class="muted lead">{% if info.source == "TMDB" %}{{ _("Tick what should be taken over from TMDB. Nothing changes until you apply.") }}{% else %}{{ _("Tick what should be taken over from IMDb. Nothing changes until you apply.") }}{% endif %} {% if info.url %}<a href="{{ info.url }}" target="_blank" rel="noopener noreferrer">{{ icon("external") }}{{ "IMDb" if info.imdb_id else "TMDB" }}</a>{% endif %}</p>
+{% if info.source == "TMDB" %}<p class="hint">This product uses the TMDB API but is not endorsed or certified by TMDB.</p>{% endif %}
+{% if info.original_title %}<p class="hint">{{ _("Original title") }}: {{ info.original_title }}</p>{% endif %}
 {% if not info.full %}<p class="note">{{ _("Only the basic data is available without an OMDb key.") }} <a href="/settings/lookup">{{ _("Add a key") }}</a> {{ _("to also take over the plot, genres, directors, the rating and the runtime.") }}</p>{% endif %}
 
-<form class="panel form" method="post" action="/movies/{{ item.id }}/lookup/{{ info.imdb_id }}" data-busy="{{ _('Applying the changes…') }}">
+<form class="panel form" method="post" action="/movies/{{ item.id }}/lookup/{{ ref }}" data-busy="{{ _('Applying the changes…') }}">
   <table class="diff">
-    <thead><tr><th></th><th>{{ _("Currently") }}</th><th>{{ _("From IMDb") }}</th></tr></thead>
+    <thead><tr><th></th><th>{{ _("Currently") }}</th><th>{{ _("From TMDB") if info.source == "TMDB" else _("From IMDb") }}</th></tr></thead>
     <tbody>
       <tr><td><label class="check"><input type="checkbox" name="title" value="1" {{ "checked" if info.title and info.title != item.title and movie.subtype == "movie" }}> {{ _("Title") }}</label></td><td>{{ item.title }}</td><td>{{ info.title }}{% if info.year %} ({{ info.year }}){% endif %}</td></tr>
       {% if info.plot %}<tr><td><label class="check"><input type="checkbox" name="plot" value="1" {{ "checked" if not item.description }}> {{ _("Description") }}</label></td><td>{{ item.description or "—" }}</td><td>{{ info.plot }}</td></tr>{% endif %}
@@ -18,7 +20,7 @@
           <td>{% for k, v in rows %}<div><span class="muted">{{ k }}:</span> {{ v }}</div>{% else %}—{% endfor %}</td></tr>
       {% if info.poster %}<tr><td><label class="check"><input type="checkbox" name="poster" value="1" checked> {{ _("Poster as card image") }}</label></td>
           <td>{% if item.has_card %}<img class="mini" src="/card/{{ item.id }}?v={{ (item.updated_at * 1000)|int }}" alt="">{% elif item.has_thumb %}<img class="mini" src="/thumb/{{ item.id }}?v={{ (item.updated_at * 1000)|int }}" alt="">{% else %}—{% endif %}</td>
-          <td><img class="mini poster" src="/movies/{{ item.id }}/lookup/{{ info.imdb_id }}/poster" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'), {textContent: {{ _('No poster available for this title')|tojson|forceescape }}}))"></td></tr>{% endif %}
+          <td><img class="mini poster" src="/movies/{{ item.id }}/lookup/{{ ref }}/poster" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'), {textContent: {{ _('No poster available for this title')|tojson|forceescape }}}))"></td></tr>{% endif %}
     </tbody>
   </table>
   {% if movie.subtype != "movie" %}<p class="hint">{{ _("This is a parody or a synchro, so your own title is kept unless you tick it. The IMDb title is saved as the original film.") }}</p>{% endif %}

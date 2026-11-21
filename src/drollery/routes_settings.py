@@ -69,7 +69,24 @@ OMDB_KEY = re.compile(r"^[A-Za-z0-9]{4,40}$")
 
 @router.get("/lookup")
 def lookup_page(request: Request):
-    return render(request, "settings_lookup.html", tab="lookup", has_key=imdb.has_key(), enabled=get_settings().metadata_lookup)
+    return render(request, "settings_lookup.html", tab="lookup", has_key=imdb.has_key(), has_tmdb=imdb.has_tmdb(), enabled=get_settings().metadata_lookup,
+                  language_name=i18n.languages().get(i18n.current(), ""))
+
+
+TMDB_KEY = re.compile(r"^[0-9a-f]{32}$")
+
+
+@router.post("/lookup/tmdb")
+def lookup_tmdb_save(tmdb_key: str = Form(""), remove: str = Form("")):
+    """The TMDB key is write-only too: stored, never shown again, never put into a page, a log or an error."""
+    if remove:
+        accounts.set_setting(imdb.TMDB_KEY_SETTING, None)
+        return flash_redirect("/settings/lookup", t("TMDB key removed"))
+    key = tmdb_key.strip().lower()
+    if not TMDB_KEY.match(key):
+        return flash_redirect("/settings/lookup", t("That does not look like a TMDB key (32 letters and digits)"), "error")
+    accounts.set_setting(imdb.TMDB_KEY_SETTING, key)
+    return flash_redirect("/settings/lookup", t("TMDB key saved"))
 
 
 @router.post("/lookup")

@@ -53,7 +53,7 @@
         {% if movie_facts.directors %}<dt>{{ _("Directors") }}</dt><dd>{{ movie_facts.directors|join(", ") }}</dd>{% endif %}
         {% if movie_facts.cast %}<dt>{{ _("Cast") }}</dt><dd>{{ movie_facts.cast|join(", ") }}</dd>{% endif %}
         {% if movie_facts.genres %}<dt>{{ _("Genres") }}</dt><dd class="chips">{% for g in movie_facts.genres %}<a href="/?q={{ g|urlencode }}">{{ g }}</a>{% endfor %}</dd>{% endif %}
-        {% if movie_facts.rating %}<dt>{{ _("IMDb rating") }}</dt><dd>{{ "%.1f"|format(movie_facts.rating) }} / 10</dd>{% endif %}
+        {% if movie_facts.rating %}<dt>{{ _("TMDB rating") if movie_facts.rating_source == "TMDB" else _("IMDb rating") }}</dt><dd>{{ "%.1f"|format(movie_facts.rating) }} / 10</dd>{% endif %}
         {% if movie_facts.runtime %}<dt>{{ _("Runtime") }}</dt><dd>{{ _("{n} min", n=movie_facts.runtime) }}</dd>{% endif %}
         {% if movie_facts.language %}<dt>{{ _("Language") }}</dt><dd>{{ movie_facts.language }}</dd>{% endif %}
         {% if movie_facts.country %}<dt>{{ _("Country") }}</dt><dd>{{ movie_facts.country }}</dd>{% endif %}
