@@ -95,5 +95,6 @@ def test_existing_gifs_move_to_the_new_kind_when_the_app_starts(client):
 
 def test_the_new_name_is_translated(library):
     client, _, _ = library
-    client.post("/settings/profile", data={"email": "", "language": "pl"})
-    assert "GIF-y <i>1</i>" in client.get("/").text
+    client.post("/settings/profile", data={"email": "", "language": "de"})
+    page = client.get("/").text
+    assert "GIFs <i>1</i>" in page and "Bilder <i>1</i>" in page            # GIFs have their own filter, apart from the pictures

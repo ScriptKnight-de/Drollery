@@ -43,7 +43,3 @@ def test_the_new_names_are_translated(library):
     library.post("/settings/profile", data={"email": "", "language": "de"})
     html = library.get("/").text
     assert "Clips <i>1</i>" in html and "Sounds <i>1</i>" in html and "Bilder <i>1</i>" in html
-    library.post("/settings/profile", data={"email": "", "language": "es"})
-    assert "Sonidos <i>1</i>" in library.get("/").text
-    library.post("/settings/profile", data={"email": "", "language": "pl"})
-    assert "Dźwięki <i>1</i>" in library.get("/").text and "Klipy <i>1</i>" in library.get("/").text

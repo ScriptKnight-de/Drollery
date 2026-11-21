@@ -26,7 +26,7 @@ TMDB_PAGE = "https://www.themoviedb.org/"
 TMDB_KEY_SETTING = "tmdb_key"
 TMDB_KEY = re.compile(r"^[0-9a-f]{32}$")
 REF = re.compile(r"^(tt\d{6,10}|[mt]\d{1,9})$")      # an IMDb id, or a TMDB movie (m603) or series (t1399)
-LOCALES = {"en": "en-US", "de": "de-DE", "es": "es-ES", "fr": "fr-FR", "it": "it-IT", "nl": "nl-NL", "pl": "pl-PL", "sv": "sv-SE", "el": "el-GR"}
+LOCALES = {"en": "en-US", "de": "de-DE"}            # Drollery speaks English and German, so that is what TMDB is asked for
 OMDB = "https://www.omdbapi.com/"
 TITLE_PAGE = "https://www.imdb.com/title/"
 IMDB_ID = re.compile(r"^tt\d{6,10}$")
@@ -290,6 +290,10 @@ def _tmdb_full(ref: str, loc: str, tk: str) -> Title | None:
     else:
         ref_tmdb, imdb_hint = ref, ""
     info = _tmdb_title(ref_tmdb, loc, tk)
+    if loc != "en-US" and (not info.plot or not info.genres):          # no translation in this language: the English text fills the gap
+        english = _tmdb_title(ref_tmdb, "en-US", tk)
+        info.plot = info.plot or english.plot
+        info.genres = info.genres or english.genres
     if not info.imdb_id and imdb_hint:
         info.imdb_id = imdb_hint
     omdb_key = key()

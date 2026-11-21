@@ -420,8 +420,7 @@ def use_tmdb(client, key=TMDB_KEY):
 
 
 def test_the_languages_map_to_tmdbs_codes():
-    assert [imdb.locale(c) for c in ("de", "en", "es", "fr", "it", "nl", "pl", "sv", "el", "xx")] == \
-        ["de-DE", "en-US", "es-ES", "fr-FR", "it-IT", "nl-NL", "pl-PL", "sv-SE", "el-GR", "en-US"]
+    assert [imdb.locale(c) for c in ("de", "en", "fr", "xx")] == ["de-DE", "en-US", "en-US", "en-US"]      # Drollery speaks English and German
 
 
 def test_the_tmdb_key_is_checked_stored_and_never_shown(client):
@@ -462,10 +461,10 @@ def test_the_language_follows_the_tool_and_answers_are_cached_per_language(clien
     use_tmdb(client)
     add(client, clip_bytes, title="Mine")
     mid = movie_id(client)
-    for code, expect in (("de", "de-DE"), ("fr", "fr-FR"), ("en", "en-US"), ("de", "de-DE")):
+    for code in ("de", "en", "de"):
         set_language(client, code)
         client.get(f"/movies/{mid}/lookup", params={"run": 1, "q": "Brian"})
-    assert [c["params"]["language"] for c in fake.tmdb_calls] == ["de-DE", "fr-FR", "en-US"]    # the second German search came from the cache
+    assert [c["params"]["language"] for c in fake.tmdb_calls] == ["de-DE", "en-US"]            # the second German search came from the cache
 
 
 def test_the_review_shows_german_details_with_a_tmdb_rating(client, clip_bytes, fake):
@@ -565,3 +564,42 @@ def test_tmdb_is_credited_where_its_data_is_shown(client, clip_bytes, fake):
     add(client, clip_bytes, title="Mine")
     mid = movie_id(client)
     assert credit in client.get(f"/movies/{mid}/lookup/m603").text
+
+
+def test_the_scraper_uses_the_language_chosen_for_the_page_on_every_step(client, clip_bytes, fake):
+    use_tmdb(client)
+    add(client, clip_bytes, title="Mine")
+    mid = movie_id(client)
+    for code, locale_code, hint in (("de", "de-DE", "Ergebnisse auf Deutsch"), ("en", "en-US", "Results in English")):
+        fake.tmdb_calls.clear()
+        metadata._cache.clear()
+        set_language(client, code)
+        page = client.get(f"/movies/{mid}/lookup", params={"run": 1, "q": "Brian"}).text
+        client.get(f"/movies/{mid}/lookup/m603")
+        client.post(f"/movies/{mid}/lookup/m603", data={"details": "1"})
+        assert {c["params"]["language"] for c in fake.tmdb_calls if c["path"] in ("/search/multi", "/movie/603")} == {locale_code}, code
+        assert hint in page
+
+
+def test_missing_translations_are_filled_from_the_english_text(client, clip_bytes, fake):
+    use_tmdb(client)
+    add(client, clip_bytes, title="Mine")
+    mid = movie_id(client)
+    original = fake.tmdb_movie
+    def by_language(path, params, req):
+        fake.tmdb_calls.append({"path": path, "params": dict(params)})
+        if path == "/movie/603" and params.get("language") == "de-DE":
+            return httpx.Response(200, json={**original, "overview": "", "genres": []}, request=req)     # no German text for this film
+        if path == "/movie/603":
+            return httpx.Response(200, json={**original, "overview": "An English plot.", "genres": [{"name": "Comedy"}]}, request=req)
+        fake.tmdb_calls.pop()                                              # the original records it itself
+        return Fake.tmdb(fake, path, params, req)
+    fake.tmdb = by_language
+    set_language(client, "de")
+    page = client.get(f"/movies/{mid}/lookup/m603").text
+    assert "An English plot." in page and "Comedy" in page and "Das Leben des Brian" in page            # the title is still the German one
+    fake.tmdb_calls.clear()
+    metadata._cache.clear()
+    set_language(client, "en")
+    client.get(f"/movies/{mid}/lookup/m603")
+    assert [c["params"]["language"] for c in fake.tmdb_calls if c["path"] == "/movie/603"] == ["en-US"]   # nothing extra to fetch in English

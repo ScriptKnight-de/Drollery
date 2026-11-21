@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from drollery import accounts, i18n
+from drollery import accounts, db, i18n
 from test_share import link_token, make_item
 
 DE = {"accept-language": "de-DE,de;q=0.9,en;q=0.8"}
@@ -63,7 +63,7 @@ def test_t_falls_back_to_english_and_formats():
 
 def test_accept_language_picks_the_best_supported_language():
     pick = i18n.from_accept_language
-    assert pick("de-AT,de;q=0.9,en;q=0.8") == "de" and pick("ja, en;q=0.5") == "en" and pick("ja, de;q=0.4") == "de" and pick("fr-CA, de;q=0.4") == "fr"
+    assert pick("de-AT,de;q=0.9,en;q=0.8") == "de" and pick("ja, en;q=0.5") == "en" and pick("ja, de;q=0.4") == "de" and pick("fr-CA, de;q=0.4") == "de" and pick("fr, es;q=0.8") == "en"
     assert pick("") == "en" and pick("xx") == "en" and pick("de;q=0") == "en" and pick("de;q=abc") == "en"
     assert i18n.normalize("DE_ch") == "de" and i18n.normalize("klingon") == "" and i18n.normalize("en-GB") == "en"
     assert list(i18n.languages())[0] == "en" and i18n.languages()["de"] == "Deutsch"
@@ -212,22 +212,63 @@ def test_every_language_has_a_flag_that_ships_and_shows_in_the_menu(anon):
     assert menu.count('class="flag"') == len(i18n.languages())
 
 
-def test_plural_rules_of_the_languages_that_need_more_than_one_or_other():
-    pl = lambda n: i18n.plural_index("pl", n)                                    # noqa: E731
+@pytest.fixture()
+def extra_languages(monkeypatch):
+    """Two made-up languages with the plural rules the machinery is there for (as Polish and French have them), so the rules stay
+    tested although Drollery itself only ships English and German."""
+    import sys
+    import types
+    def make(name, forms, rule, messages):
+        mod = types.ModuleType(f"drollery.locales.{name}")
+        mod.NAME, mod.FLAG, mod.MESSAGES, mod.FORMS, mod.plural = name.upper(), "de", messages, forms, staticmethod(rule)
+        mod.plural = rule
+        monkeypatch.setitem(sys.modules, f"drollery.locales.{name}", mod)
+        i18n._load()
+        monkeypatch.setitem(i18n._catalogs, name, {"name": mod.NAME, "messages": messages})
+    make("zp", 3, lambda n: 0 if n == 1 else 1 if 2 <= n % 10 <= 4 and not 12 <= n % 100 <= 14 else 2,
+         {"{n} hour": ("{n} godzina", "{n} godziny", "{n} godzin")})
+    make("zf", 2, lambda n: 0 if n in (0, 1) else 1, {"{n} day": ("{n} jour", "{n} jours")})
+
+
+def test_plural_rules_of_the_languages_that_need_more_than_one_or_other(extra_languages):
+    pl = lambda n: i18n.plural_index("zp", n)                                    # noqa: E731
     assert [pl(n) for n in (1, 2, 4, 5, 12, 14, 21, 22, 25, 112, 0)] == [0, 1, 1, 2, 2, 2, 2, 1, 2, 2, 2]
-    assert i18n.forms("pl") == 3 and i18n.forms("de") == 2 and i18n.forms("en") == 2
-    assert [i18n.plural_index("fr", n) for n in (0, 1, 2)] == [0, 0, 1]          # French: zero is singular
-    token = i18n.set_language("pl")
+    assert i18n.forms("zp") == 3 and i18n.forms("de") == 2 and i18n.forms("en") == 2
+    assert [i18n.plural_index("zf", n) for n in (0, 1, 2)] == [0, 0, 1]          # zero counts as singular there
+    token = i18n.set_language("zp")
     try:
         got = [i18n.tn("{n} hour", "{n} hours", n) for n in (1, 2, 5, 12, 22)]
     finally:
         i18n._current.reset(token)
     assert got == ["1 godzina", "2 godziny", "5 godzin", "12 godzin", "22 godziny"]
-    token = i18n.set_language("fr")
+    token = i18n.set_language("zf")
     try:
         assert i18n.tn("{n} day", "{n} days", 0) == "0 jour" and i18n.tn("{n} day", "{n} days", 2) == "2 jours"
     finally:
         i18n._current.reset(token)
+
+
+def test_only_english_and_german_are_offered(client):
+    assert list(i18n.languages()) == ["en", "de"] and i18n.LOCALES == ("de",)
+    menu = client.get("/").text.split('id="lang-menu"')[1].split("</details>")[0]
+    assert menu.count('class="flag"') == 2 and 'value="de"' in menu and 'value="en"' in menu
+    for gone in ("es", "fr", "it", "nl", "pl", "sv", "el"):
+        assert f'value="{gone}"' not in menu
+    root = Path(__file__).parent.parent
+    assert sorted(p.name for p in (root / "src/drollery/templates/flags").glob("*.svg")) == ["de.svg", "gb.svg"]
+    assert sorted(p.name for p in (root / "src/drollery/locales").glob("*.py")) == ["__init__.py", "de.py"]
+
+
+def test_a_removed_language_in_a_cookie_an_account_or_a_browser_falls_back_instead_of_breaking(client):
+    from drollery import accounts
+    with db.tx() as c:
+        c.execute("UPDATE users SET language='fr'")                                  # an account from when French existed
+    assert "Library" in client.get("/").text or "Search" in client.get("/").text      # English
+    page = client.get("/", headers={"Cookie": "drollery_lang=pl"}).text
+    assert "<html lang=\"en\"" in page
+    assert i18n.from_accept_language("pl, es;q=0.9, de;q=0.5") == "de"                # the next best language the browser lists
+    assert i18n.normalize("el") == "" and i18n.normalize("sv-SE") == ""
+    assert client.post("/settings/profile", data={"email": "", "language": "it"}, follow_redirects=True).status_code == 200
 
 
 @pytest.mark.parametrize("code", i18n.LOCALES)
@@ -254,5 +295,6 @@ def test_every_page_renders_in_every_language(client, code):
 def test_language_menu_lists_every_language_with_its_own_name(anon):
     accounts.create_user("boss", "a-long-enough-pass")
     menu = anon.get("/login").text.split('id="lang-menu"')[1].split("</details>")[0]
-    for name in ("English", "Deutsch", "Español", "Français", "Italiano", "Nederlands", "Polski", "Svenska", "Ελληνικά"):
+    for name in ("English", "Deutsch"):
         assert f"<span>{name}</span>" in menu, name
+    assert menu.count("<span>") == 2

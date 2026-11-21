@@ -750,4 +750,5 @@ MESSAGES = {
     "TMDB key saved": "TMDB-Schlüssel gespeichert",
     "TMDB rating": "TMDB-Bewertung",
     "TV series": "Serie",
+    "Results in {language}, the language chosen for this page": "Ergebnisse auf {language}, der für diese Seite gewählten Sprache",
 }

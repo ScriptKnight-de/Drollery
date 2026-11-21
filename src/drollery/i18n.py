@@ -17,7 +17,7 @@ from __future__ import annotations
 import contextvars
 import importlib
 
-LOCALES = ("de", "es", "fr", "it", "nl", "pl", "sv", "el")
+LOCALES = ("de",)                      # English is the key of every string, so it needs no catalog
 DEFAULT = "en"
 COOKIE = "drollery_lang"
 
