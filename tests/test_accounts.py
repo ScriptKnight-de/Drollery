@@ -405,10 +405,11 @@ def test_whisper_preset_matches_the_compose_stack():
 
 # ------------------------------------------------------------ impressum
 
-def test_impressum_is_public_and_only_linked_once_it_has_text(client, anon):
-    assert client.get("/impressum").status_code == 404 and "/impressum" not in client.get("/").text.replace("/settings/impressum", "")
+def test_impressum_is_public_and_linked_in_every_footer(client, anon):
+    assert 'class="foot"' in client.get("/").text and 'class="foot"' in anon.get("/login").text    # linked signed in or not
+    assert "not been written" in anon.get("/impressum").text
     r = client.post("/settings/impressum", data={"text": "Max Mustermann\nMusterstraße 1\n\n<script>alert(1)</script>"})
-    assert r.status_code == 200 and "Impressum saved" in r.text and 'href="/impressum"' in r.text    # footer link
+    assert r.status_code == 200 and "Impressum saved" in r.text and 'href="/impressum"' in r.text
     page = anon.get("/impressum")                                                                  # readable without signing in
     assert page.status_code == 200 and "Max Mustermann" in page.text and "<script>alert(1)" not in page.text
     assert "&lt;script&gt;" in page.text
@@ -418,6 +419,6 @@ def test_impressum_settings_need_login_and_can_be_cleared(client, anon):
     assert anon.post("/settings/impressum", data={"text": "x"}, follow_redirects=False).status_code in (303, 401, 403)
     client.post("/settings/impressum", data={"text": "Something"})
     client.post("/settings/impressum", data={"text": "  "})
-    assert accounts.get_setting("impressum") is None and client.get("/impressum").status_code == 404
+    assert accounts.get_setting("impressum") is None and "not been written" in client.get("/impressum").text
     big = client.post("/settings/impressum", data={"text": "a" * 20001})
     assert big.status_code == 422 and "too long" in big.text

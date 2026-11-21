@@ -40,7 +40,6 @@ def render(request: Request, name: str, status_code: int = 200, **ctx):
         kind, _, text = unquote(raw).partition("|")
         flash = {"kind": kind if kind in ("ok", "error") else "ok", "text": text}
     base = {"user": getattr(request.state, "user", None), "flash": flash,
-            "impressum_set": bool(accounts.get_setting("impressum")),
             "providers": {cap: aisettings.enabled(cap) for cap in aisettings.CAPS}}
     resp = templates.TemplateResponse(request, name, {**base, **ctx}, status_code=status_code)
     if raw:

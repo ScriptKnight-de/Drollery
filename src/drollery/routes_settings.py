@@ -58,7 +58,7 @@ def impressum_save(request: Request, text: str = Form("")):
         return render(request, "settings_impressum.html", status_code=422, tab="impressum", text=text[:IMPRESSUM_MAX],
                       error=f"That is too long. The limit is {IMPRESSUM_MAX} characters")
     accounts.set_setting("impressum", text or None)
-    return flash_redirect("/settings/impressum", "Impressum saved. It is linked in the footer of every page" if text else "Impressum removed")
+    return flash_redirect("/settings/impressum", "Impressum saved. It is linked in the footer of every page" if text else "Impressum cleared")
 
 
 # --------------------------------------------------------------- security
