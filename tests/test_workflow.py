@@ -116,3 +116,18 @@ def test_the_dockerfile_carries_the_labels_of_the_other_projects_and_stays_safe(
     ignored = (ROOT / ".dockerignore").read_text().split()
     for must in (".git", ".env", "data", "tests"):
         assert must in ignored, f"{must} must stay out of the image"
+
+
+def test_the_readme_tells_people_to_pull_the_image_the_workflow_publishes():
+    readme = (ROOT / "README.md").read_text()
+    ghcr = re.search(r"^  GHCR_IMAGE: (\S+)$", workflow(), re.M).group(1)
+    assert f"docker run -d --name drollery" in readme and f"{ghcr}:latest" in readme and f"{ghcr}:0.1.0" in readme
+    docker = (ROOT / "Dockerfile").read_text()
+    port = re.search(r"^EXPOSE (\d+)", docker, re.M).group(1)
+    volume = re.search(r"^VOLUME (\S+)", docker, re.M).group(1)
+    assert f"-p {port}:{port}" in readme and f"-v drollery-data:{volume}" in readme and f'"{port}:{port}"' in readme     # the commands match the image
+    assert "linux/amd64" in workflow() and "amd64" in readme and "arm64" in readme
+
+
+def test_the_changelog_mentions_the_published_image():
+    assert "ghcr.io/scriptknight-de/drollery" in (ROOT / "CHANGELOG.md").read_text()

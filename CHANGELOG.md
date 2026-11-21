@@ -26,6 +26,10 @@ First public release.
 - First-run setup code, scrypt password hashing, optional two-factor authentication with backup codes, login
   throttling, per-device API keys, and confirmation dialogs inside the app.
 
+### Distribution
+- A ready-made Docker image for `linux/amd64` and `linux/arm64` is built by CI and published to
+  `ghcr.io/scriptknight-de/drollery` (and the Forgejo registry): `latest`, the version (`0.1.0`) and the minor (`0.1`).
+
 ### Hardening
 - Links to private, loopback and link-local addresses are not fetched by default (checked when a link is added, when the
   download runs and on redirects); `allow_private_fetch` and `fetch_allow_hosts` in `config.toml` relax it on purpose.

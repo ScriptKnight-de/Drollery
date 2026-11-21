@@ -23,7 +23,36 @@ without any account at a big company.
 
 ## Get started
 
-You need a computer or server with **Docker** and **Docker Compose** (a Raspberry Pi is fine). Then:
+You need a computer or server with **Docker** (a Raspberry Pi is fine). There are two ways.
+
+**The quick way: the ready-made image.** It is built for ordinary PCs (`amd64`) and for Raspberry Pis (`arm64`), so
+nothing has to be built on your machine:
+
+```bash
+docker run -d --name drollery --restart unless-stopped -p 8080:8080 -v drollery-data:/data \
+  ghcr.io/scriptknight-de/drollery:latest
+docker logs drollery               # shows your one-time setup code
+```
+
+Prefer Compose? Save this as `compose.yml`, then run `docker compose up -d` and `docker compose logs drollery`:
+
+```yaml
+services:
+  drollery:
+    image: ghcr.io/scriptknight-de/drollery:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    volumes:
+      - drollery-data:/data
+volumes:
+  drollery-data:
+```
+
+`latest` follows the newest version on the main branch. To stay on one release, use a version such as
+`ghcr.io/scriptknight-de/drollery:0.1.0`.
+
+**Or build it yourself** from the source, which also gives you the optional Whisper container and the `.env` file:
 
 ```bash
 git clone https://forgejo.scriptknight.de/scriptknight/drollery.git
@@ -32,6 +61,8 @@ docker compose up -d --build
 docker compose logs drollery       # shows your one-time setup code
 ```
 
+Either way, then:
+
 1. Open <http://localhost:8080> (or `http://<the-server's-address>:8080` from another device).
 2. Enter the **setup code** from the log and choose a user name and a password. You are the owner of this library.
 3. Drop a few files on the page. That is all.
@@ -39,8 +70,12 @@ docker compose logs drollery       # shows your one-time setup code
 > The setup code keeps strangers from claiming your library if they find the address first. It disappears once you have
 > created your account.
 
-Everything you add lives in one Docker volume called `drollery_drollery-data` (the first part is the name of the folder
-you cloned into; see [Looking after your library](#looking-after-your-library)).
+Everything you add lives in one Docker volume: `drollery-data` with the ready-made image, or `drollery_drollery-data`
+when you built it yourself (the first part is the name of the folder you cloned into). See
+[Looking after your library](#looking-after-your-library).
+
+> The commands further down use `docker compose …`. If you started Drollery with the plain `docker run` command, use
+> `docker logs drollery`, `docker exec drollery …`, `docker stop drollery` and `docker start drollery` instead.
 
 ## A quick tour
 
@@ -159,8 +194,8 @@ Movies are never transcribed or named automatically, because they run for hours.
 
 ## Looking after your library
 
-**Where is everything?** In the Docker volume `drollery_drollery-data` (check the exact name with
-`docker volume ls`): the database, your media, thumbnails, card pictures and `config.toml`. The volume keeps your data
+**Where is everything?** In the Docker volume `drollery-data`, or `drollery_drollery-data` if you built it yourself (check
+the exact name with `docker volume ls`): the database, your media, thumbnails, card pictures and `config.toml`. The volume keeps your data
 when you update or rebuild the container. In the commands below, use your volume's name if it differs.
 
 **Back it up** (do this before big changes, and now and then):
@@ -179,7 +214,16 @@ docker run --rm -v drollery_drollery-data:/data -v "$PWD":/backup alpine \
 docker compose up -d
 ```
 
-**Update** to the newest version:
+**Update** to the newest version. With the ready-made image:
+
+```bash
+docker pull ghcr.io/scriptknight-de/drollery:latest
+docker rm -f drollery                    # removes the container only; your data stays in the volume
+docker run -d --name drollery --restart unless-stopped -p 8080:8080 -v drollery-data:/data \
+  ghcr.io/scriptknight-de/drollery:latest
+```
+
+(with the Compose file above: `docker compose pull && docker compose up -d`). If you built it yourself:
 
 ```bash
 git pull
