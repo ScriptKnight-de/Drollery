@@ -388,3 +388,14 @@ def test_qr_svg_reproduces_the_matrix_exactly_and_is_centered():
             rebuilt[int(y) - 4][int(x) - 4 + dx] = 1
     assert rebuilt == matrix                                                       # drawn exactly as encoded, nothing shifted
     assert all(not any(r[:0]) for r in matrix)
+
+
+def test_whisper_preset_matches_the_compose_stack():
+    """The UI preset and docker-compose.yml must point at the same service and model, or the one-click setup breaks."""
+    from pathlib import Path
+    compose = (Path(__file__).parent.parent / "docker-compose.yml").read_text()
+    default_model = re.search(r"WHISPER_MODEL:-([\w./-]+)\}", compose).group(1)
+    preset = next(p for p in aisettings.PRESETS if p["label"] == "Whisper server")
+    assert preset["model"] == default_model and preset["base_url"] == "http://whisper:8000/v1"
+    assert re.search(r"^  whisper:\n", compose, re.M) and 'profiles: ["whisper"]' in compose
+    assert "ports:" not in compose.split("  whisper:")[1].split("volumes:")[0]           # the server is never published to the host

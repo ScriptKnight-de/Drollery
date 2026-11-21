@@ -28,7 +28,7 @@ COMPAT = {"transcribe": ("openai", "command"), "describe": ("openai",), "ocr": (
 PRESETS = [
     {"label": "Ollama (local vision)", "type": "openai", "base_url": "http://host.docker.internal:11434/v1", "model": "moondream", "name": "Ollama vision"},
     {"label": "OpenAI", "type": "openai", "base_url": "https://api.openai.com/v1", "model": "gpt-4o-mini", "name": "OpenAI"},
-    {"label": "Whisper server", "type": "openai", "base_url": "http://whisper:8000/v1", "model": "Systran/faster-whisper-tiny", "name": "Whisper"},
+    {"label": "Whisper server", "type": "openai", "base_url": "http://whisper:8000/v1", "model": "Systran/faster-whisper-small", "name": "Whisper small"},
     {"label": "Whisper (OpenAI)", "type": "openai", "base_url": "https://api.openai.com/v1", "model": "whisper-1", "name": "OpenAI Whisper"},
     {"label": "Tesseract", "type": "tesseract", "base_url": "", "model": "", "name": "Tesseract"},
 ]

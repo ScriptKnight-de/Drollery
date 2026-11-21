@@ -45,6 +45,19 @@ docker compose exec drollery vi /data/config.toml   # or: docker cp
 docker compose restart
 ```
 
+### Local speech-to-text (Whisper) as a second container
+
+The compose file includes an optional Whisper server ([Speaches](https://github.com/speaches-ai/speaches), faster-whisper with int8 quantization on CPU), running the **small** model. It is not published to the host; Drollery reaches it at `http://whisper:8000/v1`.
+
+```bash
+echo 'COMPOSE_PROFILES=whisper' >> .env    # opt in
+docker compose up -d                       # starts whisper and downloads the model (~460 MB) once
+```
+
+Then open **Settings > AI models**, add a model with the **Whisper server** preset and assign it to **Transcription**. The model name must match `WHISPER_MODEL` (default `Systran/faster-whisper-small`; use `-tiny`, `-base`, `-medium` or `-large-v3` for other sizes). The container is capped at `WHISPER_CPUS` (default 4) and `WHISPER_MEM_LIMIT` (default 3g), and unloads the model after 10 idle minutes.
+
+**Speed depends on the CPU.** Whisper's fast int8 code needs AVX2. On a virtual machine whose CPU type hides it (e.g. a generic `QEMU Virtual CPU`), transcription runs about as fast as real time with `small`, several times slower than it should. Check with `grep -c avx2 /proc/cpuinfo`; if it prints 0, set the VM's CPU type to `host` in the hypervisor.
+
 ### AI providers
 
 Three independent capabilities, each off by default (`type = "none"`):

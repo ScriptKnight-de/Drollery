@@ -17,5 +17,41 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"   # reach an Ollama/whisper server running on the Docker host
 
+  # ---- Optional local speech-to-text: Whisper "small", int8 on CPU (Speaches / faster-whisper) --------------
+  # Off by default. Turn it on by putting COMPOSE_PROFILES=whisper in .env, then `docker compose up -d`.
+  # It is not published to the host: Drollery reaches it inside the stack at http://whisper:8000/v1
+  # (Settings > AI models > "Whisper server" preset, model name must match WHISPER_MODEL below).
+  whisper:
+    image: ghcr.io/speaches-ai/speaches:latest-cpu
+    profiles: ["whisper"]
+    restart: unless-stopped
+    environment:
+      ENABLE_UI: "false"                                  # no demo web UI, the API is all Drollery needs
+      LOG_LEVEL: info
+      WHISPER__COMPUTE_TYPE: int8                         # quantized: roughly 4x lighter and faster than float32 on CPU
+      WHISPER__TTL: "600"                                 # unload the model after 10 idle minutes to give the RAM back
+      WHISPER__CPU_THREADS: "${WHISPER_CPU_THREADS:-0}"   # 0 = let the library decide
+    volumes:
+      - whisper-models:/home/ubuntu/.cache/huggingface/hub   # downloaded models survive rebuilds
+    cpus: "${WHISPER_CPUS:-4}"                            # cap, so a transcription never starves the rest of the machine
+    mem_limit: "${WHISPER_MEM_LIMIT:-3g}"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8000/health"]
+      interval: 30s
+      timeout: 5s
+      start_period: 40s
+      retries: 3
+
+  # One-shot helper: downloads the model on first start (and is a no-op afterwards), then exits.
+  whisper-model:
+    image: ghcr.io/speaches-ai/speaches:latest-cpu
+    profiles: ["whisper"]
+    restart: "no"
+    depends_on:
+      whisper:
+        condition: service_healthy
+    entrypoint: ["sh", "-c", "curl -fsS --max-time 3600 -X POST http://whisper:8000/v1/models/${WHISPER_MODEL:-Systran/faster-whisper-small} && echo"]
+
 volumes:
   drollery-data:
+  whisper-models:
