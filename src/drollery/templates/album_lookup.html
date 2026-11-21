@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block title %}{{ _("Look up details online") }} · Drollery{% endblock %}
+{% block content %}
+<a class="back" href="/items/{{ item.id }}">{{ icon("arrow-left") }}{{ _("Back to {title}", title=item.title) }}</a>
+<div class="page-head"><h1>{{ _("Look up details online") }}</h1></div>
+<p class="muted lead">{{ _("Search MusicBrainz, a public music database, for this album. Only the title and artist in the two fields below are sent.") }}</p>
+{% if error %}<p class="note error" role="alert">{{ error }}</p>{% endif %}
+
+<form class="panel form" method="get" action="/albums/{{ item.id }}/lookup">
+  <input type="hidden" name="run" value="1">
+  <div class="duo">
+    <label>{{ _("Title") }} <input name="q" value="{{ q }}" maxlength="200"></label>
+    <label>{{ _("Artist") }} <input name="artist" value="{{ artist }}" maxlength="200"></label>
+  </div>
+  <button class="btn primary" type="submit">{{ icon("search") }}{{ _("Search") }}</button>
+</form>
+
+{% if results is not none %}
+<section class="panel stack results">
+  <h2>{{ _("Matching releases") }}</h2>
+  {% if results %}
+  <ul class="lookup-list">
+    {% for r in results %}
+    <li>
+      <a class="lookup-pick" href="/albums/{{ item.id }}/lookup/{{ r.mbid }}">
+        <b>{{ r.title }}</b>{% if r.note %} <span class="muted">({{ r.note }})</span>{% endif %}
+        <span class="muted small">{{ r.artist }}{% if r.date %} · {{ r.date }}{% endif %}{% if r.country %} · {{ r.country }}{% endif %}{% if r.label %} · {{ r.label }}{% endif %}</span>
+        <span class="muted small">{{ _("Tracks: {theirs} online, {mine} here", theirs=r.tracks, mine=mine) }}</span>
+      </a>
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="hint">{{ _("Pick the release that matches your files; you will see every change before it is applied") }}</p>
+  {% else %}<p class="muted">{{ _("No matching release found. Try fewer words, or check the artist") }}</p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}

@@ -9,6 +9,7 @@ from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from . import accounts, aisettings, i18n
+from .config import get_settings
 
 BASE = Path(__file__).parent
 templates = Jinja2Templates(directory=BASE / "templates")
@@ -59,7 +60,7 @@ def render(request: Request, name: str, status_code: int = 200, **ctx):
     if raw:
         kind, _, text = unquote(raw).partition("|")
         flash = {"kind": kind if kind in ("ok", "error") else "ok", "text": text}
-    base = {"user": getattr(request.state, "user", None), "flash": flash, "impressum_live": accounts.impressum()[1],
+    base = {"user": getattr(request.state, "user", None), "flash": flash, "impressum_live": accounts.impressum()[1], "metadata_lookup": get_settings().metadata_lookup,
             "providers": {cap: aisettings.enabled(cap) for cap in aisettings.CAPS}}
     resp = templates.TemplateResponse(request, name, {**base, **ctx}, status_code=status_code)
     if raw:

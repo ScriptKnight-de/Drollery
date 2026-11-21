@@ -32,6 +32,8 @@ class Settings(BaseModel):
     max_upload_mb: int = 500
     max_album_mb: int = 2048          # all the tracks of one album together (also the unpacked size of a ZIP)
     max_album_tracks: int = 500
+    metadata_lookup: bool = True       # offer the online album lookup (MusicBrainz + Cover Art Archive); it only runs when someone asks for it
+    metadata_user_agent: str = ""      # sent to those services; empty = just "Drollery/<version>". They ask for a contact URL here if you want to give one
     worker_concurrency: int = 1
     job_max_attempts: int = 3
     fetch_timeout: int = 900

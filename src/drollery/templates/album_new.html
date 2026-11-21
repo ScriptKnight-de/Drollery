@@ -31,6 +31,11 @@
     <input id="tags-in" name="tags" value="{{ form.tags or '' }}" placeholder="{{ _('Separate with spaces') }}" autocomplete="off">
   </div>
 
+  {% if metadata_lookup %}
+  <label class="check"><input type="checkbox" name="lookup" value="1" {{ "checked" if form.lookup }}> {{ _("After adding, look up the album online to fill in its details") }}
+    <span class="hint">{{ _("Uses MusicBrainz and the Cover Art Archive. Only the album title and artist are sent") }}</span></label>
+  {% endif %}
+
   <button class="btn primary" type="submit">{{ icon("plus") }}{{ _("Create album") }}</button>
 </form>
 <script src="/static/tagfield.js" defer></script>

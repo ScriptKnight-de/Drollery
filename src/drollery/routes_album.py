@@ -6,14 +6,15 @@ import tempfile
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse, Response
 from starlette.background import BackgroundTask
 
-from . import albums, db, i18n
+from . import albums, db, i18n, metadata
 from .albums import AlbumError, Upload
 from .config import get_settings
 from .deps import api_auth, web_auth
 from .i18n import t
+from .metadata import MetadataError
 from .web import flash_redirect, render
 
 router = APIRouter(dependencies=[Depends(web_auth)])
@@ -67,14 +68,17 @@ def new_page(request: Request):
 
 @router.post("/albums")
 async def create(request: Request, files: list[UploadFile] = File(default=[]), cover: list[UploadFile] = File(default=[]),
-                 title: str = Form(""), artist: str = Form(""), subtype: str = Form("album"), description: str = Form(""), tags: str = Form("")):
-    form = {"title": title, "artist": artist, "subtype": subtype, "description": description, "tags": tags}
+                 title: str = Form(""), artist: str = Form(""), subtype: str = Form("album"), description: str = Form(""), tags: str = Form(""),
+                 lookup: str = Form("")):
+    form = {"title": title, "artist": artist, "subtype": subtype, "description": description, "tags": tags, "lookup": lookup}
     try:
         (get_settings().tmp_dir).mkdir(parents=True, exist_ok=True)
         item_id, created = await _make(files, cover, title, artist, subtype, description, tags)
     except AlbumError as e:
         return render(request, "album_new.html", status_code=422, form=form, error=str(e))
     msg = t("Album created") if created else t("That album is already in the library")
+    if lookup and created and get_settings().metadata_lookup:      # the box on the form: go straight on to choosing the matching release
+        return flash_redirect(f"/albums/{item_id}/lookup?run=1", msg)
     return flash_redirect(f"/items/{item_id}", msg)
 
 
@@ -106,6 +110,96 @@ async def rescan(item_id: int):
         raise HTTPException(404, "album not found")
     await asyncio.to_thread(albums.rescan, item_id)
     return flash_redirect(f"/items/{item_id}#tracks", t("Order and titles read from the files again"))
+
+
+# ---------------------------------------------------------- online lookup
+
+def _lookup_album(item_id: int) -> tuple[dict, dict]:
+    if not get_settings().metadata_lookup:
+        raise HTTPException(404, "online lookup is switched off")
+    with db.tx() as c:
+        item = db.get_item(c, item_id)
+        album = albums.get(c, item_id) if item else None
+    if item is None or item["kind"] != "album":
+        raise HTTPException(404, "album not found")
+    return item, album
+
+
+def _plan(item_id: int, mbid: str):
+    """The online release and which of the album's tracks it matches (computed fresh every time, never taken from a form)."""
+    rel = metadata.release(mbid)
+    with db.tx() as c:
+        mine = albums.tracks_of(c, item_id)
+    match = metadata.match_tracks([{"id": x["id"], "title": x["title"], "duration": x["duration"]} for x in mine], rel.tracks)
+    return rel, mine, match
+
+
+@router.get("/albums/{item_id}/lookup")
+def lookup_page(request: Request, item_id: int, q: str | None = None, artist: str | None = None, run: int = 0):
+    item, album = _lookup_album(item_id)
+    q = item["title"] if q is None else q
+    artist = album["artist"] if artist is None else artist
+    results, error = None, ""
+    if run:
+        try:
+            results = metadata.search(q, artist)
+        except MetadataError as e:
+            error = str(e)
+    return render(request, "album_lookup.html", item=item, album=album, q=q, artist=artist, results=results, error=error,
+                  mine=_count(item_id))
+
+
+def _count(item_id: int) -> int:
+    with db.tx() as c:
+        return c.execute("SELECT COUNT(*) FROM tracks WHERE item_id=?", (item_id,)).fetchone()[0]
+
+
+@router.get("/albums/{item_id}/lookup/{mbid}")
+def lookup_preview(request: Request, item_id: int, mbid: str):
+    item, album = _lookup_album(item_id)
+    try:
+        rel, mine, match = _plan(item_id, mbid)
+    except MetadataError as e:
+        return flash_redirect(f"/albums/{item_id}/lookup", str(e), "error")
+    rows = [{"track": tr, "remote": rel.tracks[match[tr["id"]]] if tr["id"] in match else None} for tr in mine]
+    unmatched = len(mine) - len(match)
+    return render(request, "album_lookup_preview.html", item=item, album=album, rel=rel, rows=rows, unmatched=unmatched)
+
+
+@router.get("/albums/{item_id}/lookup/{mbid}/cover")
+def lookup_cover(item_id: int, mbid: str):
+    """The release's cover, passed through this server so the browser never talks to the lookup services itself."""
+    _lookup_album(item_id)
+    try:
+        data = metadata.cover(mbid)
+    except MetadataError:
+        raise HTTPException(502, "lookup failed") from None
+    if data is None:
+        raise HTTPException(404, "no cover")
+    return Response(data, media_type="image/jpeg" if data[:2] == b"\xff\xd8" else "image/png",
+                    headers={"Cache-Control": "private, max-age=300", "X-Content-Type-Options": "nosniff"})
+
+
+@router.post("/albums/{item_id}/lookup/{mbid}")
+async def lookup_apply(request: Request, item_id: int, mbid: str):
+    _lookup_album(item_id)
+    form = await request.form()
+    want = {k: k in form for k in ("title", "artist", "details", "cover", "tracks")}
+    try:
+        rel, mine, match = await asyncio.to_thread(_plan, item_id, mbid)
+        cover_bytes = await asyncio.to_thread(metadata.cover, mbid) if want["cover"] else None
+    except MetadataError as e:
+        return flash_redirect(f"/albums/{item_id}/lookup/{mbid}", str(e), "error")
+    titles = {}
+    if want["tracks"]:
+        for tr in mine:
+            if tr["id"] in match and f"track_{tr['id']}" in form:
+                titles[tr["id"]] = rel.tracks[match[tr["id"]]].title
+    done = await asyncio.to_thread(albums.apply_details, item_id, rel, cover_bytes, title=want["title"], artist=want["artist"],
+                                   details=want["details"], cover=want["cover"], track_titles=titles)
+    if not done:
+        return flash_redirect(f"/albums/{item_id}/lookup/{mbid}", t("Nothing was ticked, so nothing changed"), "error")
+    return flash_redirect(f"/items/{item_id}", t("Details taken over from MusicBrainz"))
 
 
 # ------------------------------------------------------------------ files

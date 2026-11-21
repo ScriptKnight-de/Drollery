@@ -330,6 +330,47 @@ def save_tracks(c, item_id: int, titles: dict[int, str], order: dict[int, int]) 
     db.reindex(c, item_id)
 
 
+def apply_details(item_id: int, rel, cover_bytes: bytes | None, *, title: bool = False, artist: bool = False, details: bool = False,
+                  cover: bool = False, track_titles: dict[int, str] | None = None) -> list[str]:
+    """Take over what the person ticked from an online release (a metadata.Release). Returns what was changed."""
+    s = get_settings()
+    done: list[str] = []
+    with db.tx() as c:
+        item = db.get_item(c, item_id)
+    if cover and cover_bytes:
+        tmp = s.tmp_dir / f"cover-{item_id}-{int(time.time())}"
+        tmp.write_bytes(cover_bytes)
+        try:
+            if media.make_cover(tmp, cover_path(item)):
+                if media.make_thumb(cover_path(item), s.thumbs_dir / f"{item['sha256']}.jpg", "image", None):
+                    done.append("cover")
+        finally:
+            tmp.unlink(missing_ok=True)
+    with db.tx() as c:
+        if "cover" in done:
+            card = get_settings().cards_dir / f"{item['sha256']}.jpg"
+            card.unlink(missing_ok=True)                      # a custom crop belonged to the old picture
+            c.execute("UPDATE items SET has_thumb=1, has_card=0, card_t=NULL, card_x=NULL, card_y=NULL, card_s=NULL WHERE id=?", (item_id,))
+        if title and rel.title:
+            c.execute("UPDATE items SET title=?, title_locked=1 WHERE id=?", (rel.title[:120], item_id))
+            done.append("title")
+        if artist and rel.artist:
+            c.execute("UPDATE albums SET artist=? WHERE item_id=?", (rel.artist[:120], item_id))
+            done.append("artist")
+        if details:
+            c.execute("UPDATE albums SET year=?, label=?, mbid=? WHERE item_id=?", (rel.year, rel.label[:120], rel.mbid, item_id))
+            c.execute("UPDATE items SET source_url=? WHERE id=?", (rel.url, item_id))
+            done.append("details")
+        for tid, name in (track_titles or {}).items():
+            if name.strip():
+                c.execute("UPDATE tracks SET title=? WHERE id=? AND item_id=?", (name.strip()[:120], tid, item_id))
+        if track_titles:
+            done.append("tracks")
+        c.execute("UPDATE items SET updated_at=? WHERE id=?", (time.time(), item_id))
+        db.reindex(c, item_id)
+    return done
+
+
 def safe_filename(text: str) -> str:
     return re.sub(r'[\\/:*?"<>|\x00-\x1f]+', "_", text).strip(" .")[:100] or "track"
 

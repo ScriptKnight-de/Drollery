@@ -48,6 +48,7 @@
       <p class="folio">{{ _("fol.") }} {{ "%03d"|format(item.id) }}</p>
       <h1>{{ item.title }}</h1>
       {% if album.artist %}<p class="muted" style="margin:-8px 0 0">{{ album.artist }}</p>{% endif %}
+      {% if album.year or album.label or album.mbid %}<p class="muted small" style="margin:-8px 0 0">{{ [album.year, album.label]|select|join(" · ") }}{% if album.mbid %}{% if album.year or album.label %} · {% endif %}<a href="{{ item.source_url }}" target="_blank" rel="noopener noreferrer">MusicBrainz</a>{% endif %}</p>{% endif %}
       <div class="cover">
         {% if item.has_thumb %}<img src="/albums/{{ item.id }}/cover" alt="{{ item.title }}">
         {% else %}<div class="nocover">{{ icon("book" if isbook else "disc") }}</div>{% endif %}
@@ -58,7 +59,8 @@
         {% if item.duration %}<span>{{ item.duration|clock }}</span>{% endif %}
         <span>{{ "%.1f"|format(item.size / 1048576) }} MB</span>
         <a href="/albums/{{ item.id }}/download">{{ icon("download") }}{{ _("Download all") }}</a>
-        {% if item.has_thumb %}<a href="/items/{{ item.id }}/card">{{ icon("crop") }}{{ _("Card image") }}{% if item.has_card %} {{ _("(custom)") }}{% endif %}</a>{% endif %}
+        {% if metadata_lookup %}<a href="/albums/{{ item.id }}/lookup?run=1">{{ icon("search") }}{{ _("Look up details online") }}</a>{% endif %}
+      {% if item.has_thumb %}<a href="/items/{{ item.id }}/card">{{ icon("crop") }}{{ _("Card image") }}{% if item.has_card %} {{ _("(custom)") }}{% endif %}</a>{% endif %}
       </p>
     </div>
 

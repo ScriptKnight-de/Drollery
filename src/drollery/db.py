@@ -38,7 +38,10 @@ CREATE INDEX IF NOT EXISTS items_created ON items(created_at DESC);
 CREATE TABLE IF NOT EXISTS albums (                   -- extra facts of an item whose kind is 'album' (a music album or an audiobook)
   item_id INTEGER PRIMARY KEY REFERENCES items(id) ON DELETE CASCADE,
   artist TEXT NOT NULL DEFAULT '',
-  subtype TEXT NOT NULL DEFAULT 'album'               -- album | audiobook
+  subtype TEXT NOT NULL DEFAULT 'album',              -- album | audiobook
+  year TEXT NOT NULL DEFAULT '',                      -- filled by the online lookup
+  label TEXT NOT NULL DEFAULT '',
+  mbid TEXT NOT NULL DEFAULT ''                       -- MusicBrainz release id the details came from
 );
 CREATE TABLE IF NOT EXISTS tracks (
   id INTEGER PRIMARY KEY,
@@ -202,11 +205,19 @@ def _migrate_shares(c: sqlite3.Connection) -> None:
         c.execute("ALTER TABLE shares ADD COLUMN track_id INTEGER REFERENCES tracks(id) ON DELETE CASCADE")
 
 
+def _migrate_albums(c: sqlite3.Connection) -> None:
+    have = {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('albums')")}
+    for col in ("year", "label", "mbid"):
+        if have and col not in have:
+            c.execute(f"ALTER TABLE albums ADD COLUMN {col} TEXT NOT NULL DEFAULT ''")
+
+
 def init() -> None:
     with tx() as c:
         _migrate_items(c)
         _migrate_users(c)
         _migrate_shares(c)
+        _migrate_albums(c)
         if "ai_tags" not in _fts_columns(c) and _fts_columns(c):       # index from before the user/AI tag split
             c.execute("DROP TABLE items_fts")
             rebuild = True
@@ -237,8 +248,8 @@ def reindex(c: sqlite3.Connection, item_id: int) -> None:
     source = f"{row['source_url']} {row['source_meta']} {row['original_name']}"
     transcript = row["transcript"]
     if row["kind"] == "album":                                      # an album is found by its artist and by its track titles
-        artist = c.execute("SELECT artist FROM albums WHERE item_id=?", (item_id,)).fetchone()
-        source += f" {artist['artist'] if artist else ''}"
+        extra = c.execute("SELECT artist, year, label FROM albums WHERE item_id=?", (item_id,)).fetchone()
+        source += f" {extra['artist']} {extra['year']} {extra['label']}" if extra else ""
         transcript += " " + " ".join(r["title"] for r in c.execute("SELECT title FROM tracks WHERE item_id=? ORDER BY position", (item_id,)))
     c.execute(
         "INSERT INTO items_fts(rowid,title,description,tags,ai_tags,transcript,ocr,source) VALUES (?,?,?,?,?,?,?,?)",

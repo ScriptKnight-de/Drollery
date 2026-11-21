@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block title %}{{ _("Review the changes") }} · Drollery{% endblock %}
+{% block content %}
+<a class="back" href="/albums/{{ item.id }}/lookup?run=1">{{ icon("arrow-left") }}{{ _("Back to the results") }}</a>
+<div class="page-head"><h1>{{ _("Review the changes") }}</h1></div>
+<p class="muted lead">{{ _("Tick what should be taken over from MusicBrainz. Nothing changes until you apply.") }} <a href="{{ rel.url }}" target="_blank" rel="noopener noreferrer">{{ icon("external") }}MusicBrainz</a></p>
+
+<form class="panel form" method="post" action="/albums/{{ item.id }}/lookup/{{ rel.mbid }}">
+  <table class="diff">
+    <thead><tr><th></th><th>{{ _("Currently") }}</th><th>{{ _("From MusicBrainz") }}</th></tr></thead>
+    <tbody>
+      <tr><td><label class="check"><input type="checkbox" name="title" value="1" {{ "checked" if rel.title and rel.title != item.title }}> {{ _("Title") }}</label></td><td>{{ item.title }}</td><td>{{ rel.title }}</td></tr>
+      <tr><td><label class="check"><input type="checkbox" name="artist" value="1" {{ "checked" if rel.artist and rel.artist != album.artist }}> {{ _("Artist") }}</label></td><td>{{ album.artist or "—" }}</td><td>{{ rel.artist or "—" }}</td></tr>
+      <tr><td><label class="check"><input type="checkbox" name="details" value="1" checked> {{ _("Year and label") }}</label></td>
+          <td>{{ ((album.year ~ " · " if album.year else "") ~ album.label) or "—" }}</td><td>{{ ((rel.year ~ " · " if rel.year else "") ~ rel.label) or "—" }}</td></tr>
+      <tr><td><label class="check"><input type="checkbox" name="cover" value="1" checked> {{ _("Cover picture") }}</label></td>
+          <td>{% if item.has_thumb %}<img class="mini" src="/albums/{{ item.id }}/cover" alt="">{% else %}—{% endif %}</td>
+          <td><img class="mini" src="/albums/{{ item.id }}/lookup/{{ rel.mbid }}/cover" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'), {textContent: {{ _('No cover available for this release')|tojson|forceescape }}}))"></td></tr>
+    </tbody>
+  </table>
+  {% if item.has_card %}<p class="hint">{{ _("A custom card crop is reset when the cover changes") }}</p>{% endif %}
+
+  <h2>{{ _("Track names") }}</h2>
+  <label class="check"><input type="checkbox" name="tracks" value="1" checked> {{ _("Take over the track names ticked below") }}</label>
+  <table class="diff">
+    <thead><tr><th></th><th>{{ _("Your track") }}</th><th>{{ _("Online") }}</th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{% if r.remote %}<input type="checkbox" name="track_{{ r.track.id }}" value="1" aria-label="{{ r.track.title }}" {{ "checked" if r.remote.title != r.track.title }}>{% endif %}</td>
+        <td>{{ r.track.position }}. {{ r.track.title }}</td>
+        <td>{% if r.remote %}{{ r.remote.title }}{% else %}<span class="muted">—</span>{% endif %}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if unmatched %}<p class="hint">{{ _n("{n} of your tracks has no match online and keeps its name", "{n} of your tracks have no match online and keep their names", unmatched) }}</p>{% endif %}
+
+  <div class="actions">
+    <button class="btn primary" type="submit">{{ icon("check") }}{{ _("Apply selected") }}</button>
+    <a class="btn" href="/items/{{ item.id }}">{{ _("Cancel") }}</a>
+  </div>
+</form>
+{% endblock %}
