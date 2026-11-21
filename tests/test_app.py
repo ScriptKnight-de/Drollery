@@ -195,3 +195,15 @@ def test_every_doodle_is_packaged_and_renders():
     names = re.search(r'\[("knight-snail".*?)\]\|random', grid).group(1)
     for name in re.findall(r'"([a-z-]+)"', names):
         assert (root / f"src/drollery/templates/doodles/{name}.svg").exists(), name
+
+
+def test_every_static_asset_referenced_by_css_exists():
+    """Backdrop tiles, wall decor and masks are referenced by url(); a missing file would silently break the look."""
+    import re
+    from pathlib import Path
+    static = Path(__file__).parent.parent / "src/drollery/static"
+    css = (static / "style.css").read_text()
+    urls = set(re.findall(r'url\("/static/([^"]+)"\)', css))
+    assert {"stone-dark.svg", "stone-light.svg", "wall-left.svg", "wall-right.svg", "banner-mask.svg"} <= urls
+    for name in urls:
+        assert (static / name).exists(), name

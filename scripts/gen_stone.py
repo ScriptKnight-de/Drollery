@@ -63,24 +63,28 @@ def stone_svg(rng, th, x, y, w, rh):
     pts = stone_points(rng, x0, y0, x1, y1)
     fill = rng.choice(th["stones"])
     out = [f'<polygon points="{poly(pts)}" fill="{fill}" stroke="{fill}" stroke-width="2" stroke-linejoin="round"/>']
-    if rng.random() < 0.55:                                           # tonal patch so no two stones read the same
+    if rng.random() < 0.85:                                           # tonal patch so no two stones read the same
         px, py = rng.uniform(x0 + 8, x1 - 8), rng.uniform(y0 + 6, y1 - 6)
         out.append(f'<ellipse cx="{px:.1f}" cy="{py:.1f}" rx="{rng.uniform(10, w / 3):.1f}" ry="{rng.uniform(5, rh / 3):.1f}" fill="{th["shade"]}" opacity="{rng.uniform(.10, .30):.2f}"/>')
     out.append(f'<polyline points="{poly(pts[6:] + pts[:3])}" fill="none" stroke="{th["hi"]}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>')
     out.append(f'<polyline points="{poly(pts[2:7])}" fill="none" stroke="{th["shade"]}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>')
-    if rng.random() < 0.22:                                           # crack
+    for _crack in range(2 if rng.random() < 0.12 else 1):
+      if rng.random() < 0.40:                                         # crack
         cx, cy = rng.uniform(x0 + 12, x1 - 12), y0 + rng.uniform(1, 5)
         seg = [(cx, cy)]
-        for _ in range(rng.randint(3, 5)):
-            cx = min(max(cx + rng.uniform(-7, 7), x0 + 6), x1 - 6); cy = min(cy + rng.uniform(5, 11), y1 - 3)
+        for _ in range(rng.randint(4, 7)):
+            cx = min(max(cx + rng.uniform(-8, 8), x0 + 6), x1 - 6); cy = min(cy + rng.uniform(5, 12), y1 - 3)
             seg.append((cx, cy))
-        out.append(f'<polyline points="{poly(seg)}" fill="none" stroke="{th["crack"]}" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>')
-    if rng.random() < 0.22:                                           # moss creeping up from the mortar
+        out.append(f'<polyline points="{poly(seg)}" fill="none" stroke="{th["crack"]}" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round"/>')
+    if rng.random() < 0.36:                                           # moss creeping up from the mortar
         mx = rng.uniform(x0 + 10, x1 - 10)
-        out.append(f'<ellipse cx="{mx:.1f}" cy="{y1 - 1:.1f}" rx="{rng.uniform(14, 26):.1f}" ry="{rng.uniform(6, 11):.1f}" fill="url(#m)"/>')
-    if rng.random() < 0.16:                                           # water stain running down
+        out.append(f'<ellipse cx="{mx:.1f}" cy="{y1 - 1:.1f}" rx="{rng.uniform(16, 34):.1f}" ry="{rng.uniform(7, 14):.1f}" fill="url(#m)"/>')
+    if rng.random() < 0.30:                                           # water stain running down
         sx = rng.uniform(x0 + 8, x1 - 20)
         out.append(f'<rect x="{sx:.1f}" y="{y0:.1f}" width="{rng.uniform(8, 18):.1f}" height="{(y1 - y0) * rng.uniform(.6, 1):.1f}" fill="url(#s)"/>')
+    if rng.random() < 0.35:                                           # grime in a corner
+        gx = rng.choice([x0 + 6, x1 - 6]); gy = rng.choice([y0 + 5, y1 - 5])
+        out.append(f'<ellipse cx="{gx:.1f}" cy="{gy:.1f}" rx="{rng.uniform(10, 22):.1f}" ry="{rng.uniform(5, 11):.1f}" fill="{th["shade"]}" opacity="{rng.uniform(.15, .35):.2f}"/>')
     return "".join(out)
 
 
