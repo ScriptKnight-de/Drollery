@@ -18,7 +18,8 @@
       hx-trigger="input changed delay:250ms from:#q, change from:.seg" hx-push-url="false">
   <div class="field grow">
     {{ icon("search") }}
-    <input id="q" type="search" name="q" value="{{ q }}" placeholder="{{ _('Search') }}" aria-label="{{ _('Search') }}" autocomplete="off">
+    <input id="q" type="search" name="q" value="{{ q }}" placeholder="{{ _('Search') }}" aria-label="{{ _('Search') }}" autocomplete="off"
+           data-suggest="/suggest" data-tags-label="{{ _('Tags') }}" data-people-label="{{ _('People') }}" role="combobox" aria-expanded="false" aria-autocomplete="list">
     <kbd>/</kbd>
   </div>
   <div class="seg" role="radiogroup" aria-label="{{ _('Type') }}">
@@ -29,16 +30,19 @@
   </div>
   <input type="hidden" name="tag" value="{{ tag }}">
   <input type="hidden" name="src" value="{{ src }}">
+  <input type="hidden" name="person" value="{{ person_id or '' }}">
 </form>
 
-{% if tag or pending %}
+{% if tag or person_row or pending %}
 <p class="status">
-  {% if tag %}<span class="pill {{ 'ai' if src == 'ai' }}">{% if src == 'ai' %}{{ icon("cpu") }}{% endif %}#{{ tag }}{% if src == 'ai' %} <small>{{ _("AI tag") }}</small>{% elif src == 'user' %} <small>{{ _("my tag") }}</small>{% endif %} <a href="/?q={{ q|urlencode }}&kind={{ kind|urlencode }}" aria-label="{{ _('Clear tag filter') }}">×</a></span>{% endif %}
+  {% if tag %}<span class="pill {{ 'ai' if src == 'ai' }}">{% if src == 'ai' %}{{ icon("cpu") }}{% endif %}#{{ tag }}{% if src == 'ai' %} <small>{{ _("AI tag") }}</small>{% elif src == 'user' %} <small>{{ _("my tag") }}</small>{% endif %} <a href="/?q={{ q|urlencode }}&kind={{ kind|urlencode }}&person={{ person_id or '' }}" aria-label="{{ _('Clear tag filter') }}">×</a></span>{% endif %}
+  {% if person_row %}<span class="pill">{{ icon("user") }}{{ person_row.name }} <a href="/?q={{ q|urlencode }}&kind={{ kind|urlencode }}&tag={{ tag|urlencode }}&src={{ src|urlencode }}" aria-label="{{ _('Clear person filter') }}">×</a></span>{% endif %}
   {% if pending %}<a href="/jobs"><span class="dot run"></span>{{ _n("{n} background job running", "{n} background jobs running", pending) }}</a>{% endif %}
 </p>
 {% endif %}
 
 <section id="grid" class="grid">{% include "grid.html" %}</section>
+<script src="/static/searchsuggest.js" defer></script>
 <script>
   var drop = document.querySelector(".drop");
   if (drop) {

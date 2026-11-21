@@ -635,4 +635,6 @@ MESSAGES = {
     "Not added to any item yet": "Δεν έχει προστεθεί ακόμη σε κανένα στοιχείο",
     "Birthday": "Γενέθλια",
     "The birthday must be a real date in the past": "Τα γενέθλια πρέπει να είναι πραγματική ημερομηνία στο παρελθόν",
+    "Tags": "Ετικέτες",
+    "Clear person filter": "Καθαρισμός φίλτρου ατόμου",
 }

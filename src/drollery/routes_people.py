@@ -83,12 +83,28 @@ def new_page(request: Request, item: int = 0, name: str = ""):
     return render(request, "person_new.html", form=_form(name=name[:people.MAX_NAME]), item=item if item > 0 else 0, genders=GENDER_LABELS, today=date.today().isoformat())
 
 
+@router.get("/suggest")
+def suggest(q: str = ""):
+    """What the search bar offers while typing: matching tags and people."""
+    with db.tx() as c:
+        tags = db.suggest_tags(c, q.lstrip("#"), 5)
+        found = people.search(c, q, 5)
+    return JSONResponse({
+        "tags": tags,
+        "people": [{"id": p["id"], "name": p["name"], "note": _note(p), "picture": f"/people/{p['id']}/picture?v={int(p['updated_at'] * 1000)}" if p["has_picture"] else ""} for p in found],
+    }, headers={"Cache-Control": "no-store"})
+
+
+def _note(p: dict) -> str:
+    return " · ".join(x for x in (str(p["age"]) if p["age"] is not None else "", t(GENDER_LABELS[p["gender"]]) if p["gender"] in GENDER_LABELS else "") if x)
+
+
 @router.get("/people/search")
 def search(q: str = ""):
     with db.tx() as c:
         found = people.search(c, q)
     return JSONResponse([{"id": p["id"], "name": p["name"],
-                          "note": " · ".join(x for x in (str(p["age"]) if p["age"] is not None else "", t(GENDER_LABELS[p["gender"]]) if p["gender"] in GENDER_LABELS else "") if x),
+                          "note": _note(p),
                           "picture": f"/people/{p['id']}/picture?v={int(p['updated_at'] * 1000)}" if p["has_picture"] else ""} for p in found],
                         headers={"Cache-Control": "no-store"})
 

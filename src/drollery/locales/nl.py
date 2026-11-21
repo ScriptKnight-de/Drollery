@@ -635,4 +635,6 @@ MESSAGES = {
     "Not added to any item yet": "Nog aan geen enkel item toegevoegd",
     "Birthday": "Verjaardag",
     "The birthday must be a real date in the past": "De verjaardag moet een echte datum in het verleden zijn",
+    "Tags": "Tags",
+    "Clear person filter": "Persoonsfilter wissen",
 }

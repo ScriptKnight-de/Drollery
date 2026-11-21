@@ -635,4 +635,6 @@ MESSAGES = {
     "Not added to any item yet": "Aún no está en ningún elemento",
     "Birthday": "Cumpleaños",
     "The birthday must be a real date in the past": "El cumpleaños debe ser una fecha real del pasado",
+    "Tags": "Etiquetas",
+    "Clear person filter": "Quitar el filtro de persona",
 }

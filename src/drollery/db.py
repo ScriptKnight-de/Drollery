@@ -409,6 +409,17 @@ def fts_query(q: str) -> str:
     return " ".join(f'"{w}"*' for w in words)
 
 
+def suggest_tags(c: sqlite3.Connection, q: str, limit: int = 5) -> list[dict]:
+    """Tags (yours and the AI's) that contain what was typed, with how many items carry each; ones that start with it come first."""
+    q = normalize_tag(q)
+    if not q:
+        return []
+    like = q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    rows = c.execute("SELECT tag, COUNT(DISTINCT item_id) AS n FROM tags WHERE tag LIKE ? ESCAPE '\\' GROUP BY tag "
+                     "ORDER BY (tag LIKE ? ESCAPE '\\') DESC, n DESC, tag LIMIT ?", (f"%{like}%", f"{like}%", limit)).fetchall()
+    return [{"tag": r["tag"], "n": r["n"]} for r in rows]
+
+
 def search(c: sqlite3.Connection, q: str = "", kind: str = "", tag: str = "",
            limit: int = 40, offset: int = 0, tag_source: str = "", person: int = 0) -> list[dict]:
     where, args = [], []

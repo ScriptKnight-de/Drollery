@@ -35,7 +35,7 @@
 {% else %}
 <div class="empty">
   {% include "doodles/" ~ (["knight-snail","dragon-treasure","wizard","princess-tower","king-queen","burglar","forest","castle"]|random) ~ ".svg" %}
-  {% if q or tag or kind %}
+  {% if q or tag or kind or person_id %}
   <h2>{{ _("No loot found") }}</h2>
   <p>{{ _("Try fewer words, or clear the filter") }}</p>
   {% else %}
@@ -45,6 +45,6 @@
 </div>
 {% endfor %}
 {% if more %}
-<div class="more" hx-get="/?q={{ q|urlencode }}&kind={{ kind|urlencode }}&tag={{ tag|urlencode }}&src={{ src|urlencode }}&page={{ page + 1 }}"
+<div class="more" hx-get="/?q={{ q|urlencode }}&kind={{ kind|urlencode }}&tag={{ tag|urlencode }}&src={{ src|urlencode }}&person={{ person_id or '' }}&page={{ page + 1 }}"
      hx-trigger="revealed" hx-swap="outerHTML"></div>
 {% endif %}

@@ -635,4 +635,6 @@ MESSAGES = {
     "Not added to any item yet": "Har inte lagts till på något objekt än",
     "Birthday": "Födelsedag",
     "The birthday must be a real date in the past": "Födelsedagen måste vara ett riktigt datum i det förflutna",
+    "Tags": "Taggar",
+    "Clear person filter": "Rensa personfiltret",
 }

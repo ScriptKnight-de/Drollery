@@ -297,18 +297,20 @@ def api_jobs(limit: int = 50):
 # --------------------------------------------------------------------- web
 
 @app.get("/", dependencies=[Depends(web_auth)])
-def home(request: Request, q: str = "", kind: str = "", tag: str = "", src: str = "", page: int = 0):
+def home(request: Request, q: str = "", kind: str = "", tag: str = "", src: str = "", page: int = 0, person: int = 0):
     page = max(page, 0)
     src = src if src in ("user", "ai") else ""
     with db.tx() as c:
-        items = db.search(c, q, kind, tag, PAGE, page * PAGE, src)
+        person_row = people.get(c, person) if person > 0 else None
+        person = person_row["id"] if person_row else 0                 # an unknown person is simply not a filter
+        items = db.search(c, q, kind, tag, PAGE, page * PAGE, src, person)
         counts = {r["kind"]: r["n"] for r in c.execute("SELECT kind, COUNT(*) n FROM items GROUP BY kind")}
         pending = c.execute("SELECT COUNT(*) FROM jobs WHERE status IN ('queued','running')").fetchone()[0]
         album_ids = [i["id"] for i in items if i["kind"] == "album"]
         album_info = albums.summaries(c, album_ids)
         track_hits = albums.track_hits(c, q, album_ids) if q.strip() else {}
     tpl = "grid.html" if request.headers.get("hx-request") and not request.headers.get("hx-boosted") else "index.html"
-    return render(request, tpl, items=items, q=q, kind=kind, tag=tag, src=src, page=page, more=len(items) == PAGE, counts=counts, pending=pending, album_info=album_info, track_hits=track_hits)
+    return render(request, tpl, items=items, q=q, kind=kind, tag=tag, src=src, person_id=person, person_row=person_row, page=page, more=len(items) == PAGE, counts=counts, pending=pending, album_info=album_info, track_hits=track_hits)
 
 
 @app.post("/add", dependencies=[Depends(web_auth)])
