@@ -517,3 +517,10 @@ def test_a_framed_page_has_no_header_and_ends_by_telling_the_page_behind(client,
     done = client.get(f"/items/{album}", headers=framed).text                    # where Cancel and Save lead
     assert "drollery-done" in done and "tracklist" not in done
     assert "tracklist" in client.get(f"/items/{album}").text                    # opened normally it is still the album page
+
+
+def test_the_popup_cookie_frames_pages_too(client, album):
+    """Browsers send no frame header over plain http, so the popup marks its requests with a cookie."""
+    album = album[0]
+    assert '<body class="embed">' in client.get(f"/albums/{album}/lookup", cookies={"drollery_embed": "1"}).text
+    assert "drollery-done" in client.get(f"/items/{album}", cookies={"drollery_embed": "1"}).text

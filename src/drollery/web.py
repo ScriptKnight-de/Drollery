@@ -69,7 +69,7 @@ def render(request: Request, name: str, status_code: int = 200, **ctx):
     for key in ("error", "ok"):
         if isinstance(ctx.get(key), str):
             ctx[key] = i18n.t(ctx[key])
-    embed = request.headers.get("sec-fetch-dest") == "iframe"      # shown inside a popup on the album page
+    embed = request.headers.get("sec-fetch-dest") == "iframe" or "drollery_embed" in request.cookies     # shown inside a popup (browsers send no frame header on plain http, so popup.js also sets a cookie while the popup is open)
     if embed and name in ("album.html", "item.html") and status_code == 200:
         return templates.TemplateResponse(request, "embed_done.html", {})      # the popup's job is done; leaves the flash message for the page behind
     raw = request.cookies.get(FLASH)

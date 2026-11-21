@@ -6,21 +6,26 @@
   if (!dlg || !dlg.showModal) return;
   var frame = document.getElementById("pp-frame"), title = document.getElementById("pp-title");
 
+  function mark(on) { document.cookie = "drollery_embed=" + (on ? "1" : "") + "; path=/; SameSite=Lax" + (on ? "" : "; max-age=0"); }
+  mark(false);
+
   document.addEventListener("click", function (e) {
     var link = e.target.closest && e.target.closest("[data-popup]");
     if (link && !e.ctrlKey && !e.metaKey && !e.shiftKey && e.button === 0) {
       e.preventDefault();
       title.textContent = link.dataset.popup;
       frame.title = link.dataset.popup;
+      mark(true);
       frame.src = link.href;
       dlg.showModal();
       return;
     }
     if (e.target === dlg || (e.target.closest && e.target.closest("[data-close]") && dlg.contains(e.target))) dlg.close();
   });
-  dlg.addEventListener("close", function () { frame.src = "about:blank"; });
+  dlg.addEventListener("close", function () { mark(false); frame.src = "about:blank"; });
   window.addEventListener("message", function (e) {
     if (e.origin !== location.origin || e.source !== frame.contentWindow || e.data !== "drollery-done") return;
+    mark(false);
     location.reload();
   });
 })();
