@@ -11,6 +11,14 @@ mimetypes.add_type("audio/ogg", ".opus")
 mimetypes.add_type("audio/mp4", ".m4a")
 mimetypes.add_type("video/webm", ".webm")
 mimetypes.add_type("video/quicktime", ".mov")
+# Containers that downloaders and phones commonly produce but that Python's mimetypes (in a slim container) doesn't know.
+for _ext, _mime in {
+    ".mkv": "video/x-matroska", ".mka": "audio/x-matroska", ".m4v": "video/x-m4v", ".ogv": "video/ogg", ".ogg": "audio/ogg",
+    ".flv": "video/x-flv", ".ts": "video/mp2t", ".mts": "video/mp2t", ".m2ts": "video/mp2t", ".3gp": "video/3gpp", ".3g2": "video/3gpp2",
+    ".wmv": "video/x-ms-wmv", ".mpg": "video/mpeg", ".mpeg": "video/mpeg", ".weba": "audio/webm", ".flac": "audio/flac",
+    ".aac": "audio/aac", ".wma": "audio/x-ms-wma", ".avif": "image/avif", ".jfif": "image/jpeg",
+}.items():
+    mimetypes.add_type(_mime, _ext)
 
 KINDS = ("image", "video", "audio")
 # Formats that can carry scripts. Served from this origin they would run with the owner's session, so they are refused.

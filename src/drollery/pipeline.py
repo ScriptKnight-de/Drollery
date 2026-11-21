@@ -197,7 +197,10 @@ def job_fetch(job: dict) -> None:
         meta: dict[Path, dict] = {}
         files = _direct_download(url, td)
         if not files:
+            # Prefer H.264/AAC up to 1080p and always merge to .mp4: it plays in every browser. Without this, YouTube
+            # pairs like H.264 video + Opus audio are merged into .mkv, which many browsers cannot play.
             r = _run_tool(["yt-dlp", "--no-playlist", "--no-warnings", "--write-info-json",
+                           "-S", "res:1080,vcodec:h264,acodec:aac", "--merge-output-format", "mp4",
                            "--max-filesize", f"{s.max_upload_mb}M",
                            "-o", str(td / "%(title).80B [%(id)s].%(ext)s"), url], s.fetch_timeout)
             err1 = r.stderr.strip()[-1500:]
@@ -218,11 +221,12 @@ def job_fetch(job: dict) -> None:
                 if not files:
                     raise providers.ProviderError(
                         f"nothing downloadable found. yt-dlp: {err1 or '-'} | gallery-dl: {r.stderr.strip()[-1500:] or '-'}")
-        imported = 0
+        imported, skipped = 0, []
         for f in files[: s.fetch_max_files]:
             try:
                 media.guess(f.name)
             except media.MediaError:
+                skipped.append(f.name)
                 continue
             d = meta.get(f, {})
             who = " ".join(str(x) for x in (d.get("uploader"), d.get("channel")) if x)
@@ -236,7 +240,8 @@ def job_fetch(job: dict) -> None:
                     db.reindex(c, item_id)
             imported += 1
         if not imported:
-            raise providers.ProviderError("downloaded files were not images, video or audio")
+            names = ", ".join(skipped[:5]) or "(no files)"
+            raise providers.ProviderError(f"downloaded files were not recognised as images, video or audio: {names}")
 
 
 HANDLERS = {"fetch": job_fetch, "transcribe": job_transcribe, "describe": job_describe, "ocr": job_ocr}
