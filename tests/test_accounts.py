@@ -401,3 +401,23 @@ def test_whisper_preset_matches_the_compose_stack():
     assert preset["model"] == default_model and preset["base_url"] == "http://whisper:8000/v1"
     assert re.search(r"^  whisper:\n", compose, re.M) and 'profiles: ["whisper"]' in compose
     assert "ports:" not in compose.split("  whisper:")[1].split("volumes:")[0]           # the server is never published to the host
+
+
+# ------------------------------------------------------------ impressum
+
+def test_impressum_is_public_and_only_linked_once_it_has_text(client, anon):
+    assert client.get("/impressum").status_code == 404 and "/impressum" not in client.get("/").text.replace("/settings/impressum", "")
+    r = client.post("/settings/impressum", data={"text": "Max Mustermann\nMusterstraße 1\n\n<script>alert(1)</script>"})
+    assert r.status_code == 200 and "Impressum saved" in r.text and 'href="/impressum"' in r.text    # footer link
+    page = anon.get("/impressum")                                                                  # readable without signing in
+    assert page.status_code == 200 and "Max Mustermann" in page.text and "<script>alert(1)" not in page.text
+    assert "&lt;script&gt;" in page.text
+
+
+def test_impressum_settings_need_login_and_can_be_cleared(client, anon):
+    assert anon.post("/settings/impressum", data={"text": "x"}, follow_redirects=False).status_code in (303, 401, 403)
+    client.post("/settings/impressum", data={"text": "Something"})
+    client.post("/settings/impressum", data={"text": "  "})
+    assert accounts.get_setting("impressum") is None and client.get("/impressum").status_code == 404
+    big = client.post("/settings/impressum", data={"text": "a" * 20001})
+    assert big.status_code == 422 and "too long" in big.text

@@ -1,0 +1,15 @@
+{% extends "settings_base.html" %}
+{% block settings %}
+<form class="panel form" method="post" action="/settings/impressum">
+  <h2>Impressum</h2>
+  <p class="muted">The legal notice that German law requires on public sites. It is shown at <a href="/impressum"><code>/impressum</code></a>, readable without signing in, and linked in the footer of every page once it has text. Leave it empty to switch it off</p>
+  <label>Text
+    <textarea name="text" rows="16" maxlength="20000" placeholder="Angaben gemäß § 5 DDG&#10;&#10;Max Mustermann&#10;Musterstraße 1&#10;12345 Musterstadt&#10;&#10;Kontakt&#10;E-Mail: mail@example.org">{{ text }}</textarea>
+    <span class="hint">Plain text. Line breaks and blank lines are kept as you type them</span>
+  </label>
+  <div class="actions">
+    <button class="btn primary" type="submit">Save Impressum</button>
+    {% if text %}<a class="btn" href="/impressum">View page</a>{% endif %}
+  </div>
+</form>
+{% endblock %}

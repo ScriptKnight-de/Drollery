@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+{% block title %}Impressum · Drollery{% endblock %}
+{% block content %}
+<article class="panel legal">
+  <h1>Impressum</h1>
+  {% if text %}<div class="pre">{{ text }}</div>{% else %}<p class="muted">No Impressum has been written yet</p>{% endif %}
+</article>
+{% endblock %}

@@ -72,6 +72,15 @@ app.include_router(settings_router)
 app.include_router(card_router)
 app.include_router(card_files_router)
 app.include_router(share_public_router)
+
+
+@app.get("/impressum")
+def impressum(request: Request):
+    """Public on purpose: the legal notice must be readable without an account."""
+    text = accounts.get_setting("impressum")
+    if not text:
+        return render(request, "impressum.html", status_code=404, text="")
+    return render(request, "impressum.html", text=text)
 app.include_router(share_manage_router)
 app.include_router(share_api_router)
 

@@ -41,6 +41,26 @@ def profile_save(request: Request, email: str = Form("")):
     return flash_redirect("/settings/profile", "Profile saved")
 
 
+# --------------------------------------------------------------- impressum
+
+IMPRESSUM_MAX = 20000
+
+
+@router.get("/impressum")
+def impressum_page(request: Request):
+    return render(request, "settings_impressum.html", tab="impressum", text=accounts.get_setting("impressum") or "")
+
+
+@router.post("/impressum")
+def impressum_save(request: Request, text: str = Form("")):
+    text = text.replace("\r\n", "\n").strip()
+    if len(text) > IMPRESSUM_MAX:
+        return render(request, "settings_impressum.html", status_code=422, tab="impressum", text=text[:IMPRESSUM_MAX],
+                      error=f"That is too long. The limit is {IMPRESSUM_MAX} characters")
+    accounts.set_setting("impressum", text or None)
+    return flash_redirect("/settings/impressum", "Impressum saved. It is linked in the footer of every page" if text else "Impressum removed")
+
+
 # --------------------------------------------------------------- security
 
 def qr_matrix(uri: str) -> list[list[int]]:
