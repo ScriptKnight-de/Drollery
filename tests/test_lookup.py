@@ -497,3 +497,23 @@ def test_the_basics_sit_in_the_details_box_in_the_right_order(client, mp3s):
         c.execute("UPDATE albums SET details=?, mbid=? WHERE item_id=?", ('{"type": ["Album", "Live"], "date": "1999"}', REL, aid))
     box = client.get(f"/items/{aid}").text.split('id="details"')[1].split("</section>")[0]
     assert box.count("<dt>Type</dt>") == 1 and "<dd>Album · Live</dd>" in box and "<dt>Release date</dt>" in box
+
+
+# ------------------------------------------------------------ the popup windows on the album page
+
+def test_lookup_and_card_image_open_in_a_popup(client, album):
+    album = album[0]
+    page = client.get(f"/items/{album}").text
+    assert f'href="/albums/{album}/lookup?run=1" data-popup=' in page
+    assert 'id="popup-dialog"' in page and "/static/popup.js" in page
+
+
+def test_a_framed_page_has_no_header_and_ends_by_telling_the_page_behind(client, album):
+    album = album[0]
+    framed = {"Sec-Fetch-Dest": "iframe"}
+    lookup = client.get(f"/albums/{album}/lookup", headers=framed).text
+    assert '<body class="embed">' in lookup
+    assert '<body class="embed">' not in client.get(f"/albums/{album}/lookup").text
+    done = client.get(f"/items/{album}", headers=framed).text                    # where Cancel and Save lead
+    assert "drollery-done" in done and "tracklist" not in done
+    assert "tracklist" in client.get(f"/items/{album}").text                    # opened normally it is still the album page

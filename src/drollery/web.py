@@ -69,12 +69,15 @@ def render(request: Request, name: str, status_code: int = 200, **ctx):
     for key in ("error", "ok"):
         if isinstance(ctx.get(key), str):
             ctx[key] = i18n.t(ctx[key])
+    embed = request.headers.get("sec-fetch-dest") == "iframe"      # shown inside a popup on the album page
+    if embed and name in ("album.html", "item.html") and status_code == 200:
+        return templates.TemplateResponse(request, "embed_done.html", {})      # the popup's job is done; leaves the flash message for the page behind
     raw = request.cookies.get(FLASH)
     flash = None
     if raw:
         kind, _, text = unquote(raw).partition("|")
         flash = {"kind": kind if kind in ("ok", "error") else "ok", "text": text}
-    base = {"user": getattr(request.state, "user", None), "flash": flash, "impressum_live": accounts.impressum()[1], "metadata_lookup": get_settings().metadata_lookup,
+    base = {"embed": embed, "user": getattr(request.state, "user", None), "flash": flash, "impressum_live": accounts.impressum()[1], "metadata_lookup": get_settings().metadata_lookup,
             "providers": {cap: aisettings.enabled(cap) for cap in aisettings.CAPS}}
     resp = templates.TemplateResponse(request, name, {**base, **ctx}, status_code=status_code)
     if raw:

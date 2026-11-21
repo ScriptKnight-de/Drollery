@@ -2,7 +2,7 @@
 {% from "icons.html" import icon %}
 {% block title %}{{ _('Card image') }} · {{ item.title }} · Drollery{% endblock %}
 {% block content %}
-<a class="back" href="/items/{{ item.id }}">{{ icon("arrow-left") }}{{ _("Back to {title}", title=item.title) }}</a>
+<a class="back leave" href="/items/{{ item.id }}">{{ icon("arrow-left") }}{{ _("Back to {title}", title=item.title) }}</a>
 <div class="page-head"><h1>{{ _("Card image") }}</h1></div>
 <p class="muted lead">{% if item.kind == "video" %}{{ _("Choose the moment for the card, then crop it.") }}{% else %}{{ _("Crop the part of the picture that should show on the card.") }}{% endif %} {{ _("Your original file is never changed") }}</p>
 

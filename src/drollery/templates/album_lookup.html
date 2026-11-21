@@ -2,7 +2,7 @@
 {% from "icons.html" import icon %}
 {% block title %}{{ _("Look up details online") }} · Drollery{% endblock %}
 {% block content %}
-<a class="back" href="/items/{{ item.id }}">{{ icon("arrow-left") }}{{ _("Back to {title}", title=item.title) }}</a>
+<a class="back leave" href="/items/{{ item.id }}">{{ icon("arrow-left") }}{{ _("Back to {title}", title=item.title) }}</a>
 <div class="page-head"><h1>{{ _("Look up details online") }}</h1></div>
 <p class="muted lead">{{ _("Search MusicBrainz, a public music database, for this album. Only the title and artist in the two fields below are sent.") }}</p>
 {% if error %}<p class="note error" role="alert">{{ error }}</p>{% endif %}
