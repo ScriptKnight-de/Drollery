@@ -62,7 +62,7 @@
       <h1>{{ item.title }}</h1>
       {% if album.artist %}<p class="muted" style="margin:-8px 0 0">{{ album.artist }}</p>{% endif %}
       <div class="cover">
-        {% if item.has_thumb %}<img src="/albums/{{ item.id }}/cover" alt="{{ item.title }}">
+        {% if item.has_thumb %}<img src="/albums/{{ item.id }}/cover?v={{ (item.updated_at * 1000)|int }}" alt="{{ item.title }}">
         {% else %}<div class="nocover">{{ icon("book" if isbook else "disc") }}</div>{% endif %}
       </div>
       <p class="meta-line">

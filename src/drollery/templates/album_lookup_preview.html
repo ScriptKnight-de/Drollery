@@ -16,7 +16,7 @@
           <td>{% for f in now_facts %}<div>{{ f }}</div>{% else %}—{% endfor %}</td>
           <td>{% for f in online_facts %}<div>{{ f }}</div>{% else %}—{% endfor %}</td></tr>
       <tr><td><label class="check"><input type="checkbox" name="cover" value="1" checked> {{ _("Cover picture") }}</label></td>
-          <td>{% if item.has_thumb %}<img class="mini" src="/albums/{{ item.id }}/cover" alt="">{% else %}—{% endif %}</td>
+          <td>{% if item.has_thumb %}<img class="mini" src="/albums/{{ item.id }}/cover?v={{ (item.updated_at * 1000)|int }}" alt="">{% else %}—{% endif %}</td>
           <td><img class="mini" src="/albums/{{ item.id }}/lookup/{{ rel.mbid }}/cover" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'), {textContent: {{ _('No cover available for this release')|tojson|forceescape }}}))"></td></tr>
     </tbody>
   </table>

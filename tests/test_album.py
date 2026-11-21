@@ -409,3 +409,14 @@ def test_only_pictures_are_accepted_as_a_cover(client, mp3s):
     assert "must be a picture" in r.text
     r = client.post(f"/albums/{aid}/cover", files={"image": ("fake.png", b"not really a png", "image/png")})
     assert "must be a picture" in r.text and client.get(f"/albums/{aid}/cover").content == before
+
+
+def test_a_new_cover_is_fetched_afresh_not_taken_from_the_browser_cache(client, mp3s):
+    upload(client, [mp3s["art"]])
+    aid = album_id(client)
+    before = re.findall(r'/albums/\d+/cover\?v=\d+', client.get(f"/items/{aid}").text)
+    frame_before = re.findall(r'/items/\d+/frame\?v=\d+', client.get(f"/items/{aid}/card").text)
+    assert before and frame_before
+    client.post(f"/albums/{aid}/cover", files={"image": ("mine.png", png(90), "image/png")})
+    assert re.findall(r'/albums/\d+/cover\?v=\d+', client.get(f"/items/{aid}").text) != before
+    assert re.findall(r'/items/\d+/frame\?v=\d+', client.get(f"/items/{aid}/card").text) != frame_before
