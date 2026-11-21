@@ -34,8 +34,8 @@
     <td class="muted">{{ k.created_at|int|timestamp }}</td>
     <td class="muted">{{ k.last_used_at|int|timestamp if k.last_used_at else _("never") }}</td>
     <td class="actions"><div class="acts">
-      <form method="post" action="/settings/keys/{{ k.id }}/regenerate" onsubmit="return confirm({{ _('Make a new key? The current one stops working at once.')|tojson|forceescape }})"><button class="btn small" type="submit">{{ icon("retry") }}{{ _("Regenerate") }}</button></form>
-      <form method="post" action="/settings/keys/{{ k.id }}/delete" onsubmit="return confirm({{ _('Revoke this key?')|tojson|forceescape }})"><button class="btn small danger" type="submit">{{ icon("trash") }}{{ _("Revoke") }}</button></form>
+      <form method="post" action="/settings/keys/{{ k.id }}/regenerate" data-confirm="{{ _('Make a new key? The current one stops working at once.') }}"><button class="btn small" type="submit">{{ icon("retry") }}{{ _("Regenerate") }}</button></form>
+      <form method="post" action="/settings/keys/{{ k.id }}/delete" data-confirm="{{ _('Revoke this key?') }}"><button class="btn small danger" type="submit">{{ icon("trash") }}{{ _("Revoke") }}</button></form>
     </div></td>
   </tr>
   {% else %}<tr><td colspan="6" class="muted">{{ _("No keys yet") }}</td></tr>{% endfor %}

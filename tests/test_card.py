@@ -259,3 +259,10 @@ def test_the_actions_share_one_toolbar_and_the_jobs_dot_shows_the_state(client, 
             c.execute("DELETE FROM jobs WHERE item_id=?", (image_id,))
             c.execute("INSERT INTO jobs(item_id, type, status, created_at, updated_at) VALUES (?,?,?,0,0)", (image_id, "describe", status))
         assert states(client.get(f"/items/{image_id}").text) == [want], status
+
+
+def test_deleting_asks_in_the_app_not_in_the_browser(client, image_id):
+    page = client.get(f"/items/{image_id}").text
+    form = page.split(f'action="/items/{image_id}/delete"')[1].split(">")[0]
+    assert "data-confirm=" in form and "onsubmit" not in form
+    assert 'id="confirm-dialog"' in page

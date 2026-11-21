@@ -49,7 +49,7 @@
           <p class="hint">{{ _("Give a track a new number to move it; the others follow") }}</p>
           <button class="btn" type="submit">{{ _("Save tracks") }}</button>
         </form>
-        <form class="trackedit" method="post" action="/albums/{{ item.id }}/rescan" onsubmit="return confirm({{ _('This replaces any names and order you set by hand')|tojson|forceescape }})">
+        <form class="trackedit" method="post" action="/albums/{{ item.id }}/rescan" data-confirm="{{ _('This replaces any names and order you set by hand') }}">
           <button class="btn small" type="submit">{{ icon("retry") }}{{ _("Read order and titles from the files again") }}</button>
         </form>
       </details>
@@ -111,7 +111,7 @@
 
     {% include "share_panel.html" %}
 
-    <form method="post" action="/items/{{ item.id }}/delete" data-reload onsubmit="return confirm({{ _('Feed this item to the dragon? It cannot be undone.')|tojson|forceescape }})">
+    <form method="post" action="/items/{{ item.id }}/delete" data-reload data-confirm="{{ _('Feed this item to the dragon? It cannot be undone.') }}">
       <button class="btn danger" type="submit">{{ icon("trash") }}{{ _("Delete") }}</button>
     </form>
   </div>

@@ -516,3 +516,7 @@ body.embed { background: var(--s1); background-image: none; }
 .jobs { margin-top: 12px; }
 .jobs h2 { margin: 0; font-size: 16px; }
 .jobs[hidden] { display: none; }
+.modal.confirm { width: min(440px, 92vw); }
+.modal.confirm[open] { grid-template-rows: auto auto auto; }
+.modal.confirm .modal-foot { display: flex; justify-content: flex-end; gap: 8px; }
+.modal.confirm .btn.danger { border-color: var(--bad); }

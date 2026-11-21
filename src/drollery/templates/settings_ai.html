@@ -37,7 +37,7 @@
       <button class="btn small" type="button" hx-post="/settings/ai/test" hx-target="#test-{{ m.id }}" hx-swap="innerHTML"
               hx-vals='{{ {"id": m.id|string, "type": m.type, "base_url": m.base_url, "model": m.model, "command": m.command}|tojson }}'>{{ icon("zap") }}{{ _("Test") }}</button>
       <a class="btn small" href="/settings/ai/models/{{ m.id }}">{{ icon("edit") }}{{ _("Edit") }}</a>
-      <form method="post" action="/settings/ai/models/{{ m.id }}/delete" onsubmit="return confirm({{ _('Delete “{name}”?', name=m.name)|tojson|forceescape }})"><button class="btn small danger" type="submit" aria-label="{{ _('Delete') }}">{{ icon("trash") }}</button></form>
+      <form method="post" action="/settings/ai/models/{{ m.id }}/delete" data-confirm="{{ _('Delete “{name}”?', name=m.name) }}"><button class="btn small danger" type="submit" aria-label="{{ _('Delete') }}">{{ icon("trash") }}</button></form>
     </div></td>
   </tr>
   <tr class="subrow"><td colspan="5"><span id="test-{{ m.id }}"></span></td></tr>
@@ -55,6 +55,6 @@
 <section class="panel stack">
   <h2>{{ _("AI tags") }}</h2>
   <p class="muted">{{ _("AI tags are stored apart from the tags you set yourself. Re-running a model replaces an item's AI tags and never touches yours. Tags you remove from an item are not suggested again for it.") }} {{ _n("{n} AI tag in the library right now", "{n} AI tags in the library right now", ai_tag_count) }}</p>
-  <form method="post" action="/settings/ai/clear-tags" onsubmit="return confirm({{ _('Remove every AI tag in the library? Your own tags stay.')|tojson|forceescape }})"><button class="btn danger" type="submit" {{ "disabled" if not ai_tag_count }}>{{ icon("trash") }}{{ _("Remove all AI tags") }}</button></form>
+  <form method="post" action="/settings/ai/clear-tags" data-confirm="{{ _('Remove every AI tag in the library? Your own tags stay.') }}"><button class="btn danger" type="submit" {{ "disabled" if not ai_tag_count }}>{{ icon("trash") }}{{ _("Remove all AI tags") }}</button></form>
 </section>
 {% endblock %}

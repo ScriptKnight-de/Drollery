@@ -595,4 +595,6 @@ MESSAGES = {
     "Your original file is never changed. You can crop it afterwards": "Din originalfil ändras aldrig. Du kan beskära bilden efteråt",
     "Choose a video frame again": "Välj en bildruta igen",
     "Actions": "Åtgärder",
+    "Are you sure?": "Är du säker?",
+    "Confirm": "Bekräfta",
 }

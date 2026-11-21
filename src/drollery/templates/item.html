@@ -17,7 +17,7 @@
       <a class="btn small" href="/media/{{ item.id }}" download="{{ item.original_name }}">{{ icon("download") }}{{ _("Download") }}</a>
       {% if item.kind != "audio" %}<a class="btn small" href="/items/{{ item.id }}/card" data-popup="{{ _('Card image') }}">{{ icon("crop") }}{{ _("Card image") }}</a>{% endif %}
       <button class="btn small" type="button" id="jobs-toggle" aria-controls="jobs-panel" aria-expanded="true" title="{{ _('Background jobs') }}: {{ _(state) if states else _('None yet') }}"><span class="dot {{ state }}" aria-hidden="true"></span>{{ _("Background jobs") }}</button>
-      <form method="post" action="/items/{{ item.id }}/delete" data-reload onsubmit="return confirm({{ _('Feed this item to the dragon? It cannot be undone.')|tojson|forceescape }})">
+      <form method="post" action="/items/{{ item.id }}/delete" data-reload data-confirm="{{ _('Feed this item to the dragon? It cannot be undone.') }}">
         <button class="btn small danger" type="submit">{{ icon("trash") }}{{ _("Delete") }}</button>
       </form>
     </div>

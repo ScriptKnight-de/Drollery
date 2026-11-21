@@ -595,4 +595,6 @@ MESSAGES = {
     "Your original file is never changed. You can crop it afterwards": "Το αρχικό σου αρχείο δεν αλλάζει ποτέ. Μπορείς να περικόψεις την εικόνα μετά",
     "Choose a video frame again": "Επιλογή καρέ ξανά",
     "Actions": "Ενέργειες",
+    "Are you sure?": "Είσαι σίγουρος;",
+    "Confirm": "Επιβεβαίωση",
 }

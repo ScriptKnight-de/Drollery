@@ -595,4 +595,6 @@ MESSAGES = {
     "Your original file is never changed. You can crop it afterwards": "Je originele bestand blijft ongewijzigd. Daarna kun je de afbeelding bijsnijden",
     "Choose a video frame again": "Opnieuw een beeld uit de video kiezen",
     "Actions": "Acties",
+    "Are you sure?": "Weet je het zeker?",
+    "Confirm": "Bevestigen",
 }

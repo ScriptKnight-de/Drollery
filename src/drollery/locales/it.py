@@ -595,4 +595,6 @@ MESSAGES = {
     "Your original file is never changed. You can crop it afterwards": "Il tuo file originale non viene mai modificato. Poi puoi ritagliare l'immagine",
     "Choose a video frame again": "Scegli di nuovo un fotogramma",
     "Actions": "Azioni",
+    "Are you sure?": "Sei sicuro?",
+    "Confirm": "Conferma",
 }

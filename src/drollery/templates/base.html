@@ -63,6 +63,14 @@
 {% if flash %}<p class="note {{ flash.kind }}" role="status">{{ flash.text }}</p>{% endif %}
 {% block content %}{% endblock %}
 </main>
+<dialog id="confirm-dialog" class="modal confirm" aria-labelledby="cf-title">
+  <div class="modal-head"><h2 id="cf-title">{{ _("Are you sure?") }}</h2></div>
+  <div class="modal-body" id="cf-text"></div>
+  <div class="modal-foot">
+    <button type="button" class="btn small" data-cf="no">{{ _("Cancel") }}</button>
+    <button type="button" class="btn small danger" data-cf="yes">{{ _("Confirm") }}</button>
+  </div>
+</dialog>
 {% if impressum_live %}
 <footer class="foot" id="foot">
   <div class="foot-bar">
@@ -114,6 +122,28 @@
       sessionStorage.removeItem(KEY);
       if (saved && saved.p === location.pathname && !location.hash) window.scrollTo(0, saved.y);
     } catch (err) {}
+  })();
+  // forms with data-confirm ask in a window of their own instead of the browser's box
+  (function () {
+    var dlg = document.getElementById("confirm-dialog"), text = document.getElementById("cf-text"), pending = null;
+    document.addEventListener("submit", function (e) {
+      var f = e.target;
+      if (!f.dataset || !f.dataset.confirm || f.dataset.confirmed) return;
+      e.preventDefault();
+      if (!dlg || !dlg.showModal) { if (confirm(f.dataset.confirm)) { f.dataset.confirmed = "1"; f.requestSubmit(e.submitter); } return; }
+      pending = { form: f, submitter: e.submitter };
+      text.textContent = f.dataset.confirm;
+      dlg.showModal();
+      dlg.querySelector("[data-cf=no]").focus();
+    }, true);
+    if (dlg) {
+      dlg.addEventListener("click", function (e) {
+        var yes = e.target.closest("[data-cf=yes]"), no = e.target.closest("[data-cf=no]");
+        if (yes && pending) { var p = pending; pending = null; dlg.close(); p.form.dataset.confirmed = "1"; p.form.requestSubmit(p.submitter); }
+        else if (no || e.target === dlg) { pending = null; dlg.close(); }
+      });
+      dlg.addEventListener("close", function () { pending = null; });
+    }
   })();
   // copy buttons (works on plain http too, where navigator.clipboard is unavailable)
   document.addEventListener("click", function (e) {
