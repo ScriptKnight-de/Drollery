@@ -234,7 +234,7 @@ def test_plural_rules_of_the_languages_that_need_more_than_one_or_other():
 def test_every_page_renders_in_every_language(client, code):
     client.post("/settings/profile", data={"email": "", "language": code})
     item = make_item(client)
-    for url in ("/", f"/items/{item}", "/jobs", "/settings/profile", "/settings/security", "/settings/keys", "/settings/ai", "/settings/shares"):
+    for url in ("/", f"/items/{item}", "/jobs", "/settings/profile", "/settings/security", "/settings/keys", "/settings/ai", "/settings/shares", "/settings/about"):
         r = client.get(url)
         assert r.status_code == 200 and f'lang="{code}"' in r.text, (code, url)
         text = re.sub(r"<script.*?</script>|<style.*?</style>|<pre.*?</pre>|<code.*?</code>", "", r.text, flags=re.S)

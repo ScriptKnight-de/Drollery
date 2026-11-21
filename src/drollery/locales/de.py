@@ -438,4 +438,12 @@ MESSAGES = {
     "Enter how long the link should work": "Gib an, wie lange der Link funktionieren soll",
     "A link can last between 1 minute and 1 year": "Ein Link kann zwischen 1 Minute und 1 Jahr gelten",
     "Choose how long the link should work": "Wähle, wie lange der Link funktionieren soll",
+
+    # ---- settings: about
+    "About": "Info",
+    "About Drollery": "Über Drollery",
+    "Drollery is free and open source, made by ScriptKnight. If you find it useful, you can support its development.": "Drollery ist kostenlos und Open Source, entwickelt von ScriptKnight. Wenn es dir nützt, kannst du die Entwicklung unterstützen.",
+    "Support on Ko-fi": "Auf Ko-fi unterstützen",
+    "ScriptKnight on GitHub": "ScriptKnight auf GitHub",
+    "Version {version}": "Version {version}",
 }

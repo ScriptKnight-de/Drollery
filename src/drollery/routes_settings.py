@@ -5,7 +5,7 @@ import segno
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 
-from . import accounts, aisettings, db, i18n, pipeline, security
+from . import __version__, accounts, aisettings, db, i18n, pipeline, security
 from .deps import SESSION_COOKIE, web_auth
 from .i18n import t, tn
 from .web import flash_redirect, render
@@ -46,6 +46,17 @@ def profile_save(request: Request, email: str = Form(""), language: str = Form("
     resp = flash_redirect("/settings/profile", "Profile saved")
     resp.set_cookie(i18n.COOKIE, language, max_age=365 * 86400, samesite="lax") if language else resp.delete_cookie(i18n.COOKIE)
     return resp
+
+
+# ------------------------------------------------------------------ about
+
+KOFI_URL = "https://ko-fi.com/scriptknight"
+GITHUB_URL = "https://github.com/ScriptKnight-de"
+
+
+@router.get("/about")
+def about_page(request: Request):
+    return render(request, "settings_about.html", tab="about", kofi_url=KOFI_URL, github_url=GITHUB_URL, version=__version__)
 
 
 # --------------------------------------------------------------- impressum

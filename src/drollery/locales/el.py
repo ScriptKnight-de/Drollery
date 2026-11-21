@@ -437,4 +437,12 @@ MESSAGES = {
     "Enter how long the link should work": "Όρισε για πόση ώρα θα λειτουργεί ο σύνδεσμος",
     "A link can last between 1 minute and 1 year": "Ένας σύνδεσμος μπορεί να διαρκεί από 1 λεπτό έως 1 έτος",
     "Choose how long the link should work": "Διάλεξε για πόση ώρα θα λειτουργεί ο σύνδεσμος",
+
+    # ---- settings: about
+    "About": "Σχετικά",
+    "About Drollery": "Σχετικά με το Drollery",
+    "Drollery is free and open source, made by ScriptKnight. If you find it useful, you can support its development.": "Το Drollery είναι δωρεάν και ανοιχτού κώδικα, δημιουργία του ScriptKnight. Αν σου φαίνεται χρήσιμο, μπορείς να στηρίξεις την ανάπτυξή του.",
+    "Support on Ko-fi": "Στήριξη στο Ko-fi",
+    "ScriptKnight on GitHub": "ScriptKnight στο GitHub",
+    "Version {version}": "Έκδοση {version}",
 }

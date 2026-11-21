@@ -433,3 +433,10 @@ def test_impressum_page_has_a_way_back_to_the_library(client):
     client.post("/settings/impressum", data={"text": "Max", "enabled": "1"})
     html = client.get("/impressum").text
     assert 'class="back" href="/"' in html
+
+
+def test_about_tab_links_to_kofi_and_github(client):
+    html = client.get("/settings/about").text
+    assert 'href="https://ko-fi.com/scriptknight"' in html and 'href="https://github.com/ScriptKnight-de"' in html
+    assert 'rel="noopener noreferrer"' in html and "Version " in html
+    assert 'href="/settings/about"' in client.get("/settings/profile").text          # the tab is in the bar
