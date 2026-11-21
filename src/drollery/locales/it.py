@@ -591,4 +591,7 @@ MESSAGES = {
     "It replaces the current cover. You can crop it afterwards": "Sostituisce la copertina attuale. Poi puoi ritagliarla",
     "Use this picture": "Usa questa immagine",
     "Dimensions": "Dimensioni",
+    "That is not a picture": "Questa non è un'immagine",
+    "Your picture is the card image now. Crop it below if you like": "La tua immagine è ora l'immagine della scheda. Ritagliala qui sotto se vuoi",
+    "Your original file is never changed. You can crop it afterwards": "Il tuo file originale non viene mai modificato. Poi puoi ritagliare l'immagine",
 }

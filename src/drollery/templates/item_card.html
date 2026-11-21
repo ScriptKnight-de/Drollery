@@ -2,20 +2,19 @@
 {% from "icons.html" import icon %}
 {% block title %}{{ _('Card image') }} · {{ item.title }} · Drollery{% endblock %}
 {% block content %}
+{% set kind = "image" if custom else item.kind %}
 <a class="back leave" href="/items/{{ item.id }}">{{ icon("arrow-left") }}{{ _("Back to {title}", title=item.title) }}</a>
 <div class="page-head"><h1>{{ _("Card image") }}</h1></div>
-<p class="muted lead">{% if not has_picture %}{% elif item.kind == "video" %}{{ _("Choose the moment for the card, then crop it.") }}{% else %}{{ _("Crop the part of the picture that should show on the card.") }}{% endif %} {{ _("Your original file is never changed") }}</p>
+<p class="muted lead">{% if not has_picture %}{% elif kind == "video" %}{{ _("Choose the moment for the card, then crop it.") }}{% else %}{{ _("Crop the part of the picture that should show on the card.") }}{% endif %} {{ _("Your original file is never changed") }}</p>
 
-{% if item.kind == "album" %}
-<form class="panel form own-picture" method="post" action="/albums/{{ item.id }}/cover" enctype="multipart/form-data">
+<form class="panel form own-picture" method="post" action="{{ '/albums/%d/cover' % item.id if item.kind == 'album' else '/items/%d/card/picture' % item.id }}" enctype="multipart/form-data">
   <h2>{{ _("Use your own picture") }}</h2>
   <label>{{ _("Picture") }} <input type="file" name="image" accept="image/*" required></label>
-  <p class="hint">{{ _("It replaces the current cover. You can crop it afterwards") }}</p>
+  <p class="hint">{{ _("It replaces the current cover. You can crop it afterwards") if item.kind == "album" else _("Your original file is never changed. You can crop it afterwards") }}</p>
   <button class="btn" type="submit">{{ icon("upload") }}{{ _("Use this picture") }}</button>
 </form>
-{% endif %}
 {% if has_picture %}
-<form class="cardedit" id="card-form" method="post" action="/items/{{ item.id }}/card" data-kind="{{ item.kind }}" data-id="{{ item.id }}" data-v="{{ (item.updated_at * 1000)|int }}"
+<form class="cardedit" id="card-form" method="post" action="/items/{{ item.id }}/card" data-kind="{{ kind }}" data-id="{{ item.id }}" data-v="{{ (item.updated_at * 1000)|int }}"
       {% if crop %}data-x="{{ crop.x }}" data-y="{{ crop.y }}" data-s="{{ crop.s }}"{% endif %}>
   <input type="hidden" name="t" id="f-t" value="{{ t }}">
   <input type="hidden" name="x" id="f-x" value="0">
@@ -23,7 +22,7 @@
   <input type="hidden" name="s" id="f-s" value="1">
 
   <div class="cardedit-main">
-    {% if item.kind == "video" %}
+    {% if kind == "video" %}
     <div class="snap panel">
       <video id="player" src="/media/{{ item.id }}" controls playsinline preload="metadata" muted></video>
       <div class="snapbar">
@@ -40,10 +39,10 @@
     {% endif %}
 
     <div class="stage" id="stage">
-      <img id="frame" src="/items/{{ item.id }}/frame?v={{ (item.updated_at * 1000)|int }}{% if item.kind == 'video' %}&t={{ t }}{% endif %}" alt="{{ _('Frame to crop') }}" draggable="false">
+      <img id="frame" src="/items/{{ item.id }}/frame?v={{ (item.updated_at * 1000)|int }}{% if kind == 'video' %}&t={{ t }}{% endif %}" alt="{{ _('Frame to crop') }}" draggable="false">
       <div class="cropbox" id="box" tabindex="0" role="slider" aria-label="{{ _('Crop area. Drag to move, arrow keys to nudge, plus and minus to resize') }}"></div>
     </div>
-    <p class="hint">{{ _("Drag the square to move it. Use the slider or the mouse wheel to zoom") }}{% if item.kind == "video" %}. {{ _("Changing the frame keeps your crop") }}{% endif %}</p>
+    <p class="hint">{{ _("Drag the square to move it. Use the slider or the mouse wheel to zoom") }}{% if kind == "video" %}. {{ _("Changing the frame keeps your crop") }}{% endif %}</p>
   </div>
 
   <aside class="cardedit-side panel stack">
@@ -56,7 +55,7 @@
     </div>
   </aside>
 </form>
-{% if item.has_card %}
+{% if item.has_card or custom %}
 <form method="post" action="/items/{{ item.id }}/card/reset" onsubmit="return confirm({{ _('Go back to the automatic card image?')|tojson|forceescape }})" class="reset-row">
   <button class="btn danger small" type="submit">{{ icon("retry") }}{{ _("Reset to automatic") }}</button>
 </form>

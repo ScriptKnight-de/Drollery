@@ -201,3 +201,30 @@ def test_card_image_is_a_popup_on_item_pages_and_not_labelled_custom(client, ima
     page = client.get(f"/items/{image_id}").text
     assert f'href="/items/{image_id}/card" data-popup="Card image"' in page and "(custom)" not in page
     assert 'id="popup-dialog"' in page and "/static/popup.js" in page
+
+
+def test_an_own_picture_becomes_the_card_and_can_be_cropped(client, video_id):
+    own = two_color_png(120, 60)
+    r = client.post(f"/items/{video_id}/card/picture", files={"image": ("mine.png", own, "image/png")})
+    assert r.status_code == 200 and "card image now" in r.text
+    assert 'data-kind="image"' in r.text and 'id="snap"' not in r.text                   # no video moments any more
+    assert colour(client.get(f"/card/{video_id}").content) == "other"                     # centred square of red|blue halves
+    assert client.get(f"/items/{video_id}/frame").headers["content-type"] == "image/jpeg"
+    r = client.post(f"/items/{video_id}/card", data={"t": 0, "x": 0, "y": 0, "s": 0.4})   # crop inside the left (red) half
+    assert colour(client.get(f"/card/{video_id}").content) == "red"
+    with db.tx() as c:
+        item = db.get_item(c, video_id)
+    assert pipeline.card_source_path(item).exists()
+    assert client.get(f"/media/{video_id}").status_code == 200                           # the item itself is untouched
+    client.post(f"/items/{video_id}/card/reset")
+    assert not pipeline.card_source_path(item).exists() and not card_file(video_id).exists()
+    assert 'id="snap"' in client.get(f"/items/{video_id}/card").text                     # back to choosing a video frame
+
+
+def test_the_own_card_picture_must_be_a_picture(client, image_id):
+    for name, data in (("notes.txt", b"hello"), ("fake.png", b"not really a png")):
+        r = client.post(f"/items/{image_id}/card/picture", files={"image": (name, data, "image/png")})
+        assert "not a picture" in r.text
+    with db.tx() as c:
+        item = db.get_item(c, image_id)
+    assert not pipeline.card_source_path(item).exists() and item["has_card"] == 0

@@ -596,4 +596,7 @@ MESSAGES = {
     "It replaces the current cover. You can crop it afterwards": "Elle remplace la pochette actuelle. Vous pourrez la recadrer ensuite",
     "Use this picture": "Utiliser cette image",
     "Dimensions": "Dimensions",
+    "That is not a picture": "Ce n'est pas une image",
+    "Your picture is the card image now. Crop it below if you like": "Votre image est maintenant l'image de la carte. Recadrez-la ci-dessous si vous le souhaitez",
+    "Your original file is never changed. You can crop it afterwards": "Votre fichier d'origine n'est jamais modifié. Vous pourrez recadrer l'image ensuite",
 }

@@ -42,6 +42,11 @@ def card_path(item: dict) -> Path:
     return get_settings().cards_dir / f"{item['sha256']}.jpg"
 
 
+def card_source_path(item: dict) -> Path:
+    """A picture the person brought for the card image; when it exists the card is cropped from it, not from the item."""
+    return get_settings().cards_dir / f"{item['sha256']}.src.jpg"
+
+
 def _title_from_name(name: str) -> str:
     return re.sub(r"[\s_]+", " ", Path(name).stem).strip()[:120] or "untitled"
 

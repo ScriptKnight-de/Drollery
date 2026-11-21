@@ -186,6 +186,7 @@ def _delete_item(item: dict) -> None:
         albums.remove_files(item)
     pipeline.thumb_path(item).unlink(missing_ok=True)
     pipeline.card_path(item).unlink(missing_ok=True)
+    pipeline.card_source_path(item).unlink(missing_ok=True)
 
 
 # ------------------------------------------------------------------ files
