@@ -530,7 +530,7 @@ def test_the_album_actions_look_like_the_ones_on_other_items(client, album):
     album = album[0]
     page = client.get(f"/items/{album}").text
     bar = page.split('class="toolbar"')[1].split("</div>")[0]
-    assert bar.count('class="btn small') == 5
+    assert bar.count('class="btn small') == 6
     for want in ("Download all", "Look up details online", "Card image", "Background jobs", "Delete"):
         assert want in bar, want
     assert 'class="meta-line"' not in page and page.count("/delete") == 1

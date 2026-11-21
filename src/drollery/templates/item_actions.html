@@ -9,6 +9,7 @@
   {% if album and metadata_lookup %}<a class="btn small" href="/albums/{{ item.id }}/lookup?run=1" data-popup="{{ _('Look up details online') }}">{{ icon("search") }}{{ _("Look up details online") }}</a>{% endif %}
   {% if item.kind == "movie" and metadata_lookup %}<a class="btn small" href="/movies/{{ item.id }}/lookup?run=1" data-popup="{{ _('Look up on IMDb') }}">{{ icon("search") }}{{ _("Look up on IMDb") }}</a>{% endif %}
   {% if item.kind != "audio" %}<a class="btn small" href="/items/{{ item.id }}/card" data-popup="{{ _('Card image') }}">{{ icon("crop") }}{{ _("Card image") }}</a>{% endif %}
+  <a class="btn small" href="#share">{{ icon("share") }}{{ _("Share") }}</a>
   <button class="btn small" type="button" data-toggle="jobs-panel" aria-controls="jobs-panel" aria-expanded="{{ 'true' if active else 'false' }}" title="{{ _('Background jobs') }}: {{ _(state) if states else _('None yet') }}"><span class="dot {{ state }}" aria-hidden="true"></span>{{ _("Background jobs") }}</button>
   <form method="post" action="/items/{{ item.id }}/delete" data-reload data-confirm="{{ _('Feed this item to the dragon? It cannot be undone.') }}">
     <button class="btn small danger" type="submit">{{ icon("trash") }}{{ _("Delete") }}</button>

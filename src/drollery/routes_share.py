@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 
 from starlette.background import BackgroundTask
 
-from . import accounts, albums, db, pipeline, shares
+from . import accounts, albums, db, movies, pipeline, shares
 from .config import get_settings
 from .deps import api_auth, client_ip, web_auth
 from .i18n import t, tn
@@ -61,7 +61,13 @@ def share_page(request: Request, token: str):
         resp = render(request, "share_album.html", share=share, item=item, album=album, track=track, tracks=[track] if track else tracks,
                       urls=shares.urls(request, share, item))
     else:
-        resp = render(request, "share.html", share=share, item=item, urls=shares.urls(request, share, item), slug=shares.file_slug(item))
+        movie = None
+        if item["kind"] == "movie":
+            with db.tx() as c:
+                movie = movies.get(c, item["id"])
+        resp = render(request, "share.html", share=share, item=item, movie=movie, subtypes=movies.SUBTYPES,
+                      preview=bool(item["has_thumb"] or (movie and item["has_card"])), urls=shares.urls(request, share, item),
+                      slug=shares.file_slug(item))
     resp.headers.update(PAGE_HEADERS)
     return resp
 
@@ -136,7 +142,9 @@ def share_thumb(request: Request, token: str):
     if not shares.is_open(share):
         raise HTTPException(410, "This link has expired or was revoked")
     path = pipeline.thumb_path(item)
-    if not item["has_thumb"] or not path.exists():
+    if item["kind"] == "movie" and item["has_card"] and pipeline.card_path(item).exists():
+        path = pipeline.card_path(item)                    # the poster the owner chose is the better preview of a movie
+    elif not item["has_thumb"] or not path.exists():
         raise HTTPException(404, "No preview")
     resp = FileResponse(path, media_type="image/jpeg")
     resp.headers.update(FILE_HEADERS)

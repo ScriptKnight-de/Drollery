@@ -248,7 +248,7 @@ def test_jobs_and_delete_sit_under_the_picture(client, image_id):
 def test_the_actions_share_one_toolbar_and_the_jobs_dot_shows_the_state(client, image_id):
     page = client.get(f"/items/{image_id}").text
     bar = page.split('class="toolbar"')[1].split("</div>")[0]
-    assert bar.count('class="btn small') == 4 and "Download" in bar and "Card image" in bar and "Background jobs" in bar and "Delete" in bar
+    assert bar.count('class="btn small') == 5 and "Download" in bar and "Card image" in bar and "Background jobs" in bar and "Delete" in bar
     states = lambda text: re.findall(r'data-toggle="jobs-panel".*?<span class="dot (\w+)"', text, re.S)
     with db.tx() as c:
         have = [dict(r)["status"] for r in c.execute("SELECT * FROM jobs WHERE item_id=?", (image_id,))]

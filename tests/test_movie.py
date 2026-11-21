@@ -295,3 +295,76 @@ def test_the_lookup_and_add_pages_need_a_login(client):
 def test_the_settings_tab_and_the_old_data_still_work(client):
     page = client.get("/settings/lookup").text
     assert 'href="/settings/lookup" class="on"' in page and "No key yet" in page and "MusicBrainz" in page
+
+
+# ------------------------------------------------------------ sharing
+
+def share_movie(client, clip_bytes, **data):
+    add(client, clip_bytes, **data)
+    mid = movie_id(client)
+    page = client.post(f"/items/{mid}/shares", data={"preset": "7d", "label": "for a friend"}).text
+    token = re.search(r"/s/([\w-]{8,})", page).group(1)
+    return mid, token
+
+
+def test_a_movie_can_be_shared_with_a_public_link(client, clip_bytes):
+    mid, token = share_movie(client, clip_bytes, title="Spaced Balls", subtype="parody", original_title="Space Quest", description="Mel makes fun")
+    from fastapi.testclient import TestClient
+    from drollery.main import app
+    guest = TestClient(app, follow_redirects=False)                                  # no login
+    page = guest.get(f"/s/{token}")
+    assert page.status_code == 200 and "<video" in page.text and "Spaced Balls" in page.text and "Mel makes fun" in page.text
+    assert "Parody · Space Quest" not in page.text and "Parody" in page.text and "Original film: Space Quest" in page.text
+    assert 'property="og:type" content="video.other"' in page.text and 'property="og:video:type" content="video/mp4"' in page.text
+    raw = re.search(r'<video src="(/s/[^"]+)"', page.text).group(1)
+    assert guest.get(raw).status_code == 200 and guest.get(raw).headers["content-type"] == "video/mp4"
+    part = guest.get(raw, headers={"Range": "bytes=0-99"})
+    assert part.status_code == 206 and len(part.content) == 100                       # a viewer can seek in a long film
+    assert guest.get(raw + "?download=1").headers["content-disposition"].startswith("attachment")
+
+
+def test_the_public_page_shows_the_type_year_and_original_but_never_the_tags_or_people(client, clip_bytes, fake):
+    client.post("/settings/lookup", data={"omdb_key": "abc12345"})
+    mid, token = share_movie(client, clip_bytes, title="Mine", subtype="synchro", tags="secret-tag")
+    client.post(f"/movies/{mid}/lookup/{TT}", data={"details": "1"})
+    client.post("/people", data={"name": "Private Person", "item": mid})
+    page = client.get(f"/s/{token}").text
+    assert "Synchro (dub)" in page and "1987" in page and "Original film: The Invented Quest" in page
+    assert "secret-tag" not in page and "Private Person" not in page and "abc12345" not in page
+
+
+def test_a_plain_movie_share_has_no_facts_line_and_other_kinds_are_unchanged(client, clip_bytes):
+    mid, token = share_movie(client, clip_bytes, title="Plain")
+    page = client.get(f"/s/{token}").text
+    assert "Original film" not in page and ">Movie" in page
+    clip = client.post("/api/v1/items", files={"file": ("clip.mp4", clip_bytes, "video/mp4")}).json()["id"]
+    cpage = client.get("/s/" + re.search(r"/s/([\w-]{8,})", client.post(f"/items/{clip}/shares", data={"preset": "7d"}).text).group(1)).text
+    assert "<video" in cpage and "Original film" not in cpage and "text-muted small" not in cpage
+
+
+def test_the_poster_is_the_link_preview_of_a_shared_movie(client, clip_bytes, fake):
+    mid, token = share_movie(client, clip_bytes, title="Mine")
+    plain = client.get(f"/s/{token}/thumb").content
+    client.post(f"/movies/{mid}/lookup/{TT}", data={"poster": "1"})
+    page = client.get(f"/s/{token}").text
+    assert 'property="og:image"' in page and f'poster="/s/{token}/thumb"' in page
+    poster = client.get(f"/s/{token}/thumb")
+    assert poster.status_code == 200 and poster.headers["content-type"] == "image/jpeg" and poster.content != plain     # the card, not the video frame
+    with db.tx() as c:
+        card = c.execute("SELECT sha256 FROM items WHERE id=?", (mid,)).fetchone()["sha256"]
+    assert poster.content == client.get(f"/card/{mid}").content
+
+
+def test_an_expired_or_revoked_movie_link_is_gone(client, clip_bytes):
+    mid, token = share_movie(client, clip_bytes)
+    with db.tx() as c:
+        sid = c.execute("SELECT id FROM shares").fetchone()["id"]
+    client.post(f"/shares/{sid}/revoke", data={"next": f"/items/{mid}"})
+    assert client.get(f"/s/{token}").status_code == 410 and client.get(f"/s/{token}/thumb").status_code == 410
+
+
+def test_every_item_page_has_a_share_button_that_jumps_to_the_share_panel(client, clip_bytes):
+    add(client, clip_bytes)
+    page = client.get(f"/items/{movie_id(client)}").text
+    bar = page.split('class="toolbar"')[1].split("</div>")[0]
+    assert 'href="#share"' in bar and "Share" in bar and 'id="share"' in page
