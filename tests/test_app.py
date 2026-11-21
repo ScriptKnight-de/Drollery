@@ -181,3 +181,17 @@ def test_failed_job_is_retried_then_marked_failed(tmp_path, monkeypatch):
     with db.tx() as c:
         assert c.execute("SELECT status FROM jobs").fetchone()["status"] == "failed"
     config.get_settings.cache_clear()
+
+
+def test_every_doodle_is_packaged_and_renders():
+    """The Docker image installs the package, so subfolders must be listed in package-data."""
+    import re
+    import tomllib
+    from pathlib import Path
+    root = Path(__file__).parent.parent
+    data = tomllib.loads((root / "pyproject.toml").read_text())
+    assert "templates/doodles/*" in data["tool"]["setuptools"]["package-data"]["drollery"]
+    grid = (root / "src/drollery/templates/grid.html").read_text()
+    names = re.search(r'\[("knight-snail".*?)\]\|random', grid).group(1)
+    for name in re.findall(r'"([a-z-]+)"', names):
+        assert (root / f"src/drollery/templates/doodles/{name}.svg").exists(), name
