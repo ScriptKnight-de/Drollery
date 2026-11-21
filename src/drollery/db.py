@@ -52,6 +52,60 @@ CREATE TABLE IF NOT EXISTS jobs (
   updated_at REAL NOT NULL
 );
 CREATE INDEX IF NOT EXISTS jobs_status ON jobs(status, run_after);
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY,
+  username TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  display_name TEXT NOT NULL DEFAULT '',
+  email TEXT NOT NULL DEFAULT '',
+  password_hash TEXT NOT NULL,
+  role TEXT NOT NULL DEFAULT 'admin',
+  totp_secret TEXT NOT NULL DEFAULT '',
+  totp_pending TEXT NOT NULL DEFAULT '',
+  totp_enabled INTEGER NOT NULL DEFAULT 0,
+  totp_last_step INTEGER NOT NULL DEFAULT 0,
+  backup_codes TEXT NOT NULL DEFAULT '[]',          -- JSON list of sha256 hashes of unused codes
+  created_at REAL NOT NULL,
+  updated_at REAL NOT NULL
+);
+CREATE TABLE IF NOT EXISTS sessions (
+  token_hash TEXT PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  kind TEXT NOT NULL DEFAULT 'session',             -- session | pending (password ok, 2FA code still needed)
+  created_at REAL NOT NULL,
+  last_used REAL NOT NULL,
+  expires_at REAL NOT NULL,
+  user_agent TEXT NOT NULL DEFAULT '',
+  ip TEXT NOT NULL DEFAULT '',
+  failures INTEGER NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS sessions_user ON sessions(user_id);
+CREATE TABLE IF NOT EXISTS api_keys (
+  id INTEGER PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'other',               -- browser | app | other
+  token_hash TEXT NOT NULL UNIQUE,                  -- only the hash is stored; the key is shown once
+  prefix TEXT NOT NULL,
+  created_at REAL NOT NULL,
+  last_used_at REAL
+);
+CREATE TABLE IF NOT EXISTS ai_models (
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL UNIQUE COLLATE NOCASE,
+  type TEXT NOT NULL,                               -- openai | command | tesseract
+  base_url TEXT NOT NULL DEFAULT '',
+  model TEXT NOT NULL DEFAULT '',
+  api_key TEXT NOT NULL DEFAULT '',                 -- write-only in the UI, never returned by any endpoint
+  command TEXT NOT NULL DEFAULT '',
+  langs TEXT NOT NULL DEFAULT 'eng',
+  language TEXT NOT NULL DEFAULT '',
+  prompt TEXT NOT NULL DEFAULT '',
+  timeout INTEGER NOT NULL DEFAULT 300,
+  send_image INTEGER NOT NULL DEFAULT 1,
+  created_at REAL NOT NULL,
+  updated_at REAL NOT NULL
+);
+CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE VIRTUAL TABLE IF NOT EXISTS items_fts USING fts5(
   title, description, tags, transcript, ocr, source,
   tokenize = 'unicode61 remove_diacritics 2', prefix = '2 3'
@@ -86,6 +140,7 @@ def init() -> None:
         c.executescript(SCHEMA)
         # jobs left 'running' by a crash/restart go back to the queue
         c.execute("UPDATE jobs SET status='queued' WHERE status='running'")
+        c.execute("DELETE FROM sessions WHERE expires_at < ?", (time.time(),))
 
 
 # ---------------------------------------------------------------- items

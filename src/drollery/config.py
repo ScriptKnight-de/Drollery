@@ -21,6 +21,7 @@ class Provider(BaseModel):
     command: str = ""
     langs: str = "eng"
     send_image: bool = True
+    api_key: str = ""      # filled from the database for UI-defined models; never read from config.toml
 
     @property
     def enabled(self) -> bool:
@@ -38,7 +39,7 @@ class Settings(BaseModel):
     ocr: Provider = Provider()
     # runtime values (not read from the TOML file)
     data_dir: Path = Path("data")
-    token: str = ""
+    cookie_secure: bool = False
 
     @property
     def media_dir(self) -> Path:
@@ -69,4 +70,4 @@ def get_settings() -> Settings:
             shutil.copyfile(src, cfg_path)
     with cfg_path.open("rb") as f:
         raw = tomllib.load(f)
-    return Settings(**raw, data_dir=data_dir, token=os.environ.get("DROLLERY_TOKEN", ""))
+    return Settings(**raw, data_dir=data_dir, cookie_secure=os.environ.get("DROLLERY_COOKIE_SECURE", "") in ("1", "true", "yes"))

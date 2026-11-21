@@ -23,8 +23,11 @@
     <a class="brand" href="/">{{ icon("castle") }}<span>Drollery</span></a>
     <div class="orn" aria-hidden="true"></div>
     <nav>
+      {% if user %}
       <a class="nav-link" href="/jobs">{{ icon("list") }}<span>Jobs</span></a>
-      {% if auth_enabled %}<form method="post" action="/logout"><button class="nav-link" type="submit">{{ icon("logout") }}<span>Log out</span></button></form>{% endif %}
+      <a class="nav-link" href="/settings">{{ icon("settings") }}<span>Settings</span></a>
+      <form method="post" action="/logout"><button class="nav-link" type="submit">{{ icon("logout") }}<span>Log out</span></button></form>
+      {% endif %}
       <details class="menu" id="theme-menu">
         <summary class="icon-btn" aria-label="Appearance" title="Appearance">{{ icon("palette") }}</summary>
         <div class="pop" role="dialog" aria-label="Appearance">
@@ -45,7 +48,10 @@
     </nav>
   </div>
 </header>
-<main>{% block content %}{% endblock %}</main>
+<main>
+{% if flash %}<p class="note {{ flash.kind }}" role="status">{{ flash.text }}</p>{% endif %}
+{% block content %}{% endblock %}
+</main>
 <script>
   (function () {
     var root = document.documentElement, menu = document.getElementById("theme-menu");
@@ -67,6 +73,14 @@
     addEventListener("keydown", function (e) { if (e.key === "Escape" && menu) menu.open = false; });
     sync();
   })();
+  // copy buttons (works on plain http too, where navigator.clipboard is unavailable)
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("[data-copy]"); if (!b) return;
+    var text = b.dataset.copy, done = function () { var old = b.innerHTML; b.textContent = "Copied"; setTimeout(function () { b.innerHTML = old; }, 1500); };
+    if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(text).then(done); return; }
+    var t = document.createElement("textarea"); t.value = text; t.style.position = "fixed"; t.style.opacity = "0"; document.body.appendChild(t); t.select();
+    try { document.execCommand("copy"); done(); } catch (err) {} document.body.removeChild(t);
+  });
   // "/" focuses search, like most keyboard-driven tools
   addEventListener("keydown", function (e) {
     var q = document.getElementById("q");

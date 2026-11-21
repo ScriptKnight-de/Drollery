@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 
 import httpx
 
-from . import db, media, providers
+from . import aisettings, db, media, providers
 from .config import get_settings
 
 log = logging.getLogger("drollery")
@@ -78,15 +78,14 @@ def import_file(src: Path, original_name: str, source_url: str = "", source_meta
 
 def plan_jobs(c, item_id: int) -> list[str]:
     """Queue the background jobs that the enabled providers can do for this item."""
-    s = get_settings()
     item = db.get_item(c, item_id)
     queued = []
-    if item["kind"] == "image" and s.ocr.enabled:
+    if item["kind"] == "image" and aisettings.enabled("ocr"):
         queued.append("ocr")
-    has_speech = item["kind"] != "image" and item["has_audio"] and s.transcribe.enabled
+    has_speech = item["kind"] != "image" and item["has_audio"] and aisettings.enabled("transcribe")
     if has_speech:
         queued.append("transcribe")          # transcribe chains into describe when it finishes
-    elif s.describe.enabled and (item["kind"] != "audio"):
+    elif aisettings.enabled("describe") and (item["kind"] != "audio"):
         queued.append("describe")
     for t in queued:
         db.enqueue(c, t, item_id)
@@ -109,11 +108,11 @@ def job_transcribe(job: dict) -> None:
     with tempfile.TemporaryDirectory(dir=s.tmp_dir) as td:
         audio = Path(td) / "audio.mp3"
         media.extract_audio(media_path(item), audio)
-        text = providers.transcribe(s.transcribe, audio)
+        text = providers.transcribe(aisettings.provider("transcribe"), audio)
     with db.tx() as c:
         c.execute("UPDATE items SET transcript=?, updated_at=? WHERE id=?", (text, time.time(), item["id"]))
         db.reindex(c, item["id"])
-        if s.describe.enabled:
+        if aisettings.enabled("describe"):
             db.enqueue(c, "describe", item["id"])
 
 
@@ -123,7 +122,7 @@ def job_describe(job: dict) -> None:
     image = thumb_path(item) if item["has_thumb"] else None
     with db.tx() as c:
         existing = db.popular_tags(c)
-    result = providers.describe(s.describe, image, item["transcript"], existing)
+    result = providers.describe(aisettings.provider("describe"), image, item["transcript"], existing)
     with db.tx() as c:
         cur = db.get_item(c, item["id"])
         if cur is None:
@@ -142,7 +141,7 @@ def job_ocr(job: dict) -> None:
     with tempfile.TemporaryDirectory(dir=s.tmp_dir) as td:
         still = Path(td) / "still.png"
         media.ocr_image(media_path(item), still, item["kind"])
-        text = providers.ocr(s.ocr, still)
+        text = providers.ocr(aisettings.provider("ocr"), still)
     with db.tx() as c:
         c.execute("UPDATE items SET ocr=?, updated_at=? WHERE id=?", (text, time.time(), item["id"]))
         db.reindex(c, item["id"])

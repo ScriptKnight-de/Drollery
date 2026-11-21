@@ -30,7 +30,7 @@ class ProviderError(Exception):
 
 
 def _headers(cfg: Provider) -> dict:
-    key = os.environ.get(cfg.api_key_env, "") if cfg.api_key_env else ""
+    key = cfg.api_key or (os.environ.get(cfg.api_key_env, "") if cfg.api_key_env else "")
     return {"Authorization": f"Bearer {key}"} if key else {}
 
 

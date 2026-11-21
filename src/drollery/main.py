@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import hmac
 import json
 import logging
 import shutil
@@ -9,21 +8,22 @@ import tempfile
 import time
 from contextlib import asynccontextmanager
 from pathlib import Path
+from urllib.parse import urlparse
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.exception_handlers import http_exception_handler
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from fastapi.templating import Jinja2Templates
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import __version__, db, media, pipeline
+from . import __version__, accounts, db, media, pipeline
 from .config import get_settings
+from .deps import LoginRequired, SetupRequired, api_auth, web_auth
+from .routes_auth import router as auth_router
+from .routes_settings import router as settings_router
+from .web import BASE, render
 
 log = logging.getLogger("drollery")
-BASE = Path(__file__).parent
-templates = Jinja2Templates(directory=BASE / "templates")
-COOKIE = "drollery_token"
 PAGE = 40
 
 
@@ -41,14 +41,21 @@ async def _worker_loop(stop: asyncio.Event) -> None:
         await asyncio.to_thread(pipeline.run_job, job)
 
 
+def _announce_setup() -> None:
+    code = accounts.get_setup_code()
+    bar = "=" * 64
+    print(f"\n{bar}\n  Drollery first-run setup\n  Open the web interface and create the admin account.\n"
+          f"  Setup code: {code}\n{bar}\n", flush=True)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     s = get_settings()
     db.init()
     for old in s.tmp_dir.iterdir():
         shutil.rmtree(old, ignore_errors=True) if old.is_dir() else old.unlink(missing_ok=True)
-    if not s.token:
-        log.warning("DROLLERY_TOKEN is not set: the UI and API are open to anyone who can reach this port")
+    if accounts.user_count() == 0:
+        _announce_setup()
     stop = asyncio.Event()
     tasks = [asyncio.create_task(_worker_loop(stop)) for _ in range(max(1, s.worker_concurrency))]
     yield
@@ -58,33 +65,18 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Drollery", version=__version__, lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
+app.include_router(auth_router)
+app.include_router(settings_router)
 
 
-# ------------------------------------------------------------------- auth
-
-def _token_ok(request: Request) -> bool:
-    token = get_settings().token
-    if not token:
-        return True
-    supplied = request.cookies.get(COOKIE, "")
-    auth = request.headers.get("authorization", "")
-    if auth.lower().startswith("bearer "):
-        supplied = auth[7:].strip()
-    return hmac.compare_digest(supplied.encode(), token.encode())
-
-
-def api_auth(request: Request) -> None:
-    if not _token_ok(request):
-        raise HTTPException(401, "missing or invalid token", headers={"WWW-Authenticate": "Bearer"})
-
-
-class LoginRequired(Exception):
-    pass
-
-
-def web_auth(request: Request) -> None:
-    if not _token_ok(request):
-        raise LoginRequired
+@app.middleware("http")
+async def same_origin_for_browser_writes(request: Request, call_next):
+    """Cookie-authenticated writes must come from this site. API-key (Bearer) requests are exempt."""
+    if request.method in ("POST", "PUT", "PATCH", "DELETE") and not request.headers.get("authorization"):
+        origin = request.headers.get("origin")
+        if origin and origin != "null" and urlparse(origin).netloc != request.headers.get("host", ""):
+            return JSONResponse({"detail": "Cross-site request blocked"}, status_code=403)
+    return await call_next(request)
 
 
 @app.exception_handler(LoginRequired)
@@ -92,40 +84,23 @@ async def _login_redirect(request: Request, exc: LoginRequired):
     return RedirectResponse("/login", status_code=303)
 
 
+@app.exception_handler(SetupRequired)
+async def _setup_redirect(request: Request, exc: SetupRequired):
+    return RedirectResponse("/setup", status_code=303)
+
+
 @app.exception_handler(StarletteHTTPException)
 async def _http_error(request: Request, exc: StarletteHTTPException):
     """Browsers get a friendly 404 page; the API and media routes keep JSON errors."""
     if (exc.status_code == 404 and "text/html" in request.headers.get("accept", "")
             and not request.url.path.startswith(("/api/", "/media/", "/thumb/"))):
-        return templates.TemplateResponse(request, "404.html", _ctx(), status_code=404)
+        return render(request, "404.html", status_code=404)
     return await http_exception_handler(request, exc)
 
 
 @app.get("/healthz")
 def healthz():
     return {"ok": True, "version": __version__}
-
-
-@app.get("/login", response_class=HTMLResponse)
-def login_page(request: Request, error: int = 0):
-    return templates.TemplateResponse(request, "login.html", {"error": bool(error)})
-
-
-@app.post("/login")
-def login(token: str = Form("")):
-    ok = hmac.compare_digest(token.encode(), get_settings().token.encode())
-    if not ok:
-        return RedirectResponse("/login?error=1", status_code=303)
-    resp = RedirectResponse("/", status_code=303)
-    resp.set_cookie(COOKIE, token, httponly=True, samesite="lax", max_age=60 * 60 * 24 * 365)
-    return resp
-
-
-@app.post("/logout")
-def logout():
-    resp = RedirectResponse("/login", status_code=303)
-    resp.delete_cookie(COOKIE)
-    return resp
 
 
 # ---------------------------------------------------------------- helpers
@@ -147,13 +122,9 @@ async def _save_upload(up: UploadFile) -> tuple[int, bool]:
             Path(tmp.name).unlink(missing_ok=True)
             raise
     try:
-        return await asyncio_to_thread(pipeline.import_file, Path(tmp.name), name)
+        return await asyncio.to_thread(pipeline.import_file, Path(tmp.name), name)
     finally:
         Path(tmp.name).unlink(missing_ok=True)
-
-
-async def asyncio_to_thread(fn, *a, **kw):
-    return await asyncio.to_thread(fn, *a, **kw)
 
 
 def _public(item: dict) -> dict:
@@ -205,6 +176,13 @@ def thumb_file(item_id: int):
 
 
 # -------------------------------------------------------------------- API
+
+@app.get("/api/v1/me", dependencies=[Depends(api_auth)])
+def api_me(request: Request):
+    u = request.state.user
+    return {"username": u["username"], "display_name": u["display_name"], "via": "api_key" if "_api_key_id" in u else "session",
+            "version": __version__}
+
 
 @app.get("/api/v1/items", dependencies=[Depends(api_auth)])
 def api_list(q: str = "", kind: str = "", tag: str = "", limit: int = PAGE, offset: int = 0):
@@ -268,23 +246,15 @@ def api_jobs(limit: int = 50):
 
 # --------------------------------------------------------------------- web
 
-def _ctx(**extra):
-    s = get_settings()
-    return {"auth_enabled": bool(s.token), "providers": {
-        "transcribe": s.transcribe.enabled, "describe": s.describe.enabled, "ocr": s.ocr.enabled}, **extra}
-
-
-@app.get("/", response_class=HTMLResponse, dependencies=[Depends(web_auth)])
+@app.get("/", dependencies=[Depends(web_auth)])
 def home(request: Request, q: str = "", kind: str = "", tag: str = "", page: int = 0):
     page = max(page, 0)
     with db.tx() as c:
         items = db.search(c, q, kind, tag, PAGE, page * PAGE)
         counts = {r["kind"]: r["n"] for r in c.execute("SELECT kind, COUNT(*) n FROM items GROUP BY kind")}
         pending = c.execute("SELECT COUNT(*) FROM jobs WHERE status IN ('queued','running')").fetchone()[0]
-    ctx = _ctx(items=items, q=q, kind=kind, tag=tag, page=page, more=len(items) == PAGE,
-               counts=counts, pending=pending)
     tpl = "grid.html" if request.headers.get("hx-request") and not request.headers.get("hx-boosted") else "index.html"
-    return templates.TemplateResponse(request, tpl, ctx)
+    return render(request, tpl, items=items, q=q, kind=kind, tag=tag, page=page, more=len(items) == PAGE, counts=counts, pending=pending)
 
 
 @app.post("/add", dependencies=[Depends(web_auth)])
@@ -304,12 +274,12 @@ async def add(files: list[UploadFile] = File(default=[]), url: str = Form("")):
     return RedirectResponse(f"/items/{last}" if last and len(files) == 1 else "/", status_code=303)
 
 
-@app.get("/items/{item_id}", response_class=HTMLResponse, dependencies=[Depends(web_auth)])
+@app.get("/items/{item_id}", dependencies=[Depends(web_auth)])
 def item_page(request: Request, item_id: int):
     item = _get_or_404(item_id)
     with db.tx() as c:
         jobs = [dict(r) for r in c.execute("SELECT * FROM jobs WHERE item_id=? ORDER BY id DESC", (item_id,))]
-    return templates.TemplateResponse(request, "item.html", _ctx(item=item, jobs=jobs))
+    return render(request, "item.html", item=item, jobs=jobs)
 
 
 @app.post("/items/{item_id}/edit", dependencies=[Depends(web_auth)])
@@ -337,18 +307,15 @@ def item_delete(item_id: int):
     return RedirectResponse("/", status_code=303)
 
 
-@app.get("/jobs", response_class=HTMLResponse, dependencies=[Depends(web_auth)])
+@app.get("/jobs", dependencies=[Depends(web_auth)])
 def jobs_page(request: Request):
     with db.tx() as c:
         rows = [dict(r) for r in c.execute(
             "SELECT jobs.*, items.title AS item_title FROM jobs LEFT JOIN items ON items.id=jobs.item_id "
             "ORDER BY jobs.id DESC LIMIT 100")]
     for r in rows:
-        if r["type"] == "fetch":
-            r["label"] = json.loads(r["payload"]).get("url", "")
-        else:
-            r["label"] = r["item_title"] or ""
-    return templates.TemplateResponse(request, "jobs.html", _ctx(jobs=rows))
+        r["label"] = json.loads(r["payload"]).get("url", "") if r["type"] == "fetch" else (r["item_title"] or "")
+    return render(request, "jobs.html", jobs=rows)
 
 
 @app.post("/jobs/retry-failed", dependencies=[Depends(web_auth)])

@@ -5,9 +5,9 @@
 <div class="doodle">{% include "doodles/castle.svg" %}</div>
 <form class="panel login" method="post" action="/login">
   <h1>Halt! Who goes there?</h1>
-  <p class="muted">Show the royal seal: the access token from your <code>.env</code> file</p>
-  {% if error %}<p class="bad" role="alert">That token is not valid</p>{% endif %}
-  <input type="password" name="token" placeholder="Access token" aria-label="Access token" autofocus required>
+  {% if error %}<p class="note error" role="alert">{{ error }}</p>{% endif %}
+  <label>Username <input name="username" value="{{ form.username or '' }}" autocomplete="username" autofocus required></label>
+  <label>Password <input type="password" name="password" autocomplete="current-password" required></label>
   <button class="btn primary" type="submit">Sign in</button>
 </form>
 </div>

@@ -1,0 +1,53 @@
+{% extends "settings_base.html" %}
+{% from "icons.html" import icon %}
+{% block settings %}
+{% if new_key %}
+<div class="reveal" role="alert">
+  <h3>{{ "New key for" if new_key.regenerated else "Key created for" }} “{{ new_key.name }}”</h3>
+  <p>Copy it now and paste it into the {{ "browser extension" if new_key.kind == "browser" else "app" if new_key.kind == "app" else "client" }}. It is stored only as a hash, so it can't be shown again{{ ". The old key stopped working" if new_key.regenerated }}</p>
+  <p class="keyline" id="new-key">{{ new_key.token }}</p>
+  <button class="btn primary" type="button" data-copy="{{ new_key.token }}">{{ icon("copy") }}Copy key</button>
+</div>
+{% endif %}
+
+<section class="panel stack">
+  <h2>API keys</h2>
+  <p class="muted">Keys let the browser extension and the Android app save to this library without your password. Make one per device or app, so you can revoke a single one if it is lost</p>
+  <form class="form row" method="post" action="/settings/keys">
+    <label>Name <input name="name" placeholder="Firefox on laptop" maxlength="60"></label>
+    <label>For
+      <select name="kind"><option value="browser">Browser extension</option><option value="app">Android app</option><option value="other">Something else</option></select>
+    </label>
+    <button class="btn primary" type="submit">{{ icon("plus") }}Create key</button>
+  </form>
+</section>
+
+<div class="panel flush">
+<table>
+  <thead><tr><th>Name</th><th>For</th><th>Key</th><th>Created</th><th>Last used</th><th></th></tr></thead>
+  <tbody>
+  {% for k in keys %}
+  <tr>
+    <td>{{ k.name }}</td>
+    <td>{{ {"browser": "Browser", "app": "App", "other": "Other"}[k.kind] }}</td>
+    <td class="muted">{{ k.prefix }}…</td>
+    <td class="muted">{{ k.created_at|int|timestamp }}</td>
+    <td class="muted">{{ k.last_used_at|int|timestamp if k.last_used_at else "never" }}</td>
+    <td class="actions"><div class="acts">
+      <form method="post" action="/settings/keys/{{ k.id }}/regenerate" onsubmit="return confirm('Make a new key? The current one stops working at once.')"><button class="btn small" type="submit">{{ icon("retry") }}Regenerate</button></form>
+      <form method="post" action="/settings/keys/{{ k.id }}/delete" onsubmit="return confirm('Revoke this key?')"><button class="btn small danger" type="submit">{{ icon("trash") }}Revoke</button></form>
+    </div></td>
+  </tr>
+  {% else %}<tr><td colspan="6" class="muted">No keys yet</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div>
+
+<section class="panel stack">
+  <h2>Using a key</h2>
+  <p class="muted">Server address for the extension or app: <code>{{ base_url }}</code>. Send the key as a bearer token:</p>
+  <pre class="snippet">curl -H "Authorization: Bearer drl_…" {{ base_url }}/api/v1/me
+curl -H "Authorization: Bearer drl_…" -X POST -H "Content-Type: application/json" \
+     -d '{"url":"https://example.com/funny.mp4"}' {{ base_url }}/api/v1/ingest</pre>
+</section>
+{% endblock %}

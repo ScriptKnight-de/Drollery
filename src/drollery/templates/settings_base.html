@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block title %}Settings · Drollery{% endblock %}
+{% block content %}
+<div class="page-head"><h1>Settings</h1></div>
+<nav class="tabs" aria-label="Settings sections">
+  <a href="/settings/profile" class="{{ 'on' if tab == 'profile' }}">{{ icon("user") }}Profile</a>
+  <a href="/settings/security" class="{{ 'on' if tab == 'security' }}">{{ icon("shield") }}Security</a>
+  <a href="/settings/keys" class="{{ 'on' if tab == 'keys' }}">{{ icon("key") }}API keys</a>
+  <a href="/settings/ai" class="{{ 'on' if tab == 'ai' }}">{{ icon("cpu") }}AI models</a>
+</nav>
+{% if ok %}<p class="note ok" role="status">{{ ok }}</p>{% endif %}
+{% if error %}<p class="note error" role="alert">{{ error }}</p>{% endif %}
+{% block settings %}{% endblock %}
+{% endblock %}

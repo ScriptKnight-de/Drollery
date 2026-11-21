@@ -1,0 +1,64 @@
+{% extends "settings_base.html" %}
+{% from "icons.html" import icon %}
+{% block title %}{{ "Edit model" if model.id else "Add model" }} · Drollery{% endblock %}
+{% block settings %}
+<a class="back" href="/settings/ai">{{ icon("arrow-left") }}AI models</a>
+<form class="panel form narrow-form" id="model-form" method="post" action="{{ '/settings/ai/models/' ~ model.id if model.id else '/settings/ai/models' }}">
+  <h2>{{ "Edit model" if model.id else "Add a model" }}</h2>
+  <input type="hidden" name="id" value="{{ model.id or '' }}">
+
+  <div class="presets" aria-label="Presets">
+    <span class="muted small">Start from</span>
+    {% for p in presets %}<button class="btn small" type="button" data-preset='{{ p|tojson }}'>{{ p.label }}</button>{% endfor %}
+  </div>
+
+  <label>Name <input name="name" value="{{ model.name }}" maxlength="60" required placeholder="Home vision model"></label>
+  <label>Type
+    <select name="type" id="f-type">
+      {% for k, label in types.items() %}<option value="{{ k }}" {{ "selected" if model.type == k }}>{{ label }}</option>{% endfor %}
+    </select>
+  </label>
+
+  <div class="form grp" data-types="openai">
+    <label>Base URL <input name="base_url" value="{{ model.base_url }}" placeholder="http://host.docker.internal:11434/v1"><span class="hint">Any OpenAI-compatible server: Ollama, llama.cpp, LocalAI, a Whisper server, OpenAI…</span></label>
+    <label>Model <input name="model" value="{{ model.model }}" list="model-list" placeholder="moondream"><span class="hint">Use “Test connection” to list the models the server offers</span></label>
+    <label>API key <input type="password" name="api_key" value="" autocomplete="off" placeholder="{{ 'Stored. Leave empty to keep it' if model.has_key else 'Only if the server needs one' }}">
+      {% if model.has_key %}<span class="check"><input type="checkbox" name="clear_key" value="1"> Remove the stored key</span>{% endif %}
+      <span class="hint">Kept in this server's database and never shown again</span></label>
+    <label>Language <input name="language" value="{{ model.language }}" maxlength="8" placeholder="auto-detect"><span class="hint">For transcription, an ISO code such as en or de. Empty detects it</span></label>
+    <label class="check"><input type="checkbox" name="send_image" value="1" {{ "checked" if model.send_image }}> Send the preview image <span class="hint">Turn off for text-only models; naming then uses the transcript only</span></label>
+    <label>Instructions <textarea name="prompt" rows="4" placeholder="Leave empty to use the built-in prompt. {tags} is replaced by your existing tags">{{ model.prompt }}</textarea></label>
+  </div>
+
+  <div class="form grp" data-types="command">
+    <label>Command <input name="command" value="{{ model.command }}" placeholder="whisper-cli -m /models/ggml-tiny.bin -f {input} -nt"><span class="hint"><code>{input}</code> becomes the file path. The program must print the result</span></label>
+  </div>
+
+  <div class="form grp" data-types="tesseract command">
+    <label>OCR languages <input name="langs" value="{{ model.langs }}" placeholder="eng+deu"></label>
+  </div>
+
+  <label>Timeout in seconds <input type="number" name="timeout" value="{{ model.timeout }}" min="5" max="3600"></label>
+
+  <div class="actions">
+    <button class="btn primary" type="submit">Save model</button>
+    <button class="btn" type="button" hx-post="/settings/ai/test" hx-include="#model-form" hx-target="#test-form" hx-swap="innerHTML">{{ icon("zap") }}Test connection</button>
+    <span id="test-form"></span>
+  </div>
+</form>
+<datalist id="model-list"></datalist>
+<script>
+  (function () {
+    var form = document.getElementById("model-form"), type = document.getElementById("f-type");
+    function sync() { form.querySelectorAll("[data-types]").forEach(function (g) { g.hidden = g.dataset.types.split(" ").indexOf(type.value) < 0; }); }
+    type.addEventListener("change", sync); sync();
+    form.querySelectorAll("[data-preset]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var p = JSON.parse(b.dataset.preset);
+        ["name", "base_url", "model"].forEach(function (k) { if (form.elements[k]) form.elements[k].value = p[k] || ""; });
+        type.value = p.type; sync();
+      });
+    });
+  })();
+</script>
+{% endblock %}

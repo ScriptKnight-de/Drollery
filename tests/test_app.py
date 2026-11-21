@@ -81,25 +81,6 @@ def test_empty_state_has_a_doodle(client):
     assert "treasury is empty" in html and "<svg" in html
 
 
-def test_token_auth(tmp_path, monkeypatch):
-    monkeypatch.setenv("DROLLERY_DATA", str(tmp_path))
-    monkeypatch.setenv("DROLLERY_TOKEN", "s3cret")
-    from drollery import config
-    config.get_settings.cache_clear()
-    from fastapi.testclient import TestClient
-    from drollery.main import app
-    with TestClient(app, follow_redirects=False) as c:
-        assert c.get("/healthz").status_code == 200
-        assert c.get("/api/v1/items").status_code == 401
-        assert c.get("/api/v1/items", headers={"Authorization": "Bearer nope"}).status_code == 401
-        assert c.get("/api/v1/items", headers={"Authorization": "Bearer s3cret"}).status_code == 200
-        assert c.get("/").status_code == 303                       # web UI redirects to /login
-        assert c.post("/login", data={"token": "wrong"}).headers["location"] == "/login?error=1"
-        assert c.post("/login", data={"token": "s3cret"}).status_code == 303
-        assert c.get("/").status_code == 200                       # cookie now set
-    config.get_settings.cache_clear()
-
-
 def test_describe_job_with_mock_provider(tmp_path, monkeypatch):
     """Enable the describe provider against a fake OpenAI-compatible endpoint and run the worker job."""
     cfg = tmp_path / "config.toml"
