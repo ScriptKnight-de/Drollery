@@ -80,9 +80,9 @@ code, .mono, kbd { font-family: inherit; font-size: 13px; }
 .top { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px); border-bottom: 2px solid var(--ln); }
 .top-in { max-width: 1280px; margin: 0 auto; padding: 0 24px; height: 60px; display: flex; align-items: center; justify-content: space-between; }
 .brand { position: relative; font: 700 22px/28px var(--sans); color: var(--tx); letter-spacing: -.01em; }
-.brand { display: inline-flex; align-items: center; gap: 8px; }
+.brand { display: inline-flex; align-items: center; gap: 10px; }
 .brand:hover { text-decoration: none; }
-.brand .ic { width: 24px; height: 24px; color: var(--ac); stroke-width: 1.6; }
+.brand .ic { width: 34px; height: 34px; color: var(--ac); stroke-width: 2.2; }
 nav { display: flex; align-items: center; gap: 4px; }
 nav form { margin: 0; }
 .nav-link, .icon-btn { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 18px; color: var(--tx2);
