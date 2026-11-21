@@ -148,13 +148,18 @@ def make_card(src: Path, dst: Path, kind: str, t: float, x: float, y: float, s: 
     raise MediaError(f"could not render the card image: {err}")
 
 
-def make_cover(src: Path, dst: Path) -> bool:
+ON_WHITE = "split[fg][bg];[bg]drawbox=x=0:y=0:w=iw:h=ih:color=white:t=fill[wh];[wh][fg]overlay=format=auto,format=yuv420p"
+
+
+def make_cover(src: Path, dst: Path, on_white: bool = False) -> bool:
     """Album cover: an image file, or the picture embedded in an audio file, as a JPEG of at most 1200 px.
+    on_white puts a transparent picture on white (a JPEG has no transparency and would turn black).
     Returns False when there is no picture to take."""
     tmp = dst.with_suffix(".tmp.jpg")
     tmp.unlink(missing_ok=True)
+    scale = "scale='min(1200,iw)':-2"
     r = _run(["ffmpeg", "-y", "-v", "error", "-i", str(src), "-an", "-frames:v", "1",
-              "-vf", "scale='min(1200,iw)':-2", "-q:v", "3", str(tmp)])
+              "-vf", f"{scale},{ON_WHITE}" if on_white else scale, "-q:v", "3", str(tmp)])
     if r.returncode == 0 and tmp.exists() and tmp.stat().st_size > 0:
         tmp.replace(dst)
         return True

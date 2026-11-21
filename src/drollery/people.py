@@ -142,7 +142,7 @@ def set_picture(person_id: int, src: Path) -> bool:
     dst.parent.mkdir(parents=True, exist_ok=True)
     tmp = dst.with_suffix(".src.jpg")
     try:
-        if not media.make_cover(src, tmp):
+        if not media.make_cover(src, tmp, on_white=True):
             return False
         info = media.probe(tmp)
         w, h = info.get("width"), info.get("height")

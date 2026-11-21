@@ -22,11 +22,12 @@
   <form class="form" method="post" action="/people/{{ person.id }}" enctype="multipart/form-data">
     {% include "person_fields.html" %}
     {% if person.has_picture %}<label class="check"><input type="checkbox" name="remove_picture" value="1"> {{ _("Remove the picture") }}</label>{% endif %}
-    <div class="actions"><button class="btn primary" type="submit">{{ icon("check") }}{{ _("Save person") }}</button></div>
+    <div class="actions">
+      <button class="btn primary" type="submit">{{ icon("check") }}{{ _("Save person") }}</button>
+      <button class="btn danger" type="submit" form="delete-person">{{ icon("trash") }}{{ _("Delete person") }}</button>
+    </div>
   </form>
-  <form method="post" action="/people/{{ person.id }}/delete" data-confirm="{{ _('Delete {name}? They are removed from every item, the items stay.', name=person.name) }}">
-    <button class="btn small danger" type="submit">{{ icon("trash") }}{{ _("Delete person") }}</button>
-  </form>
+  <form id="delete-person" method="post" action="/people/{{ person.id }}/delete" data-confirm="{{ _('Delete {name}? They are removed from every item, the items stay.', name=person.name) }}"></form>
 </details>
 
 <h2 class="with-icon">{{ _("Appears on") }}</h2>

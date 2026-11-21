@@ -561,3 +561,8 @@ body.embed { background: var(--s1); background-image: none; }
 .pc-name { font-weight: 600; overflow-wrap: anywhere; }
 .embed .person-form { max-width: none; border: 0; box-shadow: none; padding: 0; background: transparent; }
 #edit-form { display: none; }
+.person-edit .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.person-edit .actions .btn { justify-self: auto; }
+#delete-person { display: none; }
+.person-edit .btn.danger { background: var(--s2); border-color: var(--ln); }
+.person-edit .btn.danger:hover { border-color: var(--bad); }

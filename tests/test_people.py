@@ -277,3 +277,42 @@ def test_the_people_field_sits_in_the_tile_with_title_and_tags_but_in_its_own_fo
 def test_the_people_field_has_no_add_button_enter_does_it(client, item_id):
     form = client.get(f"/items/{item_id}").text.split('class="person-add"')[1].split("</form>")[0]
     assert 'type="submit"' not in form and "person-new" in form
+
+
+def transparent_png(w=40, h=40) -> bytes:
+    import struct
+    import zlib
+    row = b"\x00" + b"\x00\x00\x00\x00" * w                        # fully transparent (and black underneath)
+    def chunk(t, d):
+        return struct.pack(">I", len(d)) + t + d + struct.pack(">I", zlib.crc32(t + d))
+    return (b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(">IIBBBBB", w, h, 8, 6, 0, 0, 0))
+            + chunk(b"IDAT", zlib.compress(row * h)) + chunk(b"IEND", b""))
+
+
+def mean_rgb(jpeg: bytes) -> tuple[int, int, int]:
+    import subprocess
+    out = subprocess.run(["ffmpeg", "-v", "error", "-i", "-", "-vf", "scale=1:1", "-f", "rawvideo", "-pix_fmt", "rgb24", "-"], input=jpeg, capture_output=True).stdout
+    return out[0], out[1], out[2]
+
+
+def test_a_transparent_picture_is_put_on_white_not_black(client):
+    client.post("/people", data={"name": "Ghosty"}, files={"picture": ("clear.png", transparent_png(), "image/png")})
+    pid = pid_of("Ghosty")
+    r, g, b = mean_rgb(client.get(f"/people/{pid}/picture").content)
+    assert min(r, g, b) > 240
+    client.post(f"/people/{pid}", data={"name": "Ghosty"}, files={"picture": ("clear2.png", transparent_png(60, 20), "image/png")})
+    assert min(mean_rgb(client.get(f"/people/{pid}/picture").content)) > 240
+
+
+def test_an_opaque_picture_keeps_its_colours(client):
+    client.post("/people", data={"name": "Solid"}, files={"picture": ("halves.png", two_color_png(120, 60), "image/png")})
+    r, g, b = mean_rgb(client.get(f"/people/{pid_of('Solid')}/picture").content)
+    assert r > 90 and b > 90 and g < 60                                 # red and blue halves, not washed out to white
+
+
+def test_save_and_delete_sit_in_one_row_and_delete_still_asks(client):
+    make(client)
+    page = client.get(f"/people/{pid_of('Ada Lovelace')}").text
+    row = page.split('class="actions"')[1].split("</div>")[0]
+    assert "Save person" in row and "Delete person" in row and 'form="delete-person"' in row and 'class="btn small' not in row
+    assert "data-confirm=" in page.split('id="delete-person"')[1].split(">")[0]
