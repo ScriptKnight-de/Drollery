@@ -105,11 +105,11 @@ nav form { margin: 0; }
 main { max-width: 1280px; width: 100%; margin: 0 auto; padding: 24px; flex: 1; }
 
 /* skyline strip: tiny medieval scenery along the bottom edge, tinted by the highlight */
-.skyline { flex: none; height: 56px; margin-top: 40px; opacity: .55; background: var(--ac);
-  -webkit-mask: url("/static/skyline.svg") repeat-x center bottom / auto 56px; mask: url("/static/skyline.svg") repeat-x center bottom / auto 56px; }
+.skyline { flex: none; height: 84px; margin-top: 32px; opacity: .6; background: var(--ac);
+  -webkit-mask: url("/static/skyline.svg") repeat-x center bottom / auto 84px; mask: url("/static/skyline.svg") repeat-x center bottom / auto 84px; }
 
-@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .skyline { background: var(--ac-ink); opacity: .85; } }
-:root[data-theme="light"] .skyline { background: var(--ac-ink); opacity: .85; }
+@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .skyline { background: color-mix(in srgb, var(--ac), #1c1409 62%); opacity: 1; } }
+:root[data-theme="light"] .skyline { background: color-mix(in srgb, var(--ac), #1c1409 62%); opacity: 1; }
 
 /* appearance menu */
 .menu { position: relative; margin-left: 4px; }
