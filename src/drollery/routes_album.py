@@ -163,7 +163,8 @@ def lookup_preview(request: Request, item_id: int, mbid: str):
         return flash_redirect(f"/albums/{item_id}/lookup", str(e), "error")
     rows = [{"track": tr, "remote": rel.tracks[match[tr["id"]]] if tr["id"] in match else None} for tr in mine]
     unmatched = len(mine) - len(match)
-    return render(request, "album_lookup_preview.html", item=item, album=album, rel=rel, rows=rows, unmatched=unmatched)
+    return render(request, "album_lookup_preview.html", item=item, album=album, rel=rel, rows=rows, unmatched=unmatched,
+                  now_facts=albums.summary(albums.facts(album)), online_facts=albums.summary({**rel.details(), "date": rel.date}))
 
 
 @router.get("/albums/{item_id}/lookup/{mbid}/cover")

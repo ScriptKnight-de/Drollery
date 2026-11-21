@@ -48,7 +48,6 @@
       <p class="folio">{{ _("fol.") }} {{ "%03d"|format(item.id) }}</p>
       <h1>{{ item.title }}</h1>
       {% if album.artist %}<p class="muted" style="margin:-8px 0 0">{{ album.artist }}</p>{% endif %}
-      {% if album.year or album.label or album.mbid %}<p class="muted small" style="margin:-8px 0 0">{{ [album.year, album.label]|select|join(" · ") }}{% if album.mbid %}{% if album.year or album.label %} · {% endif %}<a href="{{ item.source_url }}" target="_blank" rel="noopener noreferrer">MusicBrainz</a>{% endif %}</p>{% endif %}
       <div class="cover">
         {% if item.has_thumb %}<img src="/albums/{{ item.id }}/cover" alt="{{ item.title }}">
         {% else %}<div class="nocover">{{ icon("book" if isbook else "disc") }}</div>{% endif %}
@@ -69,6 +68,25 @@
       {% if item.tags %}<p class="chips">{% for t in item.tags %}<a href="/?tag={{ t|urlencode }}&src=user">#{{ t }}</a>{% endfor %}</p>
       {% else %}<p class="hint">{{ _("None yet. Add your own below") }}</p>{% endif %}
     </div>
+
+    {% if facts %}
+    <section class="panel stack facts" id="details">
+      <h2>{{ _("Details") }}</h2>
+      <dl>
+        {% if facts.date %}<dt>{{ _("Release date") }}</dt><dd>{{ facts.date }}</dd>{% endif %}
+        {% if facts.original_date %}<dt>{{ _("Original release") }}</dt><dd>{{ facts.original_date }}</dd>{% endif %}
+        {% if facts.label %}<dt>{{ _("Record label") }}</dt><dd>{{ facts.label }}</dd>{% endif %}
+        {% if facts.catalog %}<dt>{{ _("Catalog number") }}</dt><dd>{{ facts.catalog }}</dd>{% endif %}
+        {% if facts.country %}<dt>{{ _("Country") }}</dt><dd>{{ _("Worldwide") if facts.country == "XW" else _("Europe") if facts.country == "XE" else facts.country }}</dd>{% endif %}
+        {% if facts.format %}<dt>{{ _("Format") }}</dt><dd>{{ facts.format }}</dd>{% endif %}
+        {% if facts.type %}<dt>{{ _("Type") }}</dt><dd>{% for ty in facts.type %}{{ _(ty) }}{% if not loop.last %} · {% endif %}{% endfor %}</dd>{% endif %}
+        {% if facts.genres %}<dt>{{ _("Genres") }}</dt><dd class="chips">{% for g in facts.genres %}<a href="/?q={{ g|urlencode }}">{{ g }}</a>{% endfor %}</dd>{% endif %}
+        {% if facts.language_name %}<dt>{{ _("Language") }}</dt><dd>{{ facts.language_name }}</dd>{% endif %}
+        {% if facts.barcode %}<dt>{{ _("Barcode") }}</dt><dd>{{ facts.barcode }}</dd>{% endif %}
+      </dl>
+      {% if album.mbid %}<p class="hint"><a href="{{ item.source_url }}" target="_blank" rel="noopener noreferrer">{{ icon("external") }}{{ _("Details from MusicBrainz") }}</a></p>{% endif %}
+    </section>
+    {% endif %}
 
     <form method="post" action="/items/{{ item.id }}/edit" class="panel form">
       <label>{{ _("Title") }} <input name="title" value="{{ item.title }}" maxlength="120"></label>

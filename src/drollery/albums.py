@@ -8,6 +8,7 @@ same set of files again finds the album that is already there.
 from __future__ import annotations
 
 import hashlib
+import json
 import mimetypes
 import re
 import shutil
@@ -16,7 +17,7 @@ import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import db, media
+from . import db, media, metadata
 from .config import get_settings
 from .i18n import t
 
@@ -59,6 +60,41 @@ def remove_files(item: dict) -> None:
 def get(c, item_id: int) -> dict | None:
     row = c.execute("SELECT * FROM albums WHERE item_id=?", (item_id,)).fetchone()
     return dict(row) if row else None
+
+
+LANGUAGES = {"eng": "English", "deu": "Deutsch", "ger": "Deutsch", "fra": "Français", "fre": "Français", "spa": "Español", "ita": "Italiano",
+             "nld": "Nederlands", "dut": "Nederlands", "pol": "Polski", "swe": "Svenska", "ell": "Ελληνικά", "gre": "Ελληνικά",
+             "por": "Português", "rus": "Русский", "jpn": "日本語", "dan": "Dansk", "nor": "Norsk", "fin": "Suomi", "tur": "Türkçe"}
+
+
+def facts(album: dict | None) -> dict:
+    """The details an album page shows, from the lookup. Albums looked up before more was kept have only year and label."""
+    if not album:
+        return {}
+    try:
+        d = json.loads(album.get("details") or "{}")
+    except ValueError:
+        d = {}
+    if not isinstance(d, dict):
+        d = {}
+    if album.get("year") and not d.get("date"):
+        d["date"] = album["year"]
+    if album.get("label") and not d.get("label"):
+        d["label"] = album["label"]
+    if d.get("type"):
+        d["type"] = [metadata.TYPE_NAMES.get(x, x) for x in d["type"]]                # the display words (translated in the template)
+    if d.get("language"):
+        d["language_name"] = LANGUAGES.get(d["language"], d["language"] if d["language"] not in ("mul", "zxx", "und") else "")
+    if d.get("original_date") and d["original_date"][:4] == str(d.get("date", ""))[:4]:
+        d.pop("original_date")                                       # nothing to say when it is the same year
+    return d
+
+
+def summary(d: dict) -> list[str]:
+    """A few short lines for the review page: what the lookup knows about a release."""
+    out = [d.get("date", ""), d.get("label", ""), d.get("catalog", ""), d.get("country", ""), d.get("format", ""), ", ".join(d.get("type", [])),
+           ", ".join(d.get("genres", []))]
+    return [x for x in out if x]
 
 
 def tracks_of(c, item_id: int) -> list[dict]:
@@ -358,7 +394,8 @@ def apply_details(item_id: int, rel, cover_bytes: bytes | None, *, title: bool =
             c.execute("UPDATE albums SET artist=? WHERE item_id=?", (rel.artist[:120], item_id))
             done.append("artist")
         if details:
-            c.execute("UPDATE albums SET year=?, label=?, mbid=? WHERE item_id=?", (rel.year, rel.label[:120], rel.mbid, item_id))
+            c.execute("UPDATE albums SET year=?, label=?, mbid=?, details=? WHERE item_id=?",
+                      (rel.year, rel.label[:120], rel.mbid, json.dumps(rel.details(), ensure_ascii=False), item_id))
             c.execute("UPDATE items SET source_url=? WHERE id=?", (rel.url, item_id))
             done.append("details")
         for tid, name in (track_titles or {}).items():

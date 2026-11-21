@@ -20,8 +20,11 @@ SEARCH = {"releases": [
     {"id": OTHER, "title": "<script>alert(1)</script>", "score": 60, "artist-credit": [{"name": "Eve"}], "track-count": 2},
 ]}
 RELEASE = {"id": REL, "title": "Satire Hits (Deluxe)", "date": "1999-05-01", "country": "DE", "artist-credit": [{"name": "The Court Jesters"}],
-           "label-info": [{"label": {"name": "Royal Records"}}],
-           "media": [{"position": 1, "tracks": [
+           "label-info": [{"label": {"name": "Royal Records"}, "catalog-number": "RR 4711"}, {"label": {"name": "Royal Records"}, "catalog-number": "RR 4711"}],
+           "barcode": "4012345678905", "status": "Official", "text-representation": {"language": "eng", "script": "Latn"},
+           "release-group": {"primary-type": "Album", "secondary-types": ["Compilation", "Live"], "first-release-date": "1995-03-02",
+                             "genres": [{"name": "satire", "count": 5}, {"name": "<b>comedy</b>", "count": 9}, {"name": "kabarett", "count": 1}]},
+           "media": [{"position": 1, "format": "CD", "tracks": [
                {"position": 1, "number": "1", "title": "Opening Fanfare (Remastered)", "length": 1000},
                {"position": 2, "number": "2", "title": "The King's Tax Return", "length": 1000},
                {"position": 3, "number": "3", "title": "Ballad of the Cheese Wizard", "length": 1000},
@@ -99,6 +102,12 @@ def test_search_builds_a_safe_query_and_skips_broken_entries(fake):
 def test_release_details_are_read(fake):
     rel = metadata.release(REL)
     assert (rel.title, rel.artist, rel.year, rel.label, rel.url) == ("Satire Hits (Deluxe)", "The Court Jesters", "1999", "Royal Records", f"https://musicbrainz.org/release/{REL}")
+    assert (rel.catalog, rel.barcode, rel.status, rel.format, rel.discs, rel.language, rel.original_date) == \
+        ("RR 4711", "4012345678905", "Official", "CD", 1, "eng", "1995-03-02")                       # a repeated catalog number is listed once
+    assert rel.type == ["Album", "Compilation", "Live"] and rel.genres == ["<b>comedy</b>", "satire", "kabarett"]            # most voted genre first
+    assert fake.calls[0]["params"]["inc"] == "recordings+artist-credits+labels+release-groups+genres"
+    d = rel.details()
+    assert d["tracks"] == 4 and d["catalog"] == "RR 4711" and "status" in d and all(v not in ("", [], None) for v in d.values())
     assert [(t.disc, t.position, t.title, t.length) for t in rel.tracks][:2] == [(1, 1, "Opening Fanfare (Remastered)", 1.0), (1, 2, "The King's Tax Return", 1.0)]
     for bad in ("", "../../etc/passwd", REL + "/x", "abc"):                                       # an id is checked before it goes into a URL
         with pytest.raises(metadata.MetadataError):
@@ -294,9 +303,49 @@ def test_applying_everything(client, album, fake):
     assert [t["title"] for t in now] == ["Opening Fanfare (Remastered)", "The King's Tax Return", "Ballad of the Cheese Wizard"]
     assert [t["id"] for t in now] == [t["id"] for t in tracks]                           # same tracks, same order, shares keep working
     page = client.get(f"/items/{aid}").text
-    assert "1999 · Royal Records" in page and f'href="https://musicbrainz.org/release/{REL}"' in page and "Look up details online" in page
-    assert f'href="/albums/{aid}"' not in page
+    assert 'id="details"' in page and f'href="https://musicbrainz.org/release/{REL}"' in page and "Look up details online" in page
+    for text in ("Release date", "1999-05-01", "Original release", "1995-03-02", "Record label", "Royal Records", "Catalog number", "RR 4711", "Country", ">DE<",
+                 "Format", ">CD<", "Album · Compilation · Live", "Genres", "Language", "English", "Barcode", "4012345678905"):
+        assert text in page, text
+    assert "<b>comedy</b>" not in page and "&lt;b&gt;comedy&lt;/b&gt;" in page                  # scraped text is escaped
+    assert f'href="/?q=satire"' in page                                                          # a genre leads to the library search
+    with db.tx() as c:
+        assert albums.facts(albums.get(c, aid))["tracks"] == 4
+    for q in ("RR 4711", "satire", "4012345678905"):                                              # the new facts are searchable
+        assert f'href="/items/{aid}"' in client.get("/", params={"q": q}).text, q
     assert f'href="/items/{aid}"' in client.get("/", params={"q": "Remastered"}).text and f'href="/items/{aid}"' in client.get("/", params={"q": "royal records"}).text
+
+
+def test_the_details_panel_is_for_albums_that_have_details(client, album, fake):
+    aid, _ = album
+    assert 'id="details"' not in client.get(f"/items/{aid}").text                               # nothing was looked up yet
+    with db.tx() as c:                                                                           # an album looked up in the first version: only year and label
+        c.execute("UPDATE albums SET year='1987', label='Old Label', mbid=? WHERE item_id=?", (REL, aid))
+    page = client.get(f"/items/{aid}").text
+    assert 'id="details"' in page and "1987" in page and "Old Label" in page and "Catalog number" not in page and "Genres" not in page
+    with db.tx() as c:
+        c.execute("UPDATE albums SET details='{broken' WHERE item_id=?", (aid,))
+        assert albums.facts(albums.get(c, aid))["date"] == "1987"                                # damaged details do not break the page
+    assert client.get(f"/items/{aid}").status_code == 200
+
+
+def test_country_and_language_codes_are_shown_in_words(client, album, fake):
+    aid, _ = album
+    import json
+    for country, shown in (("XW", "Worldwide"), ("XE", "Europe"), ("GB", ">GB<")):
+        with db.tx() as c:
+            c.execute("UPDATE albums SET details=?, mbid=? WHERE item_id=?", (json.dumps({"country": country, "language": "deu"}), REL, aid))
+        page = client.get(f"/items/{aid}").text
+        assert shown in page and "<dd>Deutsch</dd>" in page
+    with db.tx() as c:
+        c.execute("UPDATE albums SET details=? WHERE item_id=?", (json.dumps({"language": "mul"}), aid))
+    assert "<dt>Language</dt>" not in client.get(f"/items/{aid}").text                           # "multiple languages" says nothing
+
+
+def test_the_review_page_lists_the_release_details(client, album, fake):
+    aid, _ = album
+    page = client.get(f"/albums/{aid}/lookup/{REL}").text
+    assert "Release details" in page and "RR 4711" in page and "Album, Compilation, Live" in page and "&lt;b&gt;comedy&lt;/b&gt;" in page
 
 
 def test_applying_only_what_was_ticked(client, album, fake):
@@ -409,4 +458,4 @@ def test_an_older_database_gets_the_new_album_columns(tmp_path):
                       "INSERT INTO albums(item_id, artist) VALUES (1, 'x');")
     db._migrate_albums(con)
     row = con.execute("SELECT * FROM albums").fetchone()
-    assert (row["year"], row["label"], row["mbid"]) == ("", "", "") and row["artist"] == "x"
+    assert (row["year"], row["label"], row["mbid"], row["details"]) == ("", "", "", "") and row["artist"] == "x"

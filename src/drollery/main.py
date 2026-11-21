@@ -326,7 +326,7 @@ def item_page(request: Request, item_id: int):
     with db.tx() as c:
         jobs = [dict(r) for r in c.execute("SELECT * FROM jobs WHERE item_id=? ORDER BY id DESC", (item_id,))]
         if item["kind"] == "album":
-            return render(request, "album.html", item=item, album=albums.get(c, item_id), tracks=albums.tracks_of(c, item_id), **share_context(request, item))
+            return render(request, "album.html", item=item, album=albums.get(c, item_id), facts=albums.facts(albums.get(c, item_id)), tracks=albums.tracks_of(c, item_id), **share_context(request, item))
     return render(request, "item.html", item=item, jobs=jobs, **share_context(request, item))
 
 

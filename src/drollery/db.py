@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 import sqlite3
 import time
@@ -41,7 +42,8 @@ CREATE TABLE IF NOT EXISTS albums (                   -- extra facts of an item 
   subtype TEXT NOT NULL DEFAULT 'album',              -- album | audiobook
   year TEXT NOT NULL DEFAULT '',                      -- filled by the online lookup
   label TEXT NOT NULL DEFAULT '',
-  mbid TEXT NOT NULL DEFAULT ''                       -- MusicBrainz release id the details came from
+  mbid TEXT NOT NULL DEFAULT '',                      -- MusicBrainz release id the details came from
+  details TEXT NOT NULL DEFAULT ''                    -- JSON: release date, country, catalog number, format, genres ... from the lookup
 );
 CREATE TABLE IF NOT EXISTS tracks (
   id INTEGER PRIMARY KEY,
@@ -207,7 +209,7 @@ def _migrate_shares(c: sqlite3.Connection) -> None:
 
 def _migrate_albums(c: sqlite3.Connection) -> None:
     have = {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('albums')")}
-    for col in ("year", "label", "mbid"):
+    for col in ("year", "label", "mbid", "details"):
         if have and col not in have:
             c.execute(f"ALTER TABLE albums ADD COLUMN {col} TEXT NOT NULL DEFAULT ''")
 
@@ -248,8 +250,14 @@ def reindex(c: sqlite3.Connection, item_id: int) -> None:
     source = f"{row['source_url']} {row['source_meta']} {row['original_name']}"
     transcript = row["transcript"]
     if row["kind"] == "album":                                      # an album is found by its artist and by its track titles
-        extra = c.execute("SELECT artist, year, label FROM albums WHERE item_id=?", (item_id,)).fetchone()
-        source += f" {extra['artist']} {extra['year']} {extra['label']}" if extra else ""
+        extra = c.execute("SELECT artist, year, label, details FROM albums WHERE item_id=?", (item_id,)).fetchone()
+        if extra:
+            source += f" {extra['artist']} {extra['year']} {extra['label']}"
+            try:                                           # catalog number, barcode and genres are searchable too
+                d = json.loads(extra["details"] or "{}")
+                source += " " + " ".join(str(d.get(k, "")) for k in ("catalog", "barcode", "country")) + " " + " ".join(d.get("genres", []))
+            except (ValueError, TypeError, AttributeError):
+                pass
         transcript += " " + " ".join(r["title"] for r in c.execute("SELECT title FROM tracks WHERE item_id=? ORDER BY position", (item_id,)))
     c.execute(
         "INSERT INTO items_fts(rowid,title,description,tags,ai_tags,transcript,ocr,source) VALUES (?,?,?,?,?,?,?,?)",

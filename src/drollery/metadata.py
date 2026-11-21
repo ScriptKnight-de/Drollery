@@ -17,7 +17,7 @@ import httpx
 
 from . import __version__
 from .config import get_settings
-from .i18n import t
+from .i18n import N_, t
 
 MB = "https://musicbrainz.org/ws/2"
 CAA = "https://coverartarchive.org"
@@ -57,6 +57,12 @@ class RemoteTrack:
     length: float | None = None          # seconds
 
 
+TYPE_NAMES = {   # MusicBrainz release types; the ones that are words in every language need no entry in the catalogs
+    "Compilation": N_("Compilation"), "Soundtrack": N_("Soundtrack"), "Spokenword": N_("Spoken word"), "Audio drama": N_("Audio drama"),
+    "Broadcast": N_("Broadcast"), "Other": N_("Other"), "Audiobook": N_("Audiobook"),
+}
+
+
 @dataclass
 class Release:
     mbid: str
@@ -65,7 +71,23 @@ class Release:
     date: str = ""
     label: str = ""
     country: str = ""
+    catalog: str = ""
+    barcode: str = ""
+    status: str = ""
+    format: str = ""                     # "CD", "2 × CD", "Digital Media" ...
+    discs: int = 1
+    type: list = field(default_factory=list)          # ["Album"], ["Album", "Live"] ...
+    genres: list = field(default_factory=list)
+    language: str = ""                   # ISO 639-3, e.g. "eng"
+    original_date: str = ""              # first release of the album as a whole (its release group)
     tracks: list[RemoteTrack] = field(default_factory=list)
+
+    def details(self) -> dict:
+        """What is kept on the album besides year, label and id (those have columns of their own)."""
+        return {k: v for k, v in {
+            "date": self.date, "original_date": self.original_date, "country": self.country, "label": self.label, "catalog": self.catalog,
+            "barcode": self.barcode, "format": self.format, "discs": self.discs, "type": self.type, "genres": self.genres,
+            "language": self.language, "status": self.status, "tracks": len(self.tracks)}.items() if v not in ("", [], None)}
 
     @property
     def year(self) -> str:
@@ -204,10 +226,19 @@ def release(mbid: str) -> Release:
 
 
 def _release(mbid: str) -> Release:
-    d = _json(f"{MB}/release/{mbid}", {"inc": "recordings+artist-credits+labels", "fmt": "json"})
+    d = _json(f"{MB}/release/{mbid}", {"inc": "recordings+artist-credits+labels+release-groups+genres", "fmt": "json"})
     labels = [li["label"]["name"] for li in d.get("label-info", []) if li.get("label") and li["label"].get("name")]
+    catalogs = list(dict.fromkeys(li["catalog-number"] for li in d.get("label-info", []) if li.get("catalog-number")))
+    rg = d.get("release-group") or {}
+    genres = sorted(rg.get("genres") or d.get("genres") or [], key=lambda g: -int(g.get("count") or 0))
+    formats = [m.get("format") for m in d.get("media", []) if m.get("format")]
+    fmt = (f"{len(formats)} × {formats[0]}" if len(formats) > 1 and len(set(formats)) == 1 else " + ".join(dict.fromkeys(formats)))
     rel = Release(mbid=mbid, title=d.get("title", ""), artist=_credit(d.get("artist-credit")), date=d.get("date", ""),
-                  label=labels[0] if labels else "", country=d.get("country", ""))
+                  label=labels[0] if labels else "", country=d.get("country", ""), catalog=" / ".join(catalogs[:2]),
+                  barcode=d.get("barcode", ""), status=d.get("status", ""), format=fmt, discs=len(d.get("media", [])) or 1,
+                  type=[x for x in [rg.get("primary-type"), *(rg.get("secondary-types") or [])] if x],
+                  genres=[g["name"] for g in genres[:6] if g.get("name")],
+                  language=(d.get("text-representation") or {}).get("language") or "", original_date=rg.get("first-release-date", ""))
     for disc_no, medium in enumerate(d.get("media", []), 1):
         for tr in medium.get("tracks", []):
             length = tr.get("length") or (tr.get("recording") or {}).get("length")

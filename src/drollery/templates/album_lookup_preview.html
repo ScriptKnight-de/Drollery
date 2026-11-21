@@ -12,8 +12,9 @@
     <tbody>
       <tr><td><label class="check"><input type="checkbox" name="title" value="1" {{ "checked" if rel.title and rel.title != item.title }}> {{ _("Title") }}</label></td><td>{{ item.title }}</td><td>{{ rel.title }}</td></tr>
       <tr><td><label class="check"><input type="checkbox" name="artist" value="1" {{ "checked" if rel.artist and rel.artist != album.artist }}> {{ _("Artist") }}</label></td><td>{{ album.artist or "—" }}</td><td>{{ rel.artist or "—" }}</td></tr>
-      <tr><td><label class="check"><input type="checkbox" name="details" value="1" checked> {{ _("Year and label") }}</label></td>
-          <td>{{ ((album.year ~ " · " if album.year else "") ~ album.label) or "—" }}</td><td>{{ ((rel.year ~ " · " if rel.year else "") ~ rel.label) or "—" }}</td></tr>
+      <tr><td><label class="check"><input type="checkbox" name="details" value="1" checked> {{ _("Release details") }}</label></td>
+          <td>{% for f in now_facts %}<div>{{ f }}</div>{% else %}—{% endfor %}</td>
+          <td>{% for f in online_facts %}<div>{{ f }}</div>{% else %}—{% endfor %}</td></tr>
       <tr><td><label class="check"><input type="checkbox" name="cover" value="1" checked> {{ _("Cover picture") }}</label></td>
           <td>{% if item.has_thumb %}<img class="mini" src="/albums/{{ item.id }}/cover" alt="">{% else %}—{% endif %}</td>
           <td><img class="mini" src="/albums/{{ item.id }}/lookup/{{ rel.mbid }}/cover" alt="" onerror="this.replaceWith(Object.assign(document.createElement('span'), {textContent: {{ _('No cover available for this release')|tojson|forceescape }}}))"></td></tr>
