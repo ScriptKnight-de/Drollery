@@ -272,3 +272,8 @@ def test_the_people_field_sits_in_the_tile_with_title_and_tags_but_in_its_own_fo
         assert page.count('class="person-add"') == 1 and page.count('id="people"') == 1
         assert page.index('id="people"') > page.index('id="edit-tile"')           # no longer up under the title
         assert 'form="edit-form"' in tile and 'id="edit-form"' in page
+
+
+def test_the_people_field_has_no_add_button_enter_does_it(client, item_id):
+    form = client.get(f"/items/{item_id}").text.split('class="person-add"')[1].split("</form>")[0]
+    assert 'type="submit"' not in form and "person-new" in form
