@@ -104,12 +104,11 @@ nav form { margin: 0; }
 .icon-btn::-webkit-details-marker { display: none; }
 main { max-width: 1280px; width: 100%; margin: 0 auto; padding: 24px; flex: 1; }
 
-/* skyline strip: tiny medieval scenery along the bottom edge, tinted by the highlight */
-.skyline { flex: none; height: 84px; margin-top: 32px; opacity: .6; background: var(--ac);
-  -webkit-mask: url("/static/skyline.svg") repeat-x center bottom / auto 84px; mask: url("/static/skyline.svg") repeat-x center bottom / auto 84px; }
-
-@media (prefers-color-scheme: light) { :root:not([data-theme="dark"]) .skyline { background: color-mix(in srgb, var(--ac), #1c1409 62%); opacity: 1; } }
-:root[data-theme="light"] .skyline { background: color-mix(in srgb, var(--ac), #1c1409 62%); opacity: 1; }
+/* skyline: a solid band in the highlight color along the bottom edge, with the doodle scenery inked on top */
+.skyline { position: relative; flex: none; height: 64px; margin-top: 40px; background: var(--ac);
+  border-top: 3px solid color-mix(in srgb, var(--ac), #000 38%); }
+.skyline::after { content: ""; position: absolute; inset: 0; background: #1a1409;
+  -webkit-mask: url("/static/skyline.svg") repeat-x center bottom / auto 56px; mask: url("/static/skyline.svg") repeat-x center bottom / auto 56px; }
 
 /* appearance menu */
 .menu { position: relative; margin-left: 4px; }
