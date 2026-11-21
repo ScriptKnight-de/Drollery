@@ -97,6 +97,29 @@ Then add a model under **Settings › AI models** with the **Whisper server** pr
 The model name must match `WHISPER_MODEL` (default `Systran/faster-whisper-small`; `-tiny`, `-base`, `-medium` and
 `-large-v3` also work).
 
+### If the model does not download
+
+The helper container `whisper-model` asks the Whisper server to download the model once and then exits. When that fails
+it prints the HTTP code, the server's answer and the usual cause (`docker compose logs whisper-model`), and retries a
+few times if the problem might pass. What the codes mean:
+
+| Code | Meaning | What to do |
+|---|---|---|
+| `404` | the model name does not exist | fix `WHISPER_MODEL` in `.env` (for example `Systran/faster-whisper-small`) |
+| `500` | the Whisper server could not fetch the model, usually because it cannot reach `huggingface.co` | read the reason in `docker compose logs whisper`; check the machine's DNS, firewall or proxy, or whether Hugging Face is up; test with `docker compose exec whisper curl -sI https://huggingface.co` |
+| `000` | the helper cannot reach the Whisper server at all | `docker compose ps`: is the `whisper` container running and healthy? |
+
+**A machine without internet:** copy the downloaded model from a machine where it worked (the volume is called
+`<folder>_whisper-models`, see `docker volume ls`):
+
+```bash
+# on the machine that has the model
+docker run --rm -v drollery_whisper-models:/m -v "$PWD":/b alpine tar czf /b/whisper-models.tgz -C /m .
+# on the offline machine, after copying the file over
+docker run --rm -v drollery_whisper-models:/m -v "$PWD":/b alpine sh -c "cd /m && tar xzf /b/whisper-models.tgz"
+docker compose up -d
+```
+
 **Speed depends on your processor.** Whisper's fast int8 code needs a CPU feature called AVX2. On a virtual machine whose
 CPU type hides it (for example a generic "QEMU Virtual CPU"), transcription of the small model runs about as fast as real
 time. Setting the virtual CPU type to `host` in your hypervisor fixes that.

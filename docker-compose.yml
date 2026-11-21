@@ -44,6 +44,8 @@ services:
       retries: 3
 
   # One-shot helper: downloads the model on first start (and is a no-op afterwards), then exits.
+  # When it fails it says why: the HTTP code, what the Whisper server answered, and what usually causes that. The real
+  # reason is always in the server's own log: docker compose logs whisper
   whisper-model:
     image: ghcr.io/speaches-ai/speaches:latest-cpu
     profiles: ["whisper"]
@@ -51,7 +53,47 @@ services:
     depends_on:
       whisper:
         condition: service_healthy
-    entrypoint: ["sh", "-c", "curl -fsS --max-time 3600 -X POST http://whisper:8000/v1/models/${WHISPER_MODEL:-Systran/faster-whisper-small} && echo"]
+    entrypoint:
+      - sh
+      - -c
+      - |
+        model='${WHISPER_MODEL:-Systran/faster-whisper-small}'
+        url="http://whisper:8000/v1/models/$$model"
+        echo "Downloading the Whisper model $$model (the first time this can take several minutes) ..."
+        attempt=1
+        while :; do
+          code=$$(curl -sS -o /tmp/answer --max-time 3600 -w '%{http_code}' -X POST "$$url" 2>/tmp/curl-error) || code=000
+          case "$$code" in
+            5??|000)
+              if [ "$$attempt" -lt 3 ]; then
+                echo "Attempt $$attempt failed (HTTP $$code), trying again in 5 seconds ..."
+                attempt=$$((attempt + 1))
+                sleep 5
+                continue
+              fi ;;
+          esac
+          break
+        done
+        if [ "$$code" = 200 ]; then
+          cat /tmp/answer
+          echo
+          exit 0
+        fi
+        echo "ERROR: could not download the Whisper model '$$model' (HTTP $$code)."
+        if [ "$$code" = 000 ]; then
+          echo "Could not reach the Whisper server at http://whisper:8000: $$(cat /tmp/curl-error)"
+        else
+          echo "The Whisper server answered: $$(head -c 500 /tmp/answer)"
+        fi
+        case "$$code" in
+          000) echo "Is the 'whisper' container running and healthy? Check: docker compose ps" ;;
+          404) echo "That model does not exist. Check WHISPER_MODEL in .env (for example Systran/faster-whisper-small)." ;;
+          5??) echo "The Whisper server could not fetch the model. The usual reason is that it cannot reach huggingface.co"
+               echo "(no internet, or DNS, firewall or proxy settings); a full or read-only disk is another."
+               echo "The exact reason is in the server's log: docker compose logs whisper" ;;
+          *)   echo "See the server's log: docker compose logs whisper" ;;
+        esac
+        exit 1
 
 volumes:
   drollery-data:

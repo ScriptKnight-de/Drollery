@@ -261,6 +261,11 @@ button. A link from your own network needs [allowing](docs/configuration.md#fetc
 **A big file never arrives.** If a reverse proxy sits in front of Drollery, it must allow big request bodies and long
 requests, because a large file is checked after it has arrived.
 
+**The Whisper model does not download.** Look at `docker compose logs whisper-model`: it prints the HTTP code, what the
+server answered and the usual cause. `404` means the model name in `WHISPER_MODEL` does not exist; `500` almost always
+means the Whisper container cannot reach `huggingface.co` (no internet, DNS, firewall or proxy). The exact reason is in
+`docker compose logs whisper`. See [docs/configuration.md](docs/configuration.md#if-the-model-does-not-download).
+
 **Transcription is very slow.** See the speed note in [docs/configuration.md](docs/configuration.md#whisper-as-a-second-container).
 
 **The lookup says the service is busy.** MusicBrainz asks everyone to go slowly; wait a few seconds and try again.
