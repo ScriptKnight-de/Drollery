@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% from "macros.html" import avatar %}
+{% block title %}{{ _("People") }} · Drollery{% endblock %}
+{% block content %}
+<a class="back" href="/">{{ icon("arrow-left") }}{{ _("Library") }}</a>
+<div class="page-head"><h1>{{ _("People") }}</h1></div>
+<p class="muted lead">{{ _("Creators and everyone involved. Each person is stored once and can be added to any item.") }}</p>
+<p class="add-more" style="text-align:left"><a class="btn small" href="/people/new">{{ icon("plus") }}{{ _("New person") }}</a></p>
+{% if rows %}
+<ul class="people-grid">
+  {% for p in rows %}
+  <li><a class="person-card" href="/people/{{ p.id }}">{{ avatar(p) }}<span class="pc-name">{{ p.name }}</span><span class="muted small">{{ _("Items: {n}", n=p["items"]) }}</span></a></li>
+  {% endfor %}
+</ul>
+{% else %}<p class="muted">{{ _("Nobody has been added yet") }}</p>{% endif %}
+{% endblock %}

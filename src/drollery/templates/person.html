@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% from "macros.html" import avatar %}
+{% block title %}{{ person.name }} · Drollery{% endblock %}
+{% block content %}
+<a class="back" href="/people">{{ icon("arrow-left") }}{{ _("People") }}</a>
+<div class="person-head">
+  <div class="avatar big" aria-hidden="true">{% if person.has_picture %}<img src="/people/{{ person.id }}/picture?v={{ (person.updated_at * 1000)|int }}" alt="">{% else %}{{ person.name[:1]|upper }}{% endif %}</div>
+  <div>
+    <h1>{{ person.name }}</h1>
+    <dl class="facts-inline">
+      {% if person.age is not none %}<dt>{{ _("Age") }}</dt><dd>{{ person.age }}</dd>{% endif %}
+      {% if person.gender in genders %}<dt>{{ _("Gender") }}</dt><dd>{{ _(genders[person.gender]) }}</dd>{% endif %}
+      {% if person.link %}<dt>{{ _("Social media link") }}</dt><dd><a href="{{ person.link }}" rel="noreferrer noopener" target="_blank">{{ icon("external") }}{{ person.link|replace("https://", "")|replace("http://", "")|truncate(48, True) }}</a></dd>{% endif %}
+    </dl>
+  </div>
+</div>
+
+<details class="panel stack person-edit">
+  <summary>{{ icon("edit") }}{{ _("Edit details") }}</summary>
+  <form class="form" method="post" action="/people/{{ person.id }}" enctype="multipart/form-data">
+    {% include "person_fields.html" %}
+    {% if person.has_picture %}<label class="check"><input type="checkbox" name="remove_picture" value="1"> {{ _("Remove the picture") }}</label>{% endif %}
+    <div class="actions"><button class="btn primary" type="submit">{{ icon("check") }}{{ _("Save person") }}</button></div>
+  </form>
+  <form method="post" action="/people/{{ person.id }}/delete" data-confirm="{{ _('Delete {name}? They are removed from every item, the items stay.', name=person.name) }}">
+    <button class="btn small danger" type="submit">{{ icon("trash") }}{{ _("Delete person") }}</button>
+  </form>
+</details>
+
+<h2 class="with-icon">{{ _("Appears on") }}</h2>
+{% if items %}<div class="grid">{% include "grid.html" %}</div>
+{% else %}<p class="muted">{{ _("Not added to any item yet") }}</p>{% endif %}
+{% endblock %}

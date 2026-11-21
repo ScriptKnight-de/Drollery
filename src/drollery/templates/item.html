@@ -17,6 +17,7 @@
   <div class="side" id="side">
     <p class="folio">{{ _("fol.") }} {{ "%03d"|format(item.id) }}</p>
     <h1>{{ item.title }}</h1>
+    {% include "people_field.html" %}
 
     <div class="tagsplit">
       <div class="tagset">
@@ -74,6 +75,7 @@
 </div>
 {% include "popup_dialog.html" %}
 <script src="/static/popup.js" defer></script>
+<script src="/static/people.js" defer></script>
 <script src="/static/toolbar.js" defer></script>
 <script src="/static/tagfield.js" defer></script>
 <script src="/static/sharepanel.js" defer></script>

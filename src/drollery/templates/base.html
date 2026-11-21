@@ -25,6 +25,7 @@
     <div class="orn" aria-hidden="true"></div>
     <nav>
       {% if user %}
+      <a class="nav-link" href="/people">{{ icon("users") }}<span>{{ _("People") }}</span></a>
       <a class="nav-link" href="/jobs">{{ icon("list") }}<span>{{ _("Jobs") }}</span></a>
       <a class="nav-link" href="/settings">{{ icon("settings") }}<span>{{ _("Settings") }}</span></a>
       <form method="post" action="/logout"><button class="nav-link" type="submit">{{ icon("logout") }}<span>{{ _("Log out") }}</span></button></form>

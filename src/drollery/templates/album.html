@@ -68,6 +68,8 @@
       {% include "item_actions.html" %}
     </div>
 
+    {% include "people_field.html" %}
+
     <div class="tagset">
       <h3>{{ _("Your tags") }}</h3>
       {% if item.tags %}<p class="chips">{% for t in item.tags %}<a href="/?tag={{ t|urlencode }}&src=user">#{{ t }}</a>{% endfor %}</p>
@@ -120,6 +122,7 @@
 </dialog>
 {% include "popup_dialog.html" %}
 <script src="/static/popup.js" defer></script>
+<script src="/static/people.js" defer></script>
 <script src="/static/toolbar.js" defer></script>
 <script src="/static/transcript.js" defer></script>
 <script src="/static/tagfield.js" defer></script>

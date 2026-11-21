@@ -16,10 +16,12 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import __version__, accounts, albums, db, i18n, media, pipeline, shares
+from . import __version__, accounts, albums, db, i18n, media, people, pipeline, shares
 from .config import get_settings
 from .deps import LoginRequired, SetupRequired, api_auth, web_auth
 from .routes_auth import router as auth_router
+from .routes_people import files as people_files_router
+from .routes_people import router as people_router
 from .routes_album import router as album_router, files as album_files_router, api as album_api_router
 from .routes_card import files as card_files_router, router as card_router
 from .routes_share import api as share_api_router, manage as share_manage_router, public as share_public_router, share_context, FILE_HEADERS
@@ -73,6 +75,8 @@ app.include_router(auth_router)
 app.include_router(settings_router)
 app.include_router(card_router)
 app.include_router(card_files_router)
+app.include_router(people_router)
+app.include_router(people_files_router)
 app.include_router(album_router)
 app.include_router(album_files_router)
 app.include_router(album_api_router)
@@ -332,8 +336,10 @@ def item_page(request: Request, item_id: int):
         if item["kind"] == "album":
             q = request.query_params.get("q", "")
             return render(request, "album.html", item=item, album=albums.get(c, item_id), facts=albums.facts(albums.get(c, item_id)),
-                          transcription=albums.transcription_state(c, item_id), matches=albums.matching_track_ids(c, q, item_id) if q.strip() else set(), q=q, tracks=albums.tracks_of(c, item_id), **share_context(request, item))
-    return render(request, "item.html", item=item, jobs=jobs, **share_context(request, item))
+                          item_people=people.of_item(c, item_id), transcription=albums.transcription_state(c, item_id), matches=albums.matching_track_ids(c, q, item_id) if q.strip() else set(), q=q, tracks=albums.tracks_of(c, item_id), **share_context(request, item))
+    with db.tx() as c:
+        item_people = people.of_item(c, item_id)
+    return render(request, "item.html", item=item, jobs=jobs, item_people=item_people, **share_context(request, item))
 
 
 @app.post("/items/{item_id}/edit", dependencies=[Depends(web_auth)])

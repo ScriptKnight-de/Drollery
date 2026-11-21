@@ -63,6 +63,23 @@ CREATE VIRTUAL TABLE IF NOT EXISTS tracks_fts USING fts5(
   title, transcript,
   tokenize = 'unicode61 remove_diacritics 2', prefix = '2 3'
 );
+CREATE TABLE IF NOT EXISTS people (                  -- creators and other people involved; one record for everything they appear on
+  id INTEGER PRIMARY KEY,
+  name TEXT NOT NULL,
+  age INTEGER,
+  gender TEXT NOT NULL DEFAULT '',
+  link TEXT NOT NULL DEFAULT '',                       -- a social media page
+  has_picture INTEGER NOT NULL DEFAULT 0,
+  created_at REAL NOT NULL,
+  updated_at REAL NOT NULL
+);
+CREATE INDEX IF NOT EXISTS people_name ON people(name COLLATE NOCASE);
+CREATE TABLE IF NOT EXISTS item_people (
+  item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+  person_id INTEGER NOT NULL REFERENCES people(id) ON DELETE CASCADE,
+  PRIMARY KEY (item_id, person_id)
+);
+CREATE INDEX IF NOT EXISTS item_people_person ON item_people(person_id);
 CREATE TABLE IF NOT EXISTS tags (
   item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
   tag TEXT NOT NULL,
@@ -267,6 +284,7 @@ def reindex(c: sqlite3.Connection, item_id: int) -> None:
     user_tags = " ".join(r["tag"] for r in c.execute("SELECT tag FROM tags WHERE item_id=? AND source='user'", (item_id,)))
     ai_tags = " ".join(r["tag"] for r in c.execute("SELECT tag FROM tags WHERE item_id=? AND source='ai'", (item_id,)))
     source = f"{row['source_url']} {row['source_meta']} {row['original_name']}"
+    source += " " + " ".join(r["name"] for r in c.execute("SELECT p.name FROM people p JOIN item_people ip ON ip.person_id=p.id WHERE ip.item_id=?", (item_id,)))   # found by who made it
     transcript = row["transcript"]
     if row["kind"] == "album":                                      # an album is found by its artist and by its track titles
         extra = c.execute("SELECT artist, year, label, details FROM albums WHERE item_id=?", (item_id,)).fetchone()
@@ -383,8 +401,11 @@ def fts_query(q: str) -> str:
 
 
 def search(c: sqlite3.Connection, q: str = "", kind: str = "", tag: str = "",
-           limit: int = 40, offset: int = 0, tag_source: str = "") -> list[dict]:
+           limit: int = 40, offset: int = 0, tag_source: str = "", person: int = 0) -> list[dict]:
     where, args = [], []
+    if person:
+        where.append("EXISTS (SELECT 1 FROM item_people ip WHERE ip.item_id = items.id AND ip.person_id = ?)")
+        args.append(person)
     if kind:
         where.append("items.kind = ?")
         args.append(kind)

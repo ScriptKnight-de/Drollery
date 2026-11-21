@@ -7,3 +7,8 @@
   <button type="button" class="btn small" data-copy="{{ error }}">{{ icon("copy") }}{{ _("Copy error") }}</button>
 </details>{% endif %}
 {%- endmacro %}
+
+{# A person's round picture, or their first letter. #}
+{% macro avatar(p) -%}
+<span class="avatar" aria-hidden="true">{% if p.has_picture %}<img src="/people/{{ p.id }}/picture?v={{ (p.updated_at * 1000)|int }}" alt="" loading="lazy">{% else %}{{ p.name[:1]|upper }}{% endif %}</span>
+{%- endmacro %}

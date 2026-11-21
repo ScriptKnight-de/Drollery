@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block title %}{{ _("New person") }} · Drollery{% endblock %}
+{% block content %}
+<a class="back leave" href="{{ '/items/%d' % item if item else '/people' }}">{{ icon("arrow-left") }}{{ _("Back") }}</a>
+<div class="page-head"><h1>{{ _("New person") }}</h1></div>
+{% if error %}<p class="note error" role="alert">{{ error }}</p>{% endif %}
+<form class="panel form person-form" method="post" action="/people" enctype="multipart/form-data">
+  <input type="hidden" name="item" value="{{ item }}">
+  {% include "person_fields.html" %}
+  <div class="actions">
+    <button class="btn primary" type="submit">{{ icon("check") }}{{ _("Save person") }}</button>
+    <a class="btn" href="{{ '/items/%d' % item if item else '/people' }}">{{ _("Cancel") }}</a>
+  </div>
+</form>
+{% endblock %}

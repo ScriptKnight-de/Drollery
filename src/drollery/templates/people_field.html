@@ -1,0 +1,23 @@
+{% from "icons.html" import icon %}{% from "macros.html" import avatar %}
+<div class="people" id="people">
+  <h3>{{ icon("users") }}{{ _("Creators and people involved") }}</h3>
+  {% if item_people %}
+  <ul class="persons">
+    {% for p in item_people %}
+    <li class="person-chip">
+      <a href="/people/{{ p.id }}" title="{{ p.name }}">{{ avatar(p) }}<span>{{ p.name }}</span></a>
+      <form method="post" action="/items/{{ item.id }}/people/{{ p.id }}/remove"><button type="submit" title="{{ _('Remove {name}', name=p.name) }}" aria-label="{{ _('Remove {name}', name=p.name) }}">{{ icon("x") }}</button></form>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}<p class="hint">{{ _("Nobody added yet") }}</p>{% endif %}
+  <form class="person-add" method="post" action="/items/{{ item.id }}/people" autocomplete="off" data-lookup="/people/search">
+    <div class="suggest-wrap">
+      <input type="text" name="name" class="person-in" placeholder="{{ _('Search or type a name') }}" aria-label="{{ _('Search or type a name') }}" role="combobox" aria-expanded="false" aria-autocomplete="list" maxlength="120">
+      <input type="hidden" name="person_id" value="">
+      <ul class="suggest" role="listbox" hidden></ul>
+    </div>
+    <button class="btn small" type="submit">{{ icon("plus") }}{{ _("Add") }}</button>
+    <a class="btn small person-new" href="/people/new?item={{ item.id }}" data-popup="{{ _('Add a new person') }}">{{ icon("user") }}{{ _("New person") }}</a>
+  </form>
+</div>

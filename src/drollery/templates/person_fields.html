@@ -1,0 +1,12 @@
+<label>{{ _("Name") }} <input name="name" value="{{ form.name }}" maxlength="120" required autofocus></label>
+<label>{{ _("Picture") }} <input type="file" name="picture" accept="image/*"></label>
+<div class="duo">
+  <label>{{ _("Age") }} <input type="number" name="age" value="{{ form.age }}" min="0" max="130" inputmode="numeric"></label>
+  <label>{{ _("Gender") }}
+    <select name="gender">
+      <option value="">{{ _("Not specified") }}</option>
+      {% for key, label in genders.items() %}<option value="{{ key }}" {{ "selected" if form.gender == key }}>{{ _(label) }}</option>{% endfor %}
+    </select>
+  </label>
+</div>
+<label>{{ _("Social media link") }} <input type="url" name="link" value="{{ form.link }}" maxlength="300" placeholder="https://"></label>

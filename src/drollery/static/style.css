@@ -522,3 +522,40 @@ body.embed { background: var(--s1); background-image: none; }
 .modal.confirm .btn.danger { border-color: var(--bad); }
 .jobs .joblist { display: grid; gap: 8px; max-height: 260px; overflow: auto; }
 .album-head .toolbar { margin-top: 4px; }
+
+/* people: the field on an item, the popup form, the list and a person's page */
+.people { margin: 8px 0 20px; }
+.people h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 14px; }
+.persons { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; padding: 0; list-style: none; }
+.person-chip { display: inline-flex; align-items: center; gap: 4px; height: 32px; padding: 0 4px 0 4px; border-radius: 16px; background: var(--s1); border: 2px solid var(--ln); font-size: 13px; font-weight: 500; }
+.person-chip a { display: inline-flex; align-items: center; gap: 8px; color: var(--tx); padding-right: 4px; }
+.person-chip a:hover { text-decoration: none; color: var(--ac); }
+.person-chip form { margin: 0; display: flex; }
+.person-chip button { display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; background: var(--chip-x); color: #fff; cursor: pointer; }
+.person-chip button svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; }
+.avatar { display: inline-grid; place-items: center; flex: none; width: 24px; height: 24px; border-radius: 50%; overflow: hidden; background: var(--s2); color: var(--tx2); font-size: 12px; font-weight: 600; box-shadow: 0 0 0 1px var(--ln); }
+.avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.avatar.big { width: 112px; height: 112px; font-size: 44px; border: 2px solid var(--ln); box-shadow: none; }
+.person-add { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.suggest-wrap { position: relative; flex: 1 1 200px; min-width: 0; }
+.person-in { width: 100%; height: 32px; padding: 0 12px; font-size: 13px; }
+.suggest { position: absolute; z-index: 20; left: 0; right: 0; top: calc(100% + 4px); margin: 0; padding: 4px; list-style: none; background: var(--s1); border: 2px solid var(--ln); border-radius: 14px; box-shadow: 0 8px 0 var(--ln); max-height: 240px; overflow: auto; }
+.suggest[hidden] { display: none; }
+.suggest li { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 8px 10px; border-radius: 10px; cursor: pointer; font-size: 14px; }
+.suggest li small { color: var(--tx3); }
+.suggest li[aria-selected="true"], .suggest li:hover { background: var(--s2); }
+.person-form { max-width: 560px; }
+.person-form .actions { display: flex; gap: 8px; }
+.person-head { display: flex; align-items: center; gap: 24px; margin: 8px 0 24px; }
+.person-head h1 { margin: 0 0 8px; }
+.facts-inline { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 16px; margin: 0; font-size: 14px; }
+.facts-inline dt { color: var(--tx3); } .facts-inline dd { margin: 0; }
+.person-edit { margin-bottom: 24px; max-width: 640px; }
+.person-edit summary { display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 600; }
+.person-edit .form { margin-top: 12px; }
+.people-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; margin: 16px 0 0; padding: 0; list-style: none; }
+.person-card { display: grid; justify-items: center; gap: 8px; padding: 20px 12px; background: var(--s1); border: 2px solid var(--ln); border-radius: 20px; color: var(--tx); text-align: center; }
+.person-card:hover { text-decoration: none; border-color: var(--ac); }
+.person-card .avatar { width: 72px; height: 72px; font-size: 28px; }
+.pc-name { font-weight: 600; overflow-wrap: anywhere; }
+.embed .person-form { max-width: none; border: 0; box-shadow: none; padding: 0; background: transparent; }
