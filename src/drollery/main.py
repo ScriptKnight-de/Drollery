@@ -77,8 +77,10 @@ app.include_router(share_public_router)
 @app.get("/impressum")
 def impressum(request: Request):
     """Public on purpose: the legal notice must be readable without an account."""
-    text = accounts.get_setting("impressum")
-    return render(request, "impressum.html", text=text or "")
+    text, live = accounts.impressum()
+    if not live:
+        raise HTTPException(status_code=404)
+    return render(request, "impressum.html", text=text)
 app.include_router(share_manage_router)
 app.include_router(share_api_router)
 

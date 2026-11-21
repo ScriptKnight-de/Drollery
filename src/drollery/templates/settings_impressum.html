@@ -2,14 +2,15 @@
 {% block settings %}
 <form class="panel form" method="post" action="/settings/impressum">
   <h2>Impressum</h2>
-  <p class="muted">The legal notice that German law requires on public sites. It is shown at <a href="/impressum"><code>/impressum</code></a>, readable without signing in, and linked in the footer of every page, whether or not you are signed in</p>
+  <p class="muted">The legal notice that German law requires on public sites. When it is switched on and has text, it is shown at <code>/impressum</code>, readable without signing in, and linked at the bottom of every page. Otherwise both are hidden</p>
+  <label class="check"><input type="checkbox" name="enabled" value="1" {{ "checked" if on }}> Show the Impressum page and footer link</label>
   <label>Text
     <textarea name="text" rows="16" maxlength="20000" placeholder="Angaben gemäß § 5 DDG&#10;&#10;Max Mustermann&#10;Musterstraße 1&#10;12345 Musterstadt&#10;&#10;Kontakt&#10;E-Mail: mail@example.org">{{ text }}</textarea>
     <span class="hint">Plain text. Line breaks and blank lines are kept as you type them</span>
   </label>
   <div class="actions">
     <button class="btn primary" type="submit">Save Impressum</button>
-    {% if text %}<a class="btn" href="/impressum">View page</a>{% endif %}
+    {% if live %}<a class="btn" href="/impressum">View page</a>{% endif %}
   </div>
 </form>
 {% endblock %}

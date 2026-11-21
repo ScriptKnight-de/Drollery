@@ -86,6 +86,12 @@ def get_setup_code() -> str:
     return code
 
 
+def impressum() -> tuple[str, bool]:
+    """(text, published). The page and its footer link exist only when it is switched on and has text."""
+    text = get_setting("impressum") or ""
+    return text, bool(text) and get_setting("impressum_on") == "1"
+
+
 def clear_setup_code() -> None:
     setup_code_path().unlink(missing_ok=True)
 

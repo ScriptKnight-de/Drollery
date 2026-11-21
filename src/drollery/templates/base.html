@@ -53,7 +53,7 @@
 {% if flash %}<p class="note {{ flash.kind }}" role="status">{{ flash.text }}</p>{% endif %}
 {% block content %}{% endblock %}
 </main>
-<footer class="foot"><a class="seal" href="/impressum" title="Who keeps this castle">{{ icon("scroll") }}<span>Impressum</span></a></footer>
+{% if impressum_live %}<footer class="foot"><a href="/impressum">Impressum</a></footer>{% endif %}
 <script>
   (function () {
     var root = document.documentElement, menu = document.getElementById("theme-menu");

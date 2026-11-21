@@ -48,17 +48,25 @@ IMPRESSUM_MAX = 20000
 
 @router.get("/impressum")
 def impressum_page(request: Request):
-    return render(request, "settings_impressum.html", tab="impressum", text=accounts.get_setting("impressum") or "")
+    text, live = accounts.impressum()
+    return render(request, "settings_impressum.html", tab="impressum", text=text, on=accounts.get_setting("impressum_on") == "1", live=live)
 
 
 @router.post("/impressum")
-def impressum_save(request: Request, text: str = Form("")):
+def impressum_save(request: Request, text: str = Form(""), enabled: str = Form("")):
     text = text.replace("\r\n", "\n").strip()
     if len(text) > IMPRESSUM_MAX:
-        return render(request, "settings_impressum.html", status_code=422, tab="impressum", text=text[:IMPRESSUM_MAX],
+        return render(request, "settings_impressum.html", status_code=422, tab="impressum", text=text[:IMPRESSUM_MAX], on=bool(enabled), live=False,
                       error=f"That is too long. The limit is {IMPRESSUM_MAX} characters")
     accounts.set_setting("impressum", text or None)
-    return flash_redirect("/settings/impressum", "Impressum saved. It is linked in the footer of every page" if text else "Impressum cleared")
+    accounts.set_setting("impressum_on", "1" if enabled else None)
+    if enabled and not text:
+        msg = "Saved, but the page stays hidden until you write some text"
+    elif enabled:
+        msg = "Impressum saved and published. It is linked in the footer of every page"
+    else:
+        msg = "Impressum saved. It is switched off, so the page and the footer link are hidden"
+    return flash_redirect("/settings/impressum", msg)
 
 
 # --------------------------------------------------------------- security
