@@ -2,7 +2,7 @@
 :root {
   color-scheme: dark;
   --bg: #15141a; --s1: #1d1c24; --s2: #272531;
-  --chip: #000; --chip-ring: rgba(255,255,255,.38); --chip-x: #ff4d52; --chip-fld: #23222c;
+  --chip: #000; --chip-ring: rgba(255,255,255,.38); --chip-tx: #fff; --chip-x: #ff4d52; --chip-fld: #23222c;
   --ln: rgba(255,255,255,.1); --ln2: rgba(255,255,255,.22);
   --tx: #f1eef8; --tx2: #b0abc2; --tx3: #7f7a93;
   --ac: #ffb800; --ac-on: #16120a;
@@ -20,7 +20,7 @@
   :root:not([data-theme="dark"]) {
     color-scheme: light;
     --bg: #fbf7ef; --s1: #ffffff; --s2: #f1ebdd;
-    --chip: #0b0b0d; --chip-ring: rgba(255,255,255,.22); --chip-x: #e5383b; --chip-fld: #ffffff;
+    --chip: #eee7d6; --chip-ring: rgba(40,30,10,.22); --chip-tx: #26222e; --chip-x: #e5383b; --chip-fld: #ffffff;
     --ln: rgba(40,30,10,.12); --ln2: rgba(40,30,10,.26);
     --tx: #26222e; --tx2: #5e586c; --tx3: #8b8499;
     --ac-ink: color-mix(in srgb, var(--ac), black 42%);
@@ -35,7 +35,7 @@
 :root[data-theme="light"] {
   color-scheme: light;
   --bg: #fbf7ef; --s1: #ffffff; --s2: #f1ebdd;
-  --chip: #0b0b0d; --chip-ring: rgba(255,255,255,.22); --chip-x: #e5383b; --chip-fld: #ffffff;
+  --chip: #eee7d6; --chip-ring: rgba(40,30,10,.22); --chip-tx: #26222e; --chip-x: #e5383b; --chip-fld: #ffffff;
   --ln: rgba(40,30,10,.12); --ln2: rgba(40,30,10,.26);
   --tx: #26222e; --tx2: #5e586c; --tx3: #8b8499;
   --ac-ink: color-mix(in srgb, var(--ac), black 42%);
@@ -241,10 +241,10 @@ kbd { color: var(--tx3); border: 2px solid var(--ln); border-radius: 6px; paddin
 .form .btn { justify-self: start; }
 .fld { display: grid; gap: 4px; }
 .fld > label { font-size: 13px; line-height: 20px; font-weight: 500; color: var(--tx2); }
-/* manual tags: small black chips, each with its own red round cross */
+/* manual tags: small chips (black in dark mode, pale in light mode), each with its own red round cross */
 .tagfield { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 44px; padding: 6px 12px; background: var(--chip-fld); border: 2px solid var(--ln); border-radius: 14px; cursor: text; }
 .tagfield:focus-within { border-color: var(--ac); }
-.tagchip { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 4px 0 10px; border-radius: 13px; background: var(--chip); color: #fff; font-size: 13px; font-weight: 500; box-shadow: 0 0 0 1px var(--chip-ring); }
+.tagchip { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 4px 0 10px; border-radius: 13px; background: var(--chip); color: var(--chip-tx); font-size: 13px; font-weight: 500; box-shadow: 0 0 0 1px var(--chip-ring); }
 .tagchip button { display: grid; place-items: center; width: 18px; height: 18px; padding: 0; border: 0; border-radius: 50%; background: var(--chip-x); color: #fff; cursor: pointer; transition: transform .15s var(--ease), filter .15s; }
 .tagchip button svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; }
 .tagchip button:hover { filter: brightness(1.12); transform: scale(1.12); }
