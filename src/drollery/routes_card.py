@@ -149,7 +149,7 @@ def reset_card(item_id: int):
     pipeline.card_source_path(item).unlink(missing_ok=True)
     with db.tx() as c:
         c.execute("UPDATE items SET has_card=0, card_t=NULL, card_x=NULL, card_y=NULL, card_s=NULL, updated_at=? WHERE id=?", (time.time(), item_id))
-    return flash_redirect(f"/items/{item_id}", i18n.t("Card image reset to automatic"))
+    return flash_redirect(f"/items/{item_id}/card", i18n.t("Card image reset to automatic"))      # stays on the card page, so a popup stays open
 
 
 @files.get("/card/{item_id}")

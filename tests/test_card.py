@@ -216,7 +216,9 @@ def test_an_own_picture_becomes_the_card_and_can_be_cropped(client, video_id):
         item = db.get_item(c, video_id)
     assert pipeline.card_source_path(item).exists()
     assert client.get(f"/media/{video_id}").status_code == 200                           # the item itself is untouched
-    client.post(f"/items/{video_id}/card/reset")
+    assert "Choose a video frame again" in client.get(f"/items/{video_id}/card").text      # offered without a confirmation box
+    back = client.post(f"/items/{video_id}/card/reset")
+    assert 'id="snap"' in back.text and "automatic" in back.text                            # lands on the frame chooser, not the item page
     assert not pipeline.card_source_path(item).exists() and not card_file(video_id).exists()
     assert 'id="snap"' in client.get(f"/items/{video_id}/card").text                     # back to choosing a video frame
 

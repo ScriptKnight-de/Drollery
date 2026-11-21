@@ -56,9 +56,15 @@
   </aside>
 </form>
 {% if item.has_card or custom %}
+{% if custom and item.kind == "video" %}
+<form method="post" action="/items/{{ item.id }}/card/reset" class="reset-row">
+  <button class="btn small" type="submit">{{ icon("retry") }}{{ _("Choose a video frame again") }}</button>
+</form>
+{% else %}
 <form method="post" action="/items/{{ item.id }}/card/reset" onsubmit="return confirm({{ _('Go back to the automatic card image?')|tojson|forceescape }})" class="reset-row">
   <button class="btn danger small" type="submit">{{ icon("retry") }}{{ _("Reset to automatic") }}</button>
 </form>
+{% endif %}
 {% endif %}
 
 <script>

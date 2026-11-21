@@ -608,4 +608,5 @@ MESSAGES = {
     "That is not a picture": "To nie jest obraz",
     "Your picture is the card image now. Crop it below if you like": "Twój obraz jest teraz obrazem karty. Przytnij go poniżej, jeśli chcesz",
     "Your original file is never changed. You can crop it afterwards": "Twój oryginalny plik pozostaje bez zmian. Potem możesz przyciąć obraz",
+    "Choose a video frame again": "Wybierz ponownie klatkę z wideo",
 }

@@ -594,4 +594,5 @@ MESSAGES = {
     "That is not a picture": "Det där är ingen bild",
     "Your picture is the card image now. Crop it below if you like": "Din bild är nu kortbilden. Beskär den nedan om du vill",
     "Your original file is never changed. You can crop it afterwards": "Din originalfil ändras aldrig. Du kan beskära bilden efteråt",
+    "Choose a video frame again": "Välj en bildruta igen",
 }
