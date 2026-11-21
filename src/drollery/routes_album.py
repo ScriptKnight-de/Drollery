@@ -6,10 +6,10 @@ import tempfile
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, RedirectResponse, Response
+from fastapi.responses import FileResponse, Response
 from starlette.background import BackgroundTask
 
-from . import aisettings, albums, db, i18n, metadata, pipeline
+from . import aisettings, albums, db, metadata, pipeline
 from .albums import AlbumError, Upload
 from .config import get_settings
 from .deps import api_auth, web_auth

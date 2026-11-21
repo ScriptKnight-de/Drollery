@@ -1,5 +1,4 @@
 """The user's tags and the AI's tags are kept strictly apart."""
-import re
 
 from drollery import db, pipeline
 from test_app import png

@@ -5,7 +5,6 @@ import re
 import pytest
 
 from drollery.upload_redirect import UploadRedirects
-from test_app import png
 
 
 async def call(app, headers=None, path="/x"):

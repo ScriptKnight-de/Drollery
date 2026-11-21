@@ -9,7 +9,7 @@ from fastapi.responses import RedirectResponse
 
 from . import __version__, accounts, aisettings, db, i18n, imdb, pipeline, security
 from .config import get_settings
-from .deps import SESSION_COOKIE, web_auth
+from .deps import web_auth
 from .i18n import t, tn
 from .web import flash_redirect, render
 
@@ -176,10 +176,6 @@ def _security_page(request: Request, status_code: int = 200, **extra):
 @router.get("/security")
 def security_page(request: Request):
     return _security_page(request)
-
-
-def _check_password(request: Request, password: str) -> bool:
-    return security.verify_password(password, _fresh(request)["password_hash"])
 
 
 @router.post("/security/password")

@@ -1,5 +1,4 @@
 """GIFs are told apart from other pictures: their own kind, their own filter, their own tile mark."""
-import sqlite3
 import subprocess
 
 import pytest

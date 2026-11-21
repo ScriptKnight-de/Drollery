@@ -116,7 +116,6 @@ CREATE INDEX IF NOT EXISTS jobs_status ON jobs(status, run_after);
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY,
   username TEXT NOT NULL UNIQUE COLLATE NOCASE,
-  display_name TEXT NOT NULL DEFAULT '',
   email TEXT NOT NULL DEFAULT '',
   language TEXT NOT NULL DEFAULT '',                 -- UI language code; empty = follow the browser
   password_hash TEXT NOT NULL,
@@ -168,7 +167,7 @@ CREATE TABLE IF NOT EXISTS api_keys (
 CREATE TABLE IF NOT EXISTS ai_models (
   id INTEGER PRIMARY KEY,
   name TEXT NOT NULL UNIQUE COLLATE NOCASE,
-  type TEXT NOT NULL,                               -- openai | command | tesseract
+  type TEXT NOT NULL,                               -- openai | command
   base_url TEXT NOT NULL DEFAULT '',
   model TEXT NOT NULL DEFAULT '',
   api_key TEXT NOT NULL DEFAULT '',                 -- write-only in the UI, never returned by any endpoint
@@ -230,6 +229,8 @@ def _migrate_users(c: sqlite3.Connection) -> None:
     have = {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('users')")}
     if have and "language" not in have:
         c.execute("ALTER TABLE users ADD COLUMN language TEXT NOT NULL DEFAULT ''")
+    if "display_name" in have:                               # the display name was removed: a person has just a user name
+        c.execute("ALTER TABLE users DROP COLUMN display_name")
 
 
 def _migrate_shares(c: sqlite3.Connection) -> None:

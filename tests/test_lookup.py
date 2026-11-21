@@ -1,6 +1,4 @@
 """The online album lookup, with the network replaced by a fake: no test here talks to a real service."""
-import re
-import time
 
 import httpx
 import pytest
@@ -487,7 +485,6 @@ def test_an_older_database_gets_the_new_album_columns(tmp_path):
 
 
 def test_the_basics_sit_in_the_details_box_in_the_right_order(client, mp3s):
-    from test_album import make_mp3
     upload(client, [mp3s["one"], mp3s["two"]], subtype="audiobook")
     aid = album_id(client)
     box = client.get(f"/items/{aid}").text.split('id="details"')[1].split("</section>")[0]

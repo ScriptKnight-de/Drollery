@@ -1,5 +1,4 @@
 import re
-import sqlite3
 
 from conftest import PASSWORD
 from drollery import accounts, aisettings, db, pipeline, providers, security

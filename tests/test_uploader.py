@@ -1,7 +1,6 @@
 """The library's one upload zone: what the page offers and how each type reaches the server route it always used."""
 import re
 
-import pytest
 
 from drollery import db
 from test_album import make_mp3

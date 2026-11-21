@@ -21,7 +21,6 @@ for _ext, _mime in {
     mimetypes.add_type(_mime, _ext)
 
 KINDS = ("image", "gif", "video", "audio")      # a GIF is told apart from other pictures (kind "gif"); a "movie" is a video file marked as a movie (see media_kind)
-_UNUSED_KINDS = None      # a GIF is told apart from other pictures: it is stored as kind "gif"
 # Formats that can carry scripts. Served from this origin they would run with the owner's session, so they are refused.
 UNSAFE_MIMES = {"image/svg+xml", "image/svg+xml-compressed"}
 

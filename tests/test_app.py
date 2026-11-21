@@ -1,8 +1,6 @@
 import struct
-import subprocess
 import zlib
 
-import pytest
 
 from drollery import db, providers
 
@@ -92,7 +90,6 @@ def test_describe_job_with_mock_provider(tmp_path, monkeypatch):
     cfg = tmp_path / "config.toml"
     cfg.write_text('[describe]\ntype="openai"\nbase_url="http://llm.test/v1"\nmodel="tiny"\n')
     monkeypatch.setenv("DROLLERY_DATA", str(tmp_path))
-    monkeypatch.delenv("DROLLERY_TOKEN", raising=False)
     from drollery import config, pipeline
     config.get_settings.cache_clear()
 

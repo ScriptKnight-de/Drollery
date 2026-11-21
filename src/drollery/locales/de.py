@@ -63,8 +63,6 @@ MESSAGES = {
     "Here is written who lives in this castle": "Hier steht, wer diese Burg bewohnt",
 
     # ---- library
-    "Drop files or {browse}": "Dateien hierher ziehen oder {browse}",
-    "browse": "durchsuchen",
     "Paste a link": "Link einfügen",
     "Link to download": "Link zum Herunterladen",
     "Add": "Hinzufügen",
@@ -521,7 +519,6 @@ MESSAGES = {
     "Tick what should be taken over from MusicBrainz. Nothing changes until you apply.": "Hake an, was aus MusicBrainz übernommen werden soll. Es ändert sich nichts, bis du es anwendest.",
     "Currently": "Aktuell",
     "From MusicBrainz": "Aus MusicBrainz",
-    "Year and label": "Jahr und Label",
     "No cover available for this release": "Für diese Veröffentlichung gibt es kein Cover",
     "A custom card crop is reset when the cover changes": "Ein eigener Kartenausschnitt wird zurückgesetzt, wenn sich das Cover ändert",
     "Track names": "Titelnamen",
@@ -714,7 +711,6 @@ MESSAGES = {
     "Loading…": "Lädt …",
     "Loading the release details…": "Die Veröffentlichung wird geladen …",
     "Loading the title details…": "Die Titeldetails werden geladen …",
-    "Searching IMDb…": "IMDb wird durchsucht …",
     "Searching MusicBrainz…": "MusicBrainz wird durchsucht …",
     "Still working. The service is slow right now": "Es arbeitet noch. Der Dienst ist gerade langsam",
     "This can take a few seconds": "Das kann ein paar Sekunden dauern",

@@ -6,7 +6,7 @@ import asyncio
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import Response
 
-from . import db, i18n, imdb, media, movies, people
+from . import db, i18n, imdb, media, movies
 from .config import get_settings
 from .deps import web_auth
 from .i18n import N_, t

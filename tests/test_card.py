@@ -162,7 +162,6 @@ def test_card_tools_need_a_login(client, image_id):
     assert v.post(f"/items/{image_id}/card", data={"x": "0", "y": "0", "s": "1"}).headers["location"] == "/login"
     assert v.post(f"/items/{image_id}/card/reset").headers["location"] == "/login"
     assert v.get(f"/card/{image_id}").status_code == 401                                           # files: key or session
-    from conftest import PASSWORD
     key = re.search(r'id="new-key">(drl_[\w-]+)<', client.post("/settings/keys", data={"name": "app", "kind": "app"}).text).group(1)
     assert v.get(f"/card/{image_id}", headers={"Authorization": f"Bearer {key}"}).status_code == 200
 

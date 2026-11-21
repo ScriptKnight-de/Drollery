@@ -1,7 +1,6 @@
 import re
 import time
 
-from conftest import PASSWORD
 from drollery import accounts, db, shares
 from test_app import png
 
