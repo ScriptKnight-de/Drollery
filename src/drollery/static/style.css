@@ -566,3 +566,26 @@ body.embed { background: var(--s1); background-image: none; }
 #delete-person { display: none; }
 .person-edit .btn.danger { background: var(--s2); border-color: var(--ln); }
 .person-edit .btn.danger:hover { border-color: var(--bad); }
+
+/* sound cards: a round soundboard button that plays right on the card */
+.tile.sound .thumb { display: grid; place-items: center; background: color-mix(in srgb, var(--k-audio) 12%, var(--s2)); }
+.sound-play { --p: 0; position: relative; z-index: 1; display: grid; place-items: center; width: 62%; aspect-ratio: 1; padding: 0; border: 0; border-radius: 50%; cursor: pointer; color: #16120a;
+  background: radial-gradient(circle at 35% 28%, color-mix(in srgb, var(--k-audio) 70%, #fff), var(--k-audio) 62%);
+  box-shadow: 0 7px 0 color-mix(in srgb, var(--k-audio), #000 45%), 0 12px 18px rgba(0, 0, 0, .18);
+  transition: transform .1s var(--ease), box-shadow .1s var(--ease), filter .15s; }
+.sound-play:hover { filter: brightness(1.06); }
+.sound-play:active, .sound-play.playing { transform: translateY(5px); box-shadow: 0 2px 0 color-mix(in srgb, var(--k-audio), #000 45%), 0 4px 8px rgba(0, 0, 0, .18); }
+.sound-play:focus-visible { outline: 3px solid var(--ac); outline-offset: 4px; }
+.sound-play::after { content: ""; position: absolute; inset: -7px; border-radius: 50%; pointer-events: none; opacity: 0; transition: opacity .15s;
+  background: conic-gradient(var(--ac) calc(var(--p) * 1%), transparent 0);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px)); mask: radial-gradient(farthest-side, transparent calc(100% - 5px), #000 calc(100% - 4px)); }
+.sound-play.on::after { opacity: 1; }
+.sound-play .ic { width: 42%; height: 42%; fill: currentColor; stroke: none; }
+.sound-play .sp-play, .sound-play .sp-pause { display: grid; place-items: center; width: 100%; height: 100%; }
+.sound-play .sp-pause, .sound-play.playing .sp-play { display: none; }
+.sound-play.playing .sp-pause { display: grid; }
+.sound-play .sp-play .ic { margin-left: 4%; }
+.sound-play.over { width: 28%; opacity: .92; }
+.tile.sound > .cap { display: block; color: var(--tx); }
+.tile.sound > .cap:hover { text-decoration: none; }
+@media (prefers-reduced-motion: reduce) { .sound-play { transition: none; } }

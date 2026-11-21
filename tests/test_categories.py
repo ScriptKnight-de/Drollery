@@ -26,7 +26,7 @@ def test_the_filter_says_clips_and_sounds(library):
 
 def test_the_data_and_the_api_still_use_video_and_audio(library):
     assert library.get("/", params={"kind": "video"}).text.count('class="tile"') == 1                  # the filter keeps its value
-    assert library.get("/", params={"kind": "audio"}).text.count('class="tile"') == 1
+    assert library.get("/", params={"kind": "audio"}).text.count('class="tile sound"') == 1
     kinds = sorted(i["kind"] for i in library.get("/api/v1/items").json()["items"])
     assert kinds == ["audio", "image", "video"]
     assert [i["kind"] for i in library.get("/api/v1/items", params={"kind": "video"}).json()["items"]] == ["video"]

@@ -1,5 +1,22 @@
 {% from "icons.html" import icon %}
 {% for it in items %}
+{% if it.kind == "audio" %}
+{% set pic = it.has_card or it.has_thumb %}
+<div class="tile sound">
+  <div class="thumb">
+    {% if it.has_card %}<img loading="lazy" src="/card/{{ it.id }}?v={{ it.updated_at|int }}" alt="">
+    {% elif it.has_thumb %}<img loading="lazy" src="/thumb/{{ it.id }}?v={{ (it.updated_at * 1000)|int }}" alt="">{% endif %}
+    <button type="button" class="sound-play{{ ' over' if pic }}" data-src="/media/{{ it.id }}" data-id="{{ it.id }}" aria-pressed="false" aria-label="{{ _('Play') }}: {{ it.title }}" title="{{ _('Play') }}">
+      <span class="sp-play">{{ icon("play") }}</span><span class="sp-pause">{{ icon("pause") }}</span>
+    </button>
+    <span class="chip k-audio" title="{{ kind_label(it.kind) }}">{{ icon("lute") }}</span>
+  </div>
+  <a class="cap" href="/items/{{ it.id }}{% if q %}?q={{ q|urlencode }}{% endif %}">
+    <span class="t">{{ it.title }}</span>
+    <span class="meta">{{ _("fol.") }} {{ "%03d"|format(it.id) }}{% if it.duration %} · {{ it.duration|clock }}{% endif %}</span>
+  </a>
+</div>
+{% else %}
 <a class="tile" href="/items/{{ it.id }}{% if q and it.kind == 'album' %}?q={{ q|urlencode }}{% endif %}">
   <div class="thumb">
     {% if it.has_card %}<img loading="lazy" src="/card/{{ it.id }}?v={{ it.updated_at|int }}" alt="">
@@ -15,6 +32,7 @@
     {% for h in track_hits.get(it.id, []) if track_hits %}<span class="hit"><b>{{ h.title }}</b> {{ h.snippet }}</span>{% endfor %}
   </div>
 </a>
+{% endif %}
 {% else %}
 <div class="empty">
   {% include "doodles/" ~ (["knight-snail","dragon-treasure","wizard","princess-tower","king-queen","burglar","forest","castle"]|random) ~ ".svg" %}
