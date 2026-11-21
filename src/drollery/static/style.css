@@ -104,11 +104,13 @@ nav form { margin: 0; }
 .icon-btn::-webkit-details-marker { display: none; }
 main { max-width: 1280px; width: 100%; margin: 0 auto; padding: 24px; flex: 1; }
 
-/* skyline: a solid band in the highlight color along the bottom edge, with the doodle scenery inked on top */
-.skyline { position: relative; flex: none; height: 64px; margin-top: 40px; background: var(--ac);
-  border-top: 3px solid color-mix(in srgb, var(--ac), #000 38%); }
-.skyline::after { content: ""; position: absolute; inset: 0; background: #1a1409;
-  -webkit-mask: url("/static/skyline.svg") repeat-x center bottom / auto 56px; mask: url("/static/skyline.svg") repeat-x center bottom / auto 56px; }
+/* header ornament: a row of tiny medieval scenery standing on the header's bottom edge, fading out at both ends */
+.orn { flex: 1; align-self: flex-end; height: 46px; margin: 0 40px; background: var(--ac-ink); opacity: .9;
+  -webkit-mask-image: url("/static/skyline.svg"), linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+  -webkit-mask-size: auto 46px, 100% 100%; -webkit-mask-repeat: repeat-x, no-repeat; -webkit-mask-position: center bottom, 0 0; -webkit-mask-composite: source-in;
+  mask-image: url("/static/skyline.svg"), linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
+  mask-size: auto 46px, 100% 100%; mask-repeat: repeat-x, no-repeat; mask-position: center bottom, 0 0; mask-composite: intersect; }
+@media (max-width: 760px) { .orn { display: none; } }
 
 /* appearance menu */
 .menu { position: relative; margin-left: 4px; }

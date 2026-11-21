@@ -22,6 +22,7 @@
 <header class="top">
   <div class="top-in">
     <a class="brand" href="/">{{ icon("castle") }}<span>Drollery</span></a>
+    <div class="orn" aria-hidden="true"></div>
     <nav>
       <a class="nav-link" href="/jobs">{{ icon("list") }}<span>Jobs</span></a>
       {% if auth_enabled %}<form method="post" action="/logout"><button class="nav-link" type="submit">{{ icon("logout") }}<span>Log out</span></button></form>{% endif %}
@@ -52,7 +53,6 @@
   </div>
 </header>
 <main>{% block content %}{% endblock %}</main>
-<div class="skyline" aria-hidden="true"></div>
 <script>
   (function () {
     var root = document.documentElement, menu = document.getElementById("theme-menu");
