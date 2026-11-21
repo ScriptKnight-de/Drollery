@@ -154,7 +154,6 @@ MESSAGES = {
     "Zoom": "Zoom",
     "Save card image": "Spara kortbild",
     "Cancel": "Avbryt",
-    "Go back to the automatic card image?": "Gå tillbaka till den automatiska kortbilden?",
     "Reset to automatic": "Återställ till automatisk",
     "Card image reset to automatic": "Kortbilden återställd till automatisk",
     "Card image saved. It now shows on the library page": "Kortbilden sparad. Den syns nu i biblioteket",

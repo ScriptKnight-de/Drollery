@@ -230,3 +230,9 @@ def test_the_own_card_picture_must_be_a_picture(client, image_id):
     with db.tx() as c:
         item = db.get_item(c, image_id)
     assert not pipeline.card_source_path(item).exists() and item["has_card"] == 0
+
+
+def test_resetting_never_asks_the_browser_for_confirmation(client, image_id):
+    client.post(f"/items/{image_id}/card", data={"x": "0.8", "y": "0", "s": "0.5"})
+    page = client.get(f"/items/{image_id}/card").text
+    assert "/card/reset" in page and "confirm(" not in page.split("/card/reset")[1].split("</form>")[0]

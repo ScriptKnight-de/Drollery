@@ -159,7 +159,6 @@ MESSAGES = {
     "Zoom": "Zoom",
     "Save card image": "Enregistrer l’image de la carte",
     "Cancel": "Annuler",
-    "Go back to the automatic card image?": "Revenir à l’image de carte automatique ?",
     "Reset to automatic": "Rétablir l’automatique",
     "Card image reset to automatic": "Image de la carte rétablie en automatique",
     "Card image saved. It now shows on the library page": "Image de la carte enregistrée. Elle s’affiche maintenant dans la bibliothèque",

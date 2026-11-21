@@ -154,7 +154,6 @@ MESSAGES = {
     "Zoom": "Zoom",
     "Save card image": "Kaartafbeelding opslaan",
     "Cancel": "Annuleren",
-    "Go back to the automatic card image?": "Terug naar de automatische kaartafbeelding?",
     "Reset to automatic": "Terugzetten naar automatisch",
     "Card image reset to automatic": "Kaartafbeelding teruggezet naar automatisch",
     "Card image saved. It now shows on the library page": "Kaartafbeelding opgeslagen. Hij staat nu in de bibliotheek",

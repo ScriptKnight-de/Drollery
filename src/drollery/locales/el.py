@@ -154,7 +154,6 @@ MESSAGES = {
     "Zoom": "Μεγέθυνση",
     "Save card image": "Αποθήκευση εικόνας κάρτας",
     "Cancel": "Ακύρωση",
-    "Go back to the automatic card image?": "Επιστροφή στην αυτόματη εικόνα κάρτας;",
     "Reset to automatic": "Επαναφορά σε αυτόματη",
     "Card image reset to automatic": "Η εικόνα κάρτας επανήλθε σε αυτόματη",
     "Card image saved. It now shows on the library page": "Η εικόνα κάρτας αποθηκεύτηκε. Εμφανίζεται πλέον στη βιβλιοθήκη",
