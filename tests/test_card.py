@@ -236,3 +236,10 @@ def test_resetting_never_asks_the_browser_for_confirmation(client, image_id):
     client.post(f"/items/{image_id}/card", data={"x": "0.8", "y": "0", "s": "0.5"})
     page = client.get(f"/items/{image_id}/card").text
     assert "/card/reset" in page and "confirm(" not in page.split("/card/reset")[1].split("</form>")[0]
+
+
+def test_jobs_and_delete_sit_under_the_picture(client, image_id):
+    page = client.get(f"/items/{image_id}").text
+    left, right = page.split('<div class="side" id="side">')
+    assert "Background jobs" in left and f'/items/{image_id}/delete' in left and 'Download' in left
+    assert "Background jobs" not in right and "/delete" not in right

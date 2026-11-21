@@ -506,3 +506,4 @@ body.embed { background: var(--s1); background-image: none; }
 .own-picture label { flex: 1 1 260px; }
 .own-picture .hint { flex: 1 0 100%; margin: 0; order: 3; }
 .own-picture .btn { order: 2; }
+.below { margin-top: 20px; }
