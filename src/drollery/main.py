@@ -189,7 +189,7 @@ def thumb_file(item_id: int):
 @app.get("/api/v1/me", dependencies=[Depends(api_auth)])
 def api_me(request: Request):
     u = request.state.user
-    return {"username": u["username"], "display_name": u["display_name"], "via": "api_key" if "_api_key_id" in u else "session",
+    return {"username": u["username"], "via": "api_key" if "_api_key_id" in u else "session",
             "version": __version__}
 
 

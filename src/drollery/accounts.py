@@ -33,30 +33,30 @@ def get_user_by_name(username: str) -> dict | None:
     return dict(row) if row else None
 
 
-def create_user(username: str, password: str, display_name: str = "", email: str = "", role: str = "admin") -> int:
+def create_user(username: str, password: str, email: str = "", role: str = "admin") -> int:
     now = time.time()
     with db.tx() as c:
         cur = c.execute(
-            "INSERT INTO users(username,display_name,email,password_hash,role,created_at,updated_at) VALUES (?,?,?,?,?,?,?)",
-            (username.strip(), display_name.strip(), email.strip(), security.hash_password(password), role, now, now))
+            "INSERT INTO users(username,email,password_hash,role,created_at,updated_at) VALUES (?,?,?,?,?,?)",
+            (username.strip(), email.strip(), security.hash_password(password), role, now, now))
         return cur.lastrowid
 
 
-def create_first_user(username: str, password: str, display_name: str = "") -> int | None:
+def create_first_user(username: str, password: str) -> int | None:
     """Create the admin only if no user exists yet (a single statement, so two simultaneous setups can't both win)."""
     now = time.time()
     with db.tx() as c:
         cur = c.execute(
-            "INSERT INTO users(username,display_name,password_hash,role,created_at,updated_at) "
-            "SELECT ?,?,?, 'admin', ?, ? WHERE NOT EXISTS (SELECT 1 FROM users)",
-            (username.strip(), display_name.strip(), security.hash_password(password), now, now))
+            "INSERT INTO users(username,password_hash,role,created_at,updated_at) "
+            "SELECT ?,?, 'admin', ?, ? WHERE NOT EXISTS (SELECT 1 FROM users)",
+            (username.strip(), security.hash_password(password), now, now))
         return cur.lastrowid if cur.rowcount else None
 
 
-def update_profile(user_id: int, display_name: str, email: str) -> None:
+def update_profile(user_id: int, email: str) -> None:
     with db.tx() as c:
-        c.execute("UPDATE users SET display_name=?, email=?, updated_at=? WHERE id=?",
-                  (display_name.strip()[:80], email.strip()[:200], time.time(), user_id))
+        c.execute("UPDATE users SET email=?, updated_at=? WHERE id=?",
+                  (email.strip()[:200], time.time(), user_id))
 
 
 def set_password(user_id: int, password: str) -> None:

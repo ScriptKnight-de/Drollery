@@ -33,11 +33,11 @@ def profile(request: Request):
 
 
 @router.post("/profile")
-def profile_save(request: Request, display_name: str = Form(""), email: str = Form("")):
+def profile_save(request: Request, email: str = Form("")):
     if email.strip() and ("@" not in email or " " in email.strip()):
-        return render(request, "settings_profile.html", status_code=422, tab="profile", me=_fresh(request) | {"display_name": display_name, "email": email},
+        return render(request, "settings_profile.html", status_code=422, tab="profile", me=_fresh(request) | {"email": email},
                       error="That email address does not look right")
-    accounts.update_profile(_user(request)["id"], display_name, email)
+    accounts.update_profile(_user(request)["id"], email)
     return flash_redirect("/settings/profile", "Profile saved")
 
 

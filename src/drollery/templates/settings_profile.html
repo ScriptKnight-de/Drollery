@@ -3,7 +3,6 @@
 <form class="panel form narrow-form" method="post" action="/settings/profile">
   <h2>Profile</h2>
   <label>Username <input value="{{ me.username }}" disabled><span class="hint">Used to sign in; it can't be changed</span></label>
-  <label>Display name <input name="display_name" value="{{ me.display_name }}" maxlength="80" autocomplete="name"></label>
   <label>Email <input type="email" name="email" value="{{ me.email }}" maxlength="200" autocomplete="email"><span class="hint">Optional. Only shown here; Drollery never sends email</span></label>
   <button class="btn primary" type="submit">Save profile</button>
 </form>

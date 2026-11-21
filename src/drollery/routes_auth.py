@@ -35,11 +35,11 @@ def setup_page(request: Request):
 
 
 @router.post("/setup")
-def setup(request: Request, code: str = Form(""), username: str = Form(""), display_name: str = Form(""),
+def setup(request: Request, code: str = Form(""), username: str = Form(""),
           password: str = Form(""), password2: str = Form("")):
     if accounts.user_count():
         return RedirectResponse("/", status_code=303)
-    form = {"username": username, "display_name": display_name}
+    form = {"username": username}
     ip = client_ip(request)
 
     def fail(msg: str, status: int = 422):
@@ -57,7 +57,7 @@ def setup(request: Request, code: str = Form(""), username: str = Form(""), disp
         return fail(problem)
     if password != password2:
         return fail("The two passwords do not match")
-    user_id = accounts.create_first_user(username, password, display_name)
+    user_id = accounts.create_first_user(username, password)
     if user_id is None:
         return RedirectResponse("/", status_code=303)
     accounts.clear_setup_code()

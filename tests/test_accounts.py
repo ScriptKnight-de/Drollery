@@ -20,7 +20,7 @@ def test_everything_redirects_to_setup_until_an_admin_exists(anon):
 
 
 def test_setup_needs_the_code_and_a_decent_password(anon):
-    good = {"username": "boss", "display_name": "The Boss", "password": "a-long-enough-pass", "password2": "a-long-enough-pass"}
+    good = {"username": "boss", "password": "a-long-enough-pass", "password2": "a-long-enough-pass"}
     code = accounts.get_setup_code()
 
     r = anon.post("/setup", data={**good, "code": "wrong"})
@@ -90,18 +90,18 @@ def test_cross_site_posts_are_blocked(client):
     r = client.post("/logout", headers={"origin": "https://evil.example"}, follow_redirects=False)
     assert r.status_code == 403
     assert client.get("/").status_code == 200                               # still signed in
-    ok = client.post("/settings/profile", data={"display_name": "Same Site", "email": ""}, headers={"origin": "http://testserver"}, follow_redirects=False)
+    ok = client.post("/settings/profile", data={"email": ""}, headers={"origin": "http://testserver"}, follow_redirects=False)
     assert ok.status_code == 303
 
 
 # --------------------------------------------------------------- profile
 
 def test_profile_update_and_validation(client):
-    r = client.post("/settings/profile", data={"display_name": "New Name", "email": "me@example.org"})
-    assert r.status_code == 200 and "Profile saved" in r.text and "New Name" in r.text
-    bad = client.post("/settings/profile", data={"display_name": "X", "email": "not-an-email"})
+    r = client.post("/settings/profile", data={"email": "me@example.org"})
+    assert r.status_code == 200 and "Profile saved" in r.text and "me@example.org" in r.text
+    bad = client.post("/settings/profile", data={"email": "not-an-email"})
     assert bad.status_code == 422 and "email address" in bad.text
-    assert accounts.get_user_by_name("admin")["display_name"] == "New Name"
+    assert accounts.get_user_by_name("admin")["email"] == "me@example.org"
 
 
 def test_password_change_signs_out_other_devices(client):

@@ -12,7 +12,6 @@
     <span class="hint">Printed in the container log: <code>docker compose logs drollery</code>. It proves you control this server</span>
   </label>
   <label>Username <input name="username" value="{{ form.username or '' }}" autocomplete="username" required></label>
-  <label>Display name <input name="display_name" value="{{ form.display_name or '' }}" autocomplete="name"></label>
   <label>Password <input type="password" name="password" autocomplete="new-password" minlength="10" required>
     <span class="hint">At least 10 characters</span></label>
   <label>Repeat password <input type="password" name="password2" autocomplete="new-password" required></label>
