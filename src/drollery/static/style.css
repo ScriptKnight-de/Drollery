@@ -219,7 +219,9 @@ kbd { color: var(--tx3); border: 2px solid var(--ln); border-radius: 6px; paddin
 /* footer bar: the header's twin. It rises into view when you reach the end of the page */
 .foot { margin-top: 24px; transition: opacity .5s var(--ease), transform .5s var(--ease); }
 .foot.wait { opacity: 0; transform: translateY(16px); }
-.foot-bar { background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px); border-top: 2px solid var(--ln); padding: 14px 24px 18px; text-align: center; font-size: 14px; }
+.foot-bar { background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px); border-top: 2px solid var(--ln); height: 60px; padding: 0 24px; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; }
+.foot-bar .orn { margin: 0; height: 44px; align-self: flex-end; }
+.foot-bar a { flex: none; }
 .foot-bar a { display: inline-flex; align-items: baseline; gap: 12px; flex-wrap: wrap; justify-content: center; color: var(--tx3); text-decoration: none; }
 .foot-bar b { font-weight: 600; color: var(--tx2); border-bottom: 1px dotted currentColor; }
 .foot-bar a:hover, .foot-bar a:focus-visible { color: var(--tx); text-decoration: none; }
