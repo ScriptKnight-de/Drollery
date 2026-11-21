@@ -534,4 +534,5 @@ MESSAGES = {
     "Apply selected": "Tillämpa valda",
     "After adding, look up the album online to fill in its details": "Slå upp albumet online efter tillägget för att fylla i uppgifterna",
     "Uses MusicBrainz and the Cover Art Archive. Only the album title and artist are sent": "Använder MusicBrainz och Cover Art Archive. Bara albumtiteln och artisten skickas",
+    "The lookup service is busy right now. Wait a few seconds and try again": "Söktjänsten är upptagen just nu. Vänta några sekunder och försök igen",
 }

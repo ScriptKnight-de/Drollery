@@ -58,6 +58,14 @@ class Fake:
         return httpx.Response(404, request=req)
 
 
+@pytest.fixture(autouse=True)
+def fresh_cache():
+    metadata._cache.clear()
+    metadata._last[0] = 0.0
+    yield
+    metadata._cache.clear()
+
+
 @pytest.fixture()
 def fake(monkeypatch):
     f = Fake()
@@ -101,6 +109,7 @@ def test_release_details_are_read(fake):
 def test_the_cover_is_followed_only_through_the_archive_hosts(fake):
     assert metadata.cover(REL) == fake.cover
     assert [c["url"].split("/")[2] for c in fake.calls] == ["coverartarchive.org", "archive.org", "ia800000.us.archive.org"]
+    metadata._cache.clear()
     fake.cover_status = 404
     assert metadata.cover(REL) is None
 
@@ -157,6 +166,49 @@ def test_requests_are_spaced_out_and_retried_politely(monkeypatch):
     metadata.search("a")
     metadata.search("b")                                     # straight after the previous one: it has to wait about a second
     assert any(0.5 < s <= metadata.MIN_INTERVAL for s in sleeps)
+
+
+def test_a_busy_service_is_waited_for_as_long_as_it_asks(monkeypatch):
+    sleeps = []
+    monkeypatch.setattr(metadata, "_sleep", sleeps.append)
+    metadata._last[0] = 0.0
+    seen = []
+
+    def send(u, p, a):
+        seen.append(1)
+        if len(seen) < 4:                                      # busy three times, with a Retry-After that grows, then fine
+            return httpx.Response(503, headers={"retry-after": str(len(seen) * 2)}, json={"error": "busy"}, request=httpx.Request("GET", u))
+        return httpx.Response(200, json={"releases": []}, request=httpx.Request("GET", u))
+
+    monkeypatch.setattr(metadata, "_send", send)
+    assert metadata.search("busy day") == [] and len(seen) == 4
+    waits = [s for s in sleeps if s >= 1.5]
+    assert waits[:3] == [2.2, 4.2, 6.2]                          # it waited what was asked (plus a little), not a fixed pause
+    seen.clear()
+    monkeypatch.setattr(metadata, "_send", lambda u, p, a: seen.append(1) or httpx.Response(503, request=httpx.Request("GET", u)))
+    with pytest.raises(metadata.MetadataError, match="busy right now"):                    # still busy after every try: a clear message
+        metadata.search("never works")
+    assert len(seen) == metadata.ATTEMPTS
+    assert metadata._retry_wait(httpx.Response(503, headers={"retry-after": "9999"}, request=httpx.Request("GET", "x")), 0) <= 8.2     # never an endless wait
+
+
+def test_answers_are_kept_for_a_while(fake):
+    metadata.search("Same Album", "Same Artist")
+    metadata.search("same album", "SAME ARTIST")                # same question, any capitalisation
+    metadata.release(REL)
+    metadata.release(REL)
+    metadata.cover(REL)
+    n = len(fake.calls)
+    metadata.cover(REL)
+    assert [c["url"] for c in fake.calls].count(f"{metadata.MB}/release/") == 1 and [c["url"] for c in fake.calls].count(f"{metadata.MB}/release/{REL}") == 1
+    assert len(fake.calls) == n                                  # the second cover came from memory
+    fake.cover_status = 404
+    metadata._cache.clear()
+    assert metadata.cover(REL) is None
+    fake.cover_status = 307
+    assert metadata.cover(REL) == fake.cover                     # a missing cover is not remembered, so one added later is found
+    metadata.search("A different album")
+    assert [c["url"] for c in fake.calls].count(f"{metadata.MB}/release/") == 2
 
 
 def test_failures_become_readable_errors(monkeypatch):
@@ -287,11 +339,13 @@ def test_a_new_cover_replaces_the_old_one_and_resets_a_custom_crop(client, album
     with db.tx() as c:
         assert db.get_item(c, aid)["has_card"] == 1
     fake.cover = png(200)
+    metadata._cache.clear()                                                              # (answers are remembered for a while)
     client.post(f"/albums/{aid}/lookup/{REL}", data={"cover": "1"})
     with db.tx() as c:
         assert db.get_item(c, aid)["has_card"] == 0                                      # the crop belonged to the old picture
     assert client.get(f"/card/{aid}").status_code == 404
     fake.cover_status = 404                                                              # a release without a cover changes nothing
+    metadata._cache.clear()
     r = client.post(f"/albums/{aid}/lookup/{REL}", data={"cover": "1"})
     assert "nothing changed" in r.text
 
@@ -301,6 +355,7 @@ def test_the_cover_preview_passes_through_the_server(client, album, fake):
     r = client.get(f"/albums/{aid}/lookup/{REL}/cover")
     assert r.status_code == 200 and r.headers["content-type"] == "image/png" and r.content == fake.cover
     fake.cover_status = 404
+    metadata._cache.clear()
     assert client.get(f"/albums/{aid}/lookup/{REL}/cover").status_code == 404
     assert client.get(f"/albums/{aid}/lookup/not-a-release/cover").status_code == 502
 

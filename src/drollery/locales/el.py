@@ -534,4 +534,5 @@ MESSAGES = {
     "Apply selected": "Εφαρμογή επιλεγμένων",
     "After adding, look up the album online to fill in its details": "Μετά την προσθήκη, αναζήτησε το άλμπουμ online για να συμπληρωθούν οι λεπτομέρειες",
     "Uses MusicBrainz and the Cover Art Archive. Only the album title and artist are sent": "Χρησιμοποιεί το MusicBrainz και το Cover Art Archive. Στέλνονται μόνο ο τίτλος του άλμπουμ και ο καλλιτέχνης",
+    "The lookup service is busy right now. Wait a few seconds and try again": "Η υπηρεσία αναζήτησης είναι απασχολημένη αυτή τη στιγμή. Περίμενε λίγα δευτερόλεπτα και δοκίμασε ξανά",
 }

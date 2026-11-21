@@ -539,4 +539,5 @@ MESSAGES = {
     "Apply selected": "Appliquer la sélection",
     "After adding, look up the album online to fill in its details": "Après l’ajout, chercher l’album en ligne pour remplir ses détails",
     "Uses MusicBrainz and the Cover Art Archive. Only the album title and artist are sent": "Utilise MusicBrainz et le Cover Art Archive. Seuls le titre de l’album et l’artiste sont envoyés",
+    "The lookup service is busy right now. Wait a few seconds and try again": "Le service de recherche est occupé pour le moment. Attends quelques secondes et réessaie",
 }

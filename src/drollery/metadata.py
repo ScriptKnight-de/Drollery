@@ -99,10 +99,23 @@ def _spaced() -> None:
         _last[0] = time.monotonic()
 
 
+ATTEMPTS = 4
+
+
+def _retry_wait(r: httpx.Response, attempt: int) -> float:
+    """How long to wait before trying again: what the service asks for (Retry-After), else a growing pause."""
+    try:
+        asked = float(r.headers.get("retry-after", ""))
+    except ValueError:
+        asked = 0.0
+    return min(max(asked, 1.5 * 2 ** attempt), 8.0) + 0.2
+
+
 def _get(url: str, params: dict | None = None, accept: str = "application/json", mb: bool = True) -> httpx.Response:
-    """One GET with a polite pause, and a retry when MusicBrainz says it is busy (503)."""
+    """One GET with a polite pause. MusicBrainz sheds load now and then ("busy", 503, with Retry-After); that is normal,
+    so it is retried a few times, waiting as long as it asks."""
     last_error = ""
-    for attempt in range(3):
+    for attempt in range(ATTEMPTS):
         if mb:
             _spaced()
         try:
@@ -111,11 +124,31 @@ def _get(url: str, params: dict | None = None, accept: str = "application/json",
             last_error = type(e).__name__
             _sleep(1.5)
             continue
-        if r.status_code in (429, 503) and attempt < 2:
-            _sleep(2.0)
-            continue
+        if r.status_code in (429, 503):
+            if attempt < ATTEMPTS - 1:
+                _sleep(_retry_wait(r, attempt))
+                continue
+            raise MetadataError(t("The lookup service is busy right now. Wait a few seconds and try again"))
         return r
     raise MetadataError(t("Could not reach the lookup service ({error})", error=last_error or "busy"))
+
+
+# Answers are kept for a few minutes: looking at the review page and then applying asks for the same release twice,
+# and every request saved is one less chance of meeting a busy service.
+CACHE_SECONDS = 600
+CACHE_ENTRIES = 32
+_cache: dict[tuple, tuple[float, object]] = {}
+
+
+def _cached(key: tuple, make):
+    hit = _cache.get(key)
+    if hit and time.monotonic() - hit[0] < CACHE_SECONDS:
+        return hit[1]
+    value = make()
+    if len(_cache) >= CACHE_ENTRIES:
+        _cache.pop(min(_cache, key=lambda k: _cache[k][0]))
+    _cache[key] = (time.monotonic(), value)
+    return value
 
 
 def _json(url: str, params: dict) -> dict:
@@ -145,6 +178,10 @@ def search(title: str, artist: str = "", limit: int = 8) -> list[Candidate]:
     title, artist = title.strip()[:200], artist.strip()[:200]
     if not title and not artist:
         raise MetadataError(t("Enter an album title or an artist to search for"))
+    return _cached(("search", title.casefold(), artist.casefold(), limit), lambda: _search(title, artist, limit))
+
+
+def _search(title: str, artist: str, limit: int) -> list[Candidate]:
     parts = [f'release:"{_q(title)}"'] if title else []
     if artist:
         parts.append(f'artist:"{_q(artist)}"')
@@ -163,6 +200,10 @@ def search(title: str, artist: str = "", limit: int = 8) -> list[Candidate]:
 def release(mbid: str) -> Release:
     if not MBID.match(mbid or ""):
         raise MetadataError(t("That is not a valid release"))
+    return _cached(("release", mbid), lambda: _release(mbid))
+
+
+def _release(mbid: str) -> Release:
     d = _json(f"{MB}/release/{mbid}", {"inc": "recordings+artist-credits+labels", "fmt": "json"})
     labels = [li["label"]["name"] for li in d.get("label-info", []) if li.get("label") and li["label"].get("name")]
     rel = Release(mbid=mbid, title=d.get("title", ""), artist=_credit(d.get("artist-credit")), date=d.get("date", ""),
@@ -189,6 +230,17 @@ def cover(mbid: str) -> bytes | None:
     to the Cover Art Archive and archive.org, so the answer of a lookup service cannot make the server fetch anything else."""
     if not MBID.match(mbid or ""):
         raise MetadataError(t("That is not a valid release"))
+    key = ("cover", mbid)
+    hit = _cache.get(key)
+    if hit and time.monotonic() - hit[0] < CACHE_SECONDS:
+        return hit[1]
+    data = _fetch_cover(mbid)
+    if data is not None and len(_cache) < CACHE_ENTRIES:       # only found covers are kept, so a cover added later is found
+        _cache[key] = (time.monotonic(), data)
+    return data
+
+
+def _fetch_cover(mbid: str) -> bytes | None:
     url = f"{CAA}/release/{mbid}/front-500"
     for hop in range(6):
         r = _get(url, accept="image/*", mb=(hop == 0))
