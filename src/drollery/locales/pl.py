@@ -599,4 +599,10 @@ MESSAGES = {
     # ---- album facts
     "Duration": "Czas trwania",
     "Size": "Rozmiar",
+    "Choose a picture first": "Najpierw wybierz obraz",
+    "Your picture is the cover now. Crop it below if you like": "Twój obraz jest teraz okładką. Przytnij go poniżej, jeśli chcesz",
+    "Use your own picture": "Użyj własnego obrazu",
+    "Picture": "Obraz",
+    "It replaces the current cover. You can crop it afterwards": "Zastępuje obecną okładkę. Potem możesz go przyciąć",
+    "Use this picture": "Użyj tego obrazu",
 }

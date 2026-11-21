@@ -428,6 +428,22 @@ def save_tracks(c, item_id: int, titles: dict[int, str], order: dict[int, int]) 
     db.reindex(c, item_id)
 
 
+def replace_cover(item_id: int, picture: Path) -> bool:
+    """Make `picture` (any image file) the album's cover and its library thumbnail; a crop made for the old one is dropped."""
+    s = get_settings()
+    with db.tx() as c:
+        item = db.get_item(c, item_id)
+    if not media.make_cover(picture, cover_path(item)):
+        return False
+    if not media.make_thumb(cover_path(item), s.thumbs_dir / f"{item['sha256']}.jpg", "image", None):
+        return False
+    (s.cards_dir / f"{item['sha256']}.jpg").unlink(missing_ok=True)
+    with db.tx() as c:
+        c.execute("UPDATE items SET has_thumb=1, has_card=0, card_t=NULL, card_x=NULL, card_y=NULL, card_s=NULL, updated_at=? WHERE id=?",
+                  (time.time(), item_id))
+    return True
+
+
 def apply_details(item_id: int, rel, cover_bytes: bytes | None, *, title: bool = False, artist: bool = False, details: bool = False,
                   cover: bool = False, track_titles: dict[int, str] | None = None) -> list[str]:
     """Take over what the person ticked from an online release (a metadata.Release). Returns what was changed."""
@@ -439,16 +455,11 @@ def apply_details(item_id: int, rel, cover_bytes: bytes | None, *, title: bool =
         tmp = s.tmp_dir / f"cover-{item_id}-{int(time.time())}"
         tmp.write_bytes(cover_bytes)
         try:
-            if media.make_cover(tmp, cover_path(item)):
-                if media.make_thumb(cover_path(item), s.thumbs_dir / f"{item['sha256']}.jpg", "image", None):
-                    done.append("cover")
+            if replace_cover(item_id, tmp):
+                done.append("cover")
         finally:
             tmp.unlink(missing_ok=True)
     with db.tx() as c:
-        if "cover" in done:
-            card = get_settings().cards_dir / f"{item['sha256']}.jpg"
-            card.unlink(missing_ok=True)                      # a custom crop belonged to the old picture
-            c.execute("UPDATE items SET has_thumb=1, has_card=0, card_t=NULL, card_x=NULL, card_y=NULL, card_s=NULL WHERE id=?", (item_id,))
         if title and rel.title:
             c.execute("UPDATE items SET title=?, title_locked=1 WHERE id=?", (rel.title[:120], item_id))
             done.append("title")

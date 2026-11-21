@@ -585,4 +585,10 @@ MESSAGES = {
     # ---- album facts
     "Duration": "Διάρκεια",
     "Size": "Μέγεθος",
+    "Choose a picture first": "Επίλεξε πρώτα μια εικόνα",
+    "Your picture is the cover now. Crop it below if you like": "Η εικόνα σου είναι τώρα το εξώφυλλο. Περίκοψέ την παρακάτω αν θέλεις",
+    "Use your own picture": "Χρήση δικής σου εικόνας",
+    "Picture": "Εικόνα",
+    "It replaces the current cover. You can crop it afterwards": "Αντικαθιστά το τρέχον εξώφυλλο. Μπορείς να την περικόψεις μετά",
+    "Use this picture": "Χρήση αυτής της εικόνας",
 }

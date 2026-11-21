@@ -585,4 +585,10 @@ MESSAGES = {
     # ---- album facts
     "Duration": "Duur",
     "Size": "Grootte",
+    "Choose a picture first": "Kies eerst een afbeelding",
+    "Your picture is the cover now. Crop it below if you like": "Je afbeelding is nu de hoes. Snijd hem hieronder bij als je wilt",
+    "Use your own picture": "Gebruik je eigen afbeelding",
+    "Picture": "Afbeelding",
+    "It replaces the current cover. You can crop it afterwards": "Ze vervangt de huidige hoes. Daarna kun je haar bijsnijden",
+    "Use this picture": "Deze afbeelding gebruiken",
 }

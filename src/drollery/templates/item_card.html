@@ -4,8 +4,17 @@
 {% block content %}
 <a class="back leave" href="/items/{{ item.id }}">{{ icon("arrow-left") }}{{ _("Back to {title}", title=item.title) }}</a>
 <div class="page-head"><h1>{{ _("Card image") }}</h1></div>
-<p class="muted lead">{% if item.kind == "video" %}{{ _("Choose the moment for the card, then crop it.") }}{% else %}{{ _("Crop the part of the picture that should show on the card.") }}{% endif %} {{ _("Your original file is never changed") }}</p>
+<p class="muted lead">{% if not has_picture %}{% elif item.kind == "video" %}{{ _("Choose the moment for the card, then crop it.") }}{% else %}{{ _("Crop the part of the picture that should show on the card.") }}{% endif %} {{ _("Your original file is never changed") }}</p>
 
+{% if item.kind == "album" %}
+<form class="panel form own-picture" method="post" action="/albums/{{ item.id }}/cover" enctype="multipart/form-data">
+  <h2>{{ _("Use your own picture") }}</h2>
+  <label>{{ _("Picture") }} <input type="file" name="image" accept="image/*" required></label>
+  <p class="hint">{{ _("It replaces the current cover. You can crop it afterwards") }}</p>
+  <button class="btn" type="submit">{{ icon("upload") }}{{ _("Use this picture") }}</button>
+</form>
+{% endif %}
+{% if has_picture %}
 <form class="cardedit" id="card-form" method="post" action="/items/{{ item.id }}/card" data-kind="{{ item.kind }}" data-id="{{ item.id }}"
       {% if crop %}data-x="{{ crop.x }}" data-y="{{ crop.y }}" data-s="{{ crop.s }}"{% endif %}>
   <input type="hidden" name="t" id="f-t" value="{{ t }}">
@@ -143,4 +152,5 @@
   }
 })();
 </script>
+{% endif %}
 {% endblock %}

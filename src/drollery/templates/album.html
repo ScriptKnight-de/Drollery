@@ -68,7 +68,7 @@
       <p class="meta-line">
         <a href="/albums/{{ item.id }}/download">{{ icon("download") }}{{ _("Download all") }}</a>
         {% if metadata_lookup %}<a href="/albums/{{ item.id }}/lookup?run=1" data-popup="{{ _('Look up details online') }}">{{ icon("search") }}{{ _("Look up details online") }}</a>{% endif %}
-      {% if item.has_thumb %}<a href="/items/{{ item.id }}/card" data-popup="{{ _('Card image') }}">{{ icon("crop") }}{{ _("Card image") }}{% if item.has_card %} {{ _("(custom)") }}{% endif %}</a>{% endif %}
+      <a href="/items/{{ item.id }}/card" data-popup="{{ _('Card image') }}">{{ icon("crop") }}{{ _("Card image") }}{% if item.has_card %} {{ _("(custom)") }}{% endif %}</a>
       </p>
     </div>
 

@@ -257,6 +257,25 @@ def track_transcript(item_id: int, track_id: int, q: str = ""):
             "done": row["transcribed_at"] is not None}
 
 
+@router.post("/albums/{item_id}/cover")
+async def upload_cover(item_id: int, image: UploadFile = File(...)):
+    """Use a picture from the person's own device as the cover (the card image page then lets them crop it)."""
+    _album_or_404(item_id)
+    back = f"/items/{item_id}/card"
+    s = get_settings()
+    s.tmp_dir.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(dir=s.tmp_dir) as td:
+        ups = await _spool([image], Path(td))
+        if not ups:
+            return flash_redirect(back, t("Choose a picture first"), "error")
+        if not albums._is_image(ups[0].name):
+            return flash_redirect(back, t("The cover must be a picture"), "error")
+        ok = await asyncio.to_thread(albums.replace_cover, item_id, ups[0].path)
+    if not ok:
+        return flash_redirect(back, t("The cover must be a picture"), "error")
+    return flash_redirect(back, t("Your picture is the cover now. Crop it below if you like"))
+
+
 @files.get("/albums/{item_id}/cover")
 def cover_file(item_id: int):
     item = _album_or_404(item_id)

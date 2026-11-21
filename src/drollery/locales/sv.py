@@ -585,4 +585,10 @@ MESSAGES = {
     # ---- album facts
     "Duration": "Längd",
     "Size": "Storlek",
+    "Choose a picture first": "Välj en bild först",
+    "Your picture is the cover now. Crop it below if you like": "Din bild är nu omslaget. Beskär den nedan om du vill",
+    "Use your own picture": "Använd din egen bild",
+    "Picture": "Bild",
+    "It replaces the current cover. You can crop it afterwards": "Den ersätter det nuvarande omslaget. Du kan beskära den efteråt",
+    "Use this picture": "Använd den här bilden",
 }

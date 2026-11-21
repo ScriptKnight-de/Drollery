@@ -16,14 +16,14 @@ router = APIRouter(dependencies=[Depends(web_auth)])
 files = APIRouter(dependencies=[Depends(api_auth)])
 
 
-def _item(item_id: int) -> dict:
+def _item(item_id: int, allow_empty: bool = False) -> dict:
     with db.tx() as c:
         item = db.get_item(c, item_id)
     if item is None:
         raise HTTPException(404, "item not found")
     if item["kind"] == "audio":
         raise HTTPException(404, "audio has no picture to crop")
-    if item["kind"] == "album" and not albums.cover_path(item).exists():
+    if item["kind"] == "album" and not albums.cover_path(item).exists() and not allow_empty:
         raise HTTPException(404, "this album has no cover to crop")
     return item
 
@@ -42,12 +42,13 @@ def default_time(item: dict) -> float:
 
 @router.get("/items/{item_id}/card")
 def card_page(request: Request, item_id: int):
-    item = _item(item_id)
+    item = _item(item_id, allow_empty=True)           # an album without a cover still gets the page, to bring a picture of its own
     t = item["card_t"] if item["card_t"] is not None else default_time(item)
     crop = None
     if item["has_card"] and item["card_x"] is not None:
         crop = {"x": item["card_x"], "y": item["card_y"], "s": item["card_s"]}
-    return render(request, "item_card.html", item=item, t=t, crop=crop, duration=item["duration"] or 0)
+    has_picture = item["kind"] != "album" or albums.cover_path(item).exists()
+    return render(request, "item_card.html", item=item, t=t, crop=crop, duration=item["duration"] or 0, has_picture=has_picture)
 
 
 @router.get("/items/{item_id}/frame")

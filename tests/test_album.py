@@ -233,7 +233,10 @@ def test_edit_the_artist_and_the_card_image(client, mp3s):
         assert db.get_item(c, aid)["has_card"] == 1
     assert client.get(f"/card/{aid}").status_code == 200
     upload(client, [mp3s["one"]])                                                            # no cover at all
-    assert client.get(f"/items/{album_id(client)}/card").status_code == 404
+    bare = album_id(client)
+    page = client.get(f"/items/{bare}/card")                                                # the page is there, for bringing a picture
+    assert page.status_code == 200 and "own-picture" in page.text and 'id="card-form"' not in page.text
+    assert client.get(f"/items/{bare}/frame").status_code == 404
 
 
 def test_deleting_an_album_removes_its_files(client, mp3s):
@@ -373,3 +376,36 @@ def test_the_audio_player_is_dressed_like_the_other_blocks(client):
     rule = re.search(r"^audio \{([^}]*)\}", css, flags=re.M).group(1)                      # the plain `audio { ... }` rule
     assert "border: 2px solid var(--ln)" in rule and "background: var(--s1)" in rule
     assert "audio::-webkit-media-controls-panel { background-color: var(--s1); }" in css
+
+
+def test_an_own_picture_becomes_the_cover_and_drops_the_old_crop(client, mp3s):
+    upload(client, [mp3s["art"]])
+    aid = album_id(client)
+    client.post(f"/items/{aid}/card", data={"t": 0, "x": 0, "y": 0, "s": 0.5})
+    assert "own-picture" in client.get(f"/items/{aid}/card").text
+    r = client.post(f"/albums/{aid}/cover", files={"image": ("mine.png", png(90), "image/png")})
+    assert r.status_code == 200 and "cover now" in r.text and 'id="card-form"' in r.text
+    with db.tx() as c:
+        item = db.get_item(c, aid)
+    assert item["has_card"] == 0 and item["has_thumb"] == 1
+    assert client.get(f"/card/{aid}").status_code == 404
+    assert client.get(f"/albums/{aid}/cover").content[:2] == b"\xff\xd8"
+
+
+def test_a_cover_can_be_added_to_an_album_that_has_none(client, mp3s):
+    upload(client, [mp3s["one"]])
+    aid = album_id(client)
+    r = client.post(f"/albums/{aid}/cover", files={"image": ("mine.png", png(90), "image/png")})
+    assert r.status_code == 200 and client.get(f"/albums/{aid}/cover").status_code == 200
+    with db.tx() as c:
+        assert db.get_item(c, aid)["has_thumb"] == 1
+
+
+def test_only_pictures_are_accepted_as_a_cover(client, mp3s):
+    upload(client, [mp3s["art"]])
+    aid = album_id(client)
+    before = client.get(f"/albums/{aid}/cover").content
+    r = client.post(f"/albums/{aid}/cover", files={"image": ("notes.txt", b"hello", "text/plain")})
+    assert "must be a picture" in r.text
+    r = client.post(f"/albums/{aid}/cover", files={"image": ("fake.png", b"not really a png", "image/png")})
+    assert "must be a picture" in r.text and client.get(f"/albums/{aid}/cover").content == before
