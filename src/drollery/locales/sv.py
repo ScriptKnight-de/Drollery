@@ -566,4 +566,11 @@ MESSAGES = {
     "Transcribe all again": "Transkribera allt igen",
     "Runs one track at a time in the background and takes about as long as the audio itself. Everything said becomes searchable.": "Körs ett spår i taget i bakgrunden och tar ungefär lika lång tid som ljudet självt. Allt som sägs blir sökbart.",
     "transcribe_track": "transkribering av spår",
+
+    # ---- transcript popup
+    "Show transcript": "Visa transkribering",
+    "Close": "Stäng",
+    "Copy transcript": "Kopiera transkribering",
+    "Could not load the transcript": "Transkriberingen kunde inte laddas",
+    "Nothing was said in this track": "Inget sägs i det här spåret",
 }

@@ -19,9 +19,9 @@
           <span class="num">{{ tr.position }}</span>
           <span class="name" title="{{ tr.title }}">{{ tr.title }}</span>
           <span class="dur">{{ tr.duration|clock if tr.duration else "" }}</span>
+          {% if tr.transcribed_at %}<button type="button" class="play share{{ ' hit' if tr.id in matches }}" data-transcript="{{ tr.id }}" aria-label="{{ _('Show transcript') }}: {{ tr.title }}" title="{{ _('Show transcript') }}">{{ icon("transcript") }}</button>{% else %}<span></span>{% endif %}
           <button type="button" class="play share" data-share-track="{{ tr.id }}" aria-label="{{ _('Share this chapter') if isbook else _('Share this track') }}: {{ tr.title }}" title="{{ _('Share this chapter') if isbook else _('Share this track') }}">{{ icon("share") }}</button>
           <a class="muted" href="/albums/{{ item.id }}/track/{{ tr.id }}" download="{{ tr.original_name }}" aria-label="{{ _('Download') }}: {{ tr.title }}" title="{{ _('Download') }}">{{ icon("download") }}</a>
-          {% if tr.transcript %}<details class="tr-text"{% if tr.id in matches %} open{% endif %}><summary>{{ _("Transcript") }}</summary><p class="pre">{{ tr.transcript }}</p></details>{% endif %}
         </li>
         {% endfor %}
       </ol>
@@ -119,6 +119,16 @@
     </form>
   </div>
 </div>
+<dialog id="transcript-dialog" class="modal" aria-labelledby="tr-title" data-q="{{ q }}" data-item="{{ item.id }}"
+        data-error="{{ _('Could not load the transcript') }}" data-empty="{{ _('Nothing was said in this track') }}">
+  <div class="modal-head">
+    <div><p class="muted small">{{ _("Transcript") }}</p><h2 id="tr-title"></h2></div>
+    <button type="button" class="play share" data-close aria-label="{{ _('Close') }}" title="{{ _('Close') }}">{{ icon("x") }}</button>
+  </div>
+  <div class="modal-body pre" id="tr-text"></div>
+  <div class="modal-foot"><button type="button" class="btn small" id="tr-copy" data-copy="">{{ icon("copy") }}{{ _("Copy transcript") }}</button></div>
+</dialog>
+<script src="/static/transcript.js" defer></script>
 <script src="/static/tagfield.js" defer></script>
 <script src="/static/player.js" defer></script>
 <script src="/static/sharepanel.js" defer></script>

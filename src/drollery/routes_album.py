@@ -245,6 +245,18 @@ def track_file(item_id: int, track_id: int):
                         headers={"X-Content-Type-Options": "nosniff"})
 
 
+@files.get("/albums/{item_id}/track/{track_id}/transcript")
+def track_transcript(item_id: int, track_id: int, q: str = ""):
+    """What is said in one track, as text and as escaped HTML with the searched words marked (for the popup on the album page)."""
+    _album_or_404(item_id)
+    with db.tx() as c:
+        row = c.execute("SELECT title, transcript, transcribed_at FROM tracks WHERE id=? AND item_id=?", (track_id, item_id)).fetchone()
+    if row is None:
+        raise HTTPException(404, "track not found")
+    return {"title": row["title"], "text": row["transcript"], "html": str(albums.highlight(row["transcript"], q)),
+            "done": row["transcribed_at"] is not None}
+
+
 @files.get("/albums/{item_id}/cover")
 def cover_file(item_id: int):
     item = _album_or_404(item_id)

@@ -31,7 +31,7 @@
       <span class="num">{{ tr.position }}</span>
       <span class="name" title="{{ tr.title }}">{{ tr.title }}</span>
       <span class="dur">{{ tr.duration|clock if tr.duration else "" }}</span>
-      <span></span>
+      <span></span><span></span>
       <a class="muted" href="/s/{{ share.token }}/track/{{ tr.id }}?download=1" aria-label="{{ _('Download') }}: {{ tr.title }}" title="{{ _('Download') }}">{{ icon("download") }}</a>
     </li>
     {% endfor %}

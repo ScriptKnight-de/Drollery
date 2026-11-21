@@ -111,9 +111,52 @@ def test_what_is_said_makes_the_album_searchable_and_shows_where(client, album, 
     assert f'href="/items/{aid}' in client.get("/", params={"q": "welcom"}).text                                       # prefix search works inside transcripts
     assert 'class="hit"' not in client.get("/", params={"q": "talk show"}).text                                         # a title match needs no snippet of speech
     page = client.get(f"/items/{aid}", params={"q": "treasurer"}).text
-    assert page.count('class="match"') == 1 and f'id="t{tracks[1]["id"]}"' in page and "<details class=\"tr-text\" open>" in page   # the matching track is marked and opened
-    plain = client.get(f"/items/{aid}").text
-    assert 'class="match"' not in plain and "<summary>Transcript</summary>" in plain and "&lt;script&gt;alert(1)&lt;/script&gt;" in plain
+    assert page.count('<li id="t') == 3 and page.count('class="match"') == 1 and f'id="t{tracks[1]["id"]}" data-track class="match"' in page          # the matching track is marked
+    assert f'class="play share hit" data-transcript="{tracks[1]["id"]}"' in page and 'data-q="treasurer"' in page                                   # its transcript button too
+    assert page.count("data-transcript=") == 3 and "<details" not in page.split('id="tracklist"')[1].split("</ol>")[0]
+
+
+def test_the_transcript_button_opens_a_popup_with_the_text(client, album, monkeypatch):
+    aid, tracks = album
+    enable_transcription(client)
+    client.post(f"/albums/{aid}/transcribe")
+    say(monkeypatch, ["Das erste Wort", "so the Treasurer said <b>hello</b> & left", ""])
+    run_all_jobs()
+    page = client.get(f"/items/{aid}").text
+    assert 'id="transcript-dialog"' in page and "/static/transcript.js" in page and 'data-error="Could not load the transcript"' in page
+    assert all(f'data-transcript="{t["id"]}"' in page for t in tracks)                         # every transcribed track has the button, even an empty one
+    assert "Das erste Wort" not in page                                                         # the text is fetched when asked for, not carried by the page
+    r = client.get(f"/albums/{aid}/track/{tracks[1]['id']}/transcript", params={"q": "treasurer hel"})
+    d = r.json()
+    assert r.status_code == 200 and d["title"] == tracks[1]["title"] and d["text"] == "so the Treasurer said <b>hello</b> & left" and d["done"] is True
+    assert d["html"] == "so the <mark>Treasurer</mark> said &lt;b&gt;<mark>hello</mark>&lt;/b&gt; &amp; left"            # escaped, with the searched words marked
+    plain = client.get(f"/albums/{aid}/track/{tracks[0]['id']}/transcript").json()
+    assert plain["html"] == "Das erste Wort" and "<mark>" not in plain["html"]
+    assert client.get(f"/albums/{aid}/track/{tracks[2]['id']}/transcript").json() == {"title": tracks[2]["title"], "text": "", "html": "", "done": True}
+    assert client.get(f"/albums/{aid}/track/999999/transcript").status_code == 404 and client.get("/albums/99999/track/1/transcript").status_code == 404
+    assert anon_client().get(f"/albums/{aid}/track/{tracks[0]['id']}/transcript").status_code in (303, 401)           # transcripts are not public
+    weird = client.get(f"/albums/{aid}/track/{tracks[0]['id']}/transcript", params={"q": "(((  \\ [a-  *"})
+    assert weird.status_code == 200                                                              # odd search text cannot break the highlighting
+
+
+def test_a_track_not_transcribed_yet_has_no_button(client, album):
+    aid, _ = album
+    page = client.get(f"/items/{aid}").text
+    assert "data-transcript=" not in page.split('id="tracklist"')[1].split("</ol>")[0]
+
+
+def test_the_public_page_never_shows_transcripts(client, album, monkeypatch):
+    aid, tracks = album
+    enable_transcription(client)
+    client.post(f"/albums/{aid}/transcribe")
+    say(monkeypatch, ["private words", "more private words", "and more"])
+    run_all_jobs()
+    client.post(f"/items/{aid}/shares", data={"preset": "never", "next": f"/items/{aid}"})
+    with db.tx() as c:
+        token = c.execute("SELECT token FROM shares").fetchone()[0]
+    page = anon_client().get(f"/s/{token}")
+    assert page.status_code == 200 and "private words" not in page.text and "data-transcript" not in page.text and "transcript" not in page.text.lower().replace("transcribe", "")
+    assert anon_client().get(f"/s/{token}/track/{tracks[0]['id']}/transcript").status_code == 404
 
 
 def test_the_status_and_the_buttons_on_the_album_page(client, album, monkeypatch):

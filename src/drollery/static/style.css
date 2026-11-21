@@ -257,7 +257,7 @@ audio::-webkit-media-controls-panel { background-color: var(--s1); }
 .nowplaying { margin: 0; font-size: 14px; line-height: 20px; color: var(--tx2); min-height: 20px; }
 .nowplaying b { color: var(--tx); font-weight: 500; }
 .tracklist { list-style: none; margin: 0; padding: 0; display: grid; }
-.tracklist li { display: grid; grid-template-columns: 36px 28px minmax(0, 1fr) auto auto auto; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px dashed var(--ln); border-radius: 12px; font-size: 14px; }
+.tracklist li { display: grid; grid-template-columns: 36px 28px minmax(0, 1fr) auto auto auto auto; align-items: center; gap: 8px; padding: 8px 12px; border-top: 1px dashed var(--ln); border-radius: 12px; font-size: 14px; }
 .tracklist li:first-child { border-top: 0; }
 .tracklist li.playing { background: color-mix(in srgb, var(--ac) 16%, var(--s1)); border-top-color: transparent; }
 .tracklist .num { color: var(--tx3); font-variant-numeric: tabular-nums; text-align: right; }
@@ -266,18 +266,26 @@ audio::-webkit-media-controls-panel { background-color: var(--s1); }
 .play { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 2px solid var(--ln2); border-radius: 50%; background: var(--s1); color: var(--tx); cursor: pointer; }
 .play:hover { border-color: var(--ac); color: var(--ac-ink); }
 .play .ic { width: 14px; height: 14px; fill: currentColor; stroke: none; }
-.play.share { width: 28px; height: 28px; border-color: transparent; background: none; color: var(--tx3); }
+.play.share { margin: 0; max-width: none; width: 28px; height: 28px; border-color: transparent; background: none; color: var(--tx3); }
 .play.share .ic { fill: none; stroke: currentColor; stroke-width: 1.5; width: 16px; height: 16px; }
 .play.share:hover { color: var(--ac-ink); border-color: var(--ln2); }
 .play .on { display: none; } .play[aria-pressed="true"] .on { display: block; } .play[aria-pressed="true"] .off { display: none; }
 .tracklist li.playing .play:not(.share) { background: var(--ac); border-color: var(--ac); color: var(--ac-on); }
 .tracklist li.match { background: color-mix(in srgb, var(--ac) 10%, var(--s1)); }
-.tracklist .tr-text { grid-column: 1 / -1; margin: 0 0 4px 36px; font-size: 13px; }
-.tracklist .tr-text summary { color: var(--tx3); cursor: pointer; }
-.tracklist .tr-text p { margin: 8px 0 0; max-height: 260px; overflow: auto; color: var(--tx2); }
+/* the transcript popup */
+.modal { width: min(720px, 92vw); max-height: 86vh; padding: 0; border: 2px solid var(--ln); border-radius: 20px; background: var(--s1); color: var(--tx); box-shadow: 0 12px 0 var(--ln); }
+.modal[open] { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
+.modal::backdrop { background: rgba(8, 7, 12, .62); }
+.modal-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; padding: 16px 20px 8px; }
+.modal-head h2 { margin: 0; font-size: 18px; line-height: 24px; }
+.modal-head p { margin: 0; }
+.modal-body { padding: 8px 20px 16px; overflow: auto; font-size: 14px; line-height: 22px; color: var(--tx2); }
+.modal-body mark { background: color-mix(in srgb, var(--ac) 35%, transparent); color: var(--tx); border-radius: 3px; padding: 0 1px; }
+.modal-foot { padding: 12px 20px 16px; border-top: 1px dashed var(--ln); }
 .transcribe { display: grid; gap: 8px; margin-top: 12px; }
 .transcribe p { margin: 0; }
 .transcribe form { display: flex; gap: 8px; flex-wrap: wrap; }
+.play.share.hit { color: var(--ac-ink); border-color: var(--ln2); }
 .hit { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 6px; font-size: 12px; line-height: 16px; color: var(--tx2); }
 .hit b { font-weight: 500; color: var(--tx); }
 .hit mark { background: color-mix(in srgb, var(--ac) 35%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; }

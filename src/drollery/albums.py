@@ -97,6 +97,21 @@ def summary(d: dict) -> list[str]:
     return [x for x in out if x]
 
 
+def highlight(text: str, q: str):
+    """The text, escaped, with the words of a search wrapped in <mark> (a word matches as a prefix, like the search itself)."""
+    from markupsafe import Markup, escape
+    words = [re.escape(w) for w in re.findall(r"\w+", q or "", flags=re.U) if len(w) > 1][:8]
+    if not words:
+        return escape(text)
+    rx = re.compile(r"\b(?:" + "|".join(w[:40] for w in words) + r")\w*", re.I | re.U)
+    out, last = [], 0
+    for m in rx.finditer(text):
+        out += [escape(text[last:m.start()]), Markup("<mark>"), escape(m.group()), Markup("</mark>")]
+        last = m.end()
+    out.append(escape(text[last:]))
+    return Markup("").join(out)
+
+
 _HIT_START, _HIT_END = "\x02", "\x03"
 
 

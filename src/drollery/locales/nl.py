@@ -566,4 +566,11 @@ MESSAGES = {
     "Transcribe all again": "Alles opnieuw transcriberen",
     "Runs one track at a time in the background and takes about as long as the audio itself. Everything said becomes searchable.": "Draait nummer voor nummer op de achtergrond en duurt ongeveer zo lang als de audio zelf. Alles wat gezegd wordt, wordt doorzoekbaar.",
     "transcribe_track": "nummer transcriberen",
+
+    # ---- transcript popup
+    "Show transcript": "Transcriptie tonen",
+    "Close": "Sluiten",
+    "Copy transcript": "Transcriptie kopiëren",
+    "Could not load the transcript": "De transcriptie kon niet worden geladen",
+    "Nothing was said in this track": "In dit nummer wordt niets gezegd",
 }

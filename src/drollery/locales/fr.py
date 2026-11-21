@@ -571,4 +571,11 @@ MESSAGES = {
     "Transcribe all again": "Tout retranscrire",
     "Runs one track at a time in the background and takes about as long as the audio itself. Everything said becomes searchable.": "S’exécute piste par piste en arrière-plan et dure à peu près aussi longtemps que l’audio lui-même. Tout ce qui est dit devient recherchable.",
     "transcribe_track": "transcription de piste",
+
+    # ---- transcript popup
+    "Show transcript": "Afficher la transcription",
+    "Close": "Fermer",
+    "Copy transcript": "Copier la transcription",
+    "Could not load the transcript": "La transcription n’a pas pu être chargée",
+    "Nothing was said in this track": "Rien n’est dit dans cette piste",
 }
