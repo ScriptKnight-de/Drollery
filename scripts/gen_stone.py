@@ -57,6 +57,33 @@ def poly(pts):
     return " ".join(f"{x:.1f},{y:.1f}" for x, y in pts)
 
 
+def stone_svg(rng, th, x, y, w, rh):
+    """One stone with all its weathering, as SVG, positioned at (x, y)."""
+    x0, y0, x1, y1 = x + GAP / 2, y + GAP / 2, x + w - GAP / 2, y + rh - GAP / 2
+    pts = stone_points(rng, x0, y0, x1, y1)
+    fill = rng.choice(th["stones"])
+    out = [f'<polygon points="{poly(pts)}" fill="{fill}" stroke="{fill}" stroke-width="2" stroke-linejoin="round"/>']
+    if rng.random() < 0.55:                                           # tonal patch so no two stones read the same
+        px, py = rng.uniform(x0 + 8, x1 - 8), rng.uniform(y0 + 6, y1 - 6)
+        out.append(f'<ellipse cx="{px:.1f}" cy="{py:.1f}" rx="{rng.uniform(10, w / 3):.1f}" ry="{rng.uniform(5, rh / 3):.1f}" fill="{th["shade"]}" opacity="{rng.uniform(.10, .30):.2f}"/>')
+    out.append(f'<polyline points="{poly(pts[6:] + pts[:3])}" fill="none" stroke="{th["hi"]}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>')
+    out.append(f'<polyline points="{poly(pts[2:7])}" fill="none" stroke="{th["shade"]}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>')
+    if rng.random() < 0.22:                                           # crack
+        cx, cy = rng.uniform(x0 + 12, x1 - 12), y0 + rng.uniform(1, 5)
+        seg = [(cx, cy)]
+        for _ in range(rng.randint(3, 5)):
+            cx = min(max(cx + rng.uniform(-7, 7), x0 + 6), x1 - 6); cy = min(cy + rng.uniform(5, 11), y1 - 3)
+            seg.append((cx, cy))
+        out.append(f'<polyline points="{poly(seg)}" fill="none" stroke="{th["crack"]}" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>')
+    if rng.random() < 0.22:                                           # moss creeping up from the mortar
+        mx = rng.uniform(x0 + 10, x1 - 10)
+        out.append(f'<ellipse cx="{mx:.1f}" cy="{y1 - 1:.1f}" rx="{rng.uniform(14, 26):.1f}" ry="{rng.uniform(6, 11):.1f}" fill="url(#m)"/>')
+    if rng.random() < 0.16:                                           # water stain running down
+        sx = rng.uniform(x0 + 8, x1 - 20)
+        out.append(f'<rect x="{sx:.1f}" y="{y0:.1f}" width="{rng.uniform(8, 18):.1f}" height="{(y1 - y0) * rng.uniform(.6, 1):.1f}" fill="url(#s)"/>')
+    return "".join(out)
+
+
 def build(name, th, seed):
     rng = random.Random(seed)
     out = [f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewBox="0 0 {W} {H}">',
@@ -65,35 +92,26 @@ def build(name, th, seed):
            f'<linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="{th["stain"]}"/><stop offset="1" stop-color="{th["stain"]}" stop-opacity="0"/></linearGradient>'
            '</defs>',
            f'<rect width="{W}" height="{H}" fill="{th["mortar"]}"/>']
-    y = 0
+    y, prev_joints = 0, []
     for rh in ROWS:
-        x = 0
-        for w in partition(rng, W):
-            x0, y0, x1, y1 = x + GAP / 2, y + GAP / 2, x + w - GAP / 2, y + rh - GAP / 2
-            pts = stone_points(rng, x0, y0, x1, y1)
-            fill = rng.choice(th["stones"])
-            out.append(f'<polygon points="{poly(pts)}" fill="{fill}" stroke="{fill}" stroke-width="2" stroke-linejoin="round"/>')
-            # tonal patches so no two stones read the same
-            if rng.random() < 0.55:
-                px, py = rng.uniform(x0 + 8, x1 - 8), rng.uniform(y0 + 6, y1 - 6)
-                out.append(f'<ellipse cx="{px:.1f}" cy="{py:.1f}" rx="{rng.uniform(10, w / 3):.1f}" ry="{rng.uniform(5, rh / 3):.1f}" fill="{th["shade"]}" opacity="{rng.uniform(.10, .30):.2f}"/>')
-            # lit top/left edge, shaded bottom/right edge
-            out.append(f'<polyline points="{poly(pts[6:] + pts[:3])}" fill="none" stroke="{th["hi"]}" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>')
-            out.append(f'<polyline points="{poly(pts[2:7])}" fill="none" stroke="{th["shade"]}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>')
-            if rng.random() < 0.22:                                       # crack
-                cx, cy = rng.uniform(x0 + 12, x1 - 12), y0 + rng.uniform(1, 5)
-                seg = [(cx, cy)]
-                for _ in range(rng.randint(3, 5)):
-                    cx = min(max(cx + rng.uniform(-7, 7), x0 + 6), x1 - 6); cy = min(cy + rng.uniform(5, 11), y1 - 3)
-                    seg.append((cx, cy))
-                out.append(f'<polyline points="{poly(seg)}" fill="none" stroke="{th["crack"]}" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>')
-            if rng.random() < 0.22:                                       # moss creeping up from the mortar
-                mx = rng.uniform(x0 + 10, x1 - 10)
-                out.append(f'<ellipse cx="{mx:.1f}" cy="{y1 - 1:.1f}" rx="{rng.uniform(14, 26):.1f}" ry="{rng.uniform(6, 11):.1f}" fill="url(#m)"/>')
-            if rng.random() < 0.16:                                       # water stain running down
-                sx = rng.uniform(x0 + 8, x1 - 20)
-                out.append(f'<rect x="{sx:.1f}" y="{y0:.1f}" width="{rng.uniform(8, 18):.1f}" height="{(y1 - y0) * rng.uniform(.6, 1):.1f}" fill="url(#s)"/>')
-            x += w
+        # every row starts at its own random offset and wraps around the tile edge, so no joint
+        # lines up with the previous row's (that would read as a long vertical crack in the wall)
+        for _ in range(200):
+            widths, ox = partition(rng, W), rng.uniform(0, W)
+            joints, acc = [], 0
+            for w in widths:
+                joints.append((ox + acc) % W); acc += w
+            if all(min(abs(a - b), W - abs(a - b)) > 24 for a in joints for b in prev_joints):
+                break
+        prev_joints = joints
+        acc = 0
+        for w in widths:
+            xs = (ox + acc) % W
+            svg = stone_svg(rng, th, xs, y, w, rh)
+            out.append(svg)
+            if xs + w > W:                                            # stone straddles the tile edge: draw its other half
+                out.append(f'<g transform="translate({-W},0)">{svg}</g>')
+            acc += w
         y += rh
     out.append('</svg>')
     return "\n".join(out)
