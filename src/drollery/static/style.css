@@ -248,6 +248,25 @@ td.clip { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-spa
 .login { display: grid; gap: 16px; padding: 24px; }
 .login p { margin: 0; font-size: 14px; }
 
+/* user tags vs AI tags */
+.tagsplit { display: grid; gap: 12px; }
+.tagset h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--tx2); }
+.tagset p { margin: 0; }
+.tag-actions { margin-left: auto; display: inline-flex; gap: 12px; } .tag-actions form { margin: 0; }
+.tag-actions .link { font-size: 12px; font-weight: 500; }
+.tagset.ai { padding: 12px; border: 2px dashed var(--ln2); border-radius: 16px; }
+ul.chips { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.chips.ai li { display: inline-flex; align-items: center; gap: 2px; height: 28px; padding: 0 4px 0 12px; border: 2px dashed var(--ln2); border-radius: 14px; background: transparent; }
+.chips.ai li a { padding: 0; height: auto; line-height: 24px; border: 0; background: none; border-radius: 0; font-size: 13px; font-weight: 500; color: var(--tx2); }
+.chips.ai li a:hover { color: var(--ac-ink); transform: none; }
+.chips.ai li form { display: inline-flex; margin: 0; }
+.chips.ai li button { display: grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--tx3); cursor: pointer; transition: background-color .15s var(--ease), color .15s var(--ease); }
+.chips.ai li button .ic { width: 12px; height: 12px; stroke-width: 2.2; }
+.chips.ai li button:hover { background: var(--s2); color: var(--tx); }
+.chips.ai li form + form button:hover { color: var(--bad); }
+.pill.ai { background: transparent; color: var(--tx); border: 2px dashed var(--ac); }
+.pill small { font-size: 11px; font-weight: 500; opacity: .75; }
+
 /* settings, forms, notices */
 [hidden] { display: none !important; }
 .small { font-size: 13px; }

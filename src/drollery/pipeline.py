@@ -70,7 +70,7 @@ def import_file(src: Path, original_name: str, source_url: str = "", source_meta
              int(info["has_audio"]), int(has_thumb), source_url, source_meta, now, now))
         item_id = cur.lastrowid
         if tags:
-            db.set_tags(c, item_id, tags, "user")
+            db.set_user_tags(c, item_id, tags)
         db.reindex(c, item_id)
         plan_jobs(c, item_id)
     return item_id, True
@@ -132,7 +132,7 @@ def job_describe(job: dict) -> None:
         if result["description"]:
             c.execute("UPDATE items SET description=? WHERE id=?", (result["description"], item["id"]))
         c.execute("UPDATE items SET updated_at=? WHERE id=?", (time.time(), item["id"]))
-        db.set_tags(c, item["id"], result["tags"], "ai")
+        db.set_ai_tags(c, item["id"], result["tags"])
 
 
 def job_ocr(job: dict) -> None:

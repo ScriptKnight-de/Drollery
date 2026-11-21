@@ -39,6 +39,11 @@ CREATE TABLE IF NOT EXISTS tags (
   PRIMARY KEY (item_id, tag)
 );
 CREATE INDEX IF NOT EXISTS tags_tag ON tags(tag);
+CREATE TABLE IF NOT EXISTS tag_dismissed (            -- AI tags the user removed; the AI must not bring them back
+  item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+  tag TEXT NOT NULL,
+  PRIMARY KEY (item_id, tag)
+);
 CREATE TABLE IF NOT EXISTS jobs (
   id INTEGER PRIMARY KEY,
   type TEXT NOT NULL,
@@ -107,7 +112,7 @@ CREATE TABLE IF NOT EXISTS ai_models (
 );
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE VIRTUAL TABLE IF NOT EXISTS items_fts USING fts5(
-  title, description, tags, transcript, ocr, source,
+  title, description, tags, ai_tags, transcript, ocr, source,
   tokenize = 'unicode61 remove_diacritics 2', prefix = '2 3'
 );
 """
@@ -135,9 +140,21 @@ def tx():
         conn.close()
 
 
+def _fts_columns(c: sqlite3.Connection) -> list[str]:
+    return [r["name"] for r in c.execute("SELECT name FROM pragma_table_info('items_fts')")]
+
+
 def init() -> None:
     with tx() as c:
+        if "ai_tags" not in _fts_columns(c) and _fts_columns(c):       # index from before the user/AI tag split
+            c.execute("DROP TABLE items_fts")
+            rebuild = True
+        else:
+            rebuild = False
         c.executescript(SCHEMA)
+        if rebuild:
+            for (item_id,) in c.execute("SELECT id FROM items").fetchall():
+                reindex(c, item_id)
         # jobs left 'running' by a crash/restart go back to the queue
         c.execute("UPDATE jobs SET status='queued' WHERE status='running'")
         c.execute("DELETE FROM sessions WHERE expires_at < ?", (time.time(),))
@@ -150,11 +167,12 @@ def reindex(c: sqlite3.Connection, item_id: int) -> None:
     row = c.execute("SELECT * FROM items WHERE id=?", (item_id,)).fetchone()
     if row is None:
         return
-    tags = " ".join(r["tag"] for r in c.execute("SELECT tag FROM tags WHERE item_id=?", (item_id,)))
+    user_tags = " ".join(r["tag"] for r in c.execute("SELECT tag FROM tags WHERE item_id=? AND source='user'", (item_id,)))
+    ai_tags = " ".join(r["tag"] for r in c.execute("SELECT tag FROM tags WHERE item_id=? AND source='ai'", (item_id,)))
     source = f"{row['source_url']} {row['source_meta']} {row['original_name']}"
     c.execute(
-        "INSERT INTO items_fts(rowid,title,description,tags,transcript,ocr,source) VALUES (?,?,?,?,?,?,?)",
-        (item_id, row["title"], row["description"], tags, row["transcript"], row["ocr"], source),
+        "INSERT INTO items_fts(rowid,title,description,tags,ai_tags,transcript,ocr,source) VALUES (?,?,?,?,?,?,?,?)",
+        (item_id, row["title"], row["description"], user_tags, ai_tags, row["transcript"], row["ocr"], source),
     )
 
 
@@ -162,13 +180,69 @@ def normalize_tag(tag: str) -> str:
     return re.sub(r"\s+", "-", tag.strip().lower().lstrip("#"))[:40]
 
 
-def set_tags(c: sqlite3.Connection, item_id: int, tags: list[str], source: str, replace: bool = False) -> None:
-    if replace:
-        c.execute("DELETE FROM tags WHERE item_id=?", (item_id,))
-    for t in dict.fromkeys(normalize_tag(t) for t in tags):
-        if t:
-            c.execute("INSERT OR IGNORE INTO tags(item_id,tag,source) VALUES (?,?,?)", (item_id, t, source))
+def _clean(tags: list[str]) -> list[str]:
+    return [t for t in dict.fromkeys(normalize_tag(t) for t in tags) if t]
+
+
+def set_user_tags(c: sqlite3.Connection, item_id: int, tags: list[str]) -> None:
+    """Replace the user's tags. AI tags are never touched, except that a tag the user types which the AI also
+    suggested becomes the user's (it is promoted, not duplicated)."""
+    wanted = _clean(tags)
+    c.execute("DELETE FROM tags WHERE item_id=? AND source='user'" + (f" AND tag NOT IN ({','.join('?' * len(wanted))})" if wanted else ""),
+              (item_id, *wanted))
+    for t in wanted:
+        c.execute("INSERT INTO tags(item_id,tag,source) VALUES (?,?,'user') ON CONFLICT(item_id,tag) DO UPDATE SET source='user'", (item_id, t))
+        c.execute("DELETE FROM tag_dismissed WHERE item_id=? AND tag=?", (item_id, t))      # re-adding a tag undoes an earlier dismissal
     reindex(c, item_id)
+
+
+def set_ai_tags(c: sqlite3.Connection, item_id: int, tags: list[str]) -> None:
+    """Replace the AI's tags with a fresh suggestion. The user's tags are never changed, and tags the user
+    already has or has dismissed are skipped."""
+    c.execute("DELETE FROM tags WHERE item_id=? AND source='ai'", (item_id,))
+    have = {r["tag"] for r in c.execute("SELECT tag FROM tags WHERE item_id=?", (item_id,))}
+    dismissed = {r["tag"] for r in c.execute("SELECT tag FROM tag_dismissed WHERE item_id=?", (item_id,))}
+    for t in _clean(tags):
+        if t not in have and t not in dismissed:
+            c.execute("INSERT INTO tags(item_id,tag,source) VALUES (?,?,'ai')", (item_id, t))
+    reindex(c, item_id)
+
+
+def keep_ai_tags(c: sqlite3.Connection, item_id: int, tag: str = "") -> int:
+    """Turn AI tag(s) into the user's own tags. An empty tag means all of them. Returns how many changed."""
+    q, args = "UPDATE tags SET source='user' WHERE item_id=? AND source='ai'", [item_id]
+    if tag:
+        q, args = q + " AND tag=?", args + [normalize_tag(tag)]
+    n = c.execute(q, args).rowcount
+    reindex(c, item_id)
+    return n
+
+
+def dismiss_ai_tags(c: sqlite3.Connection, item_id: int, tag: str = "") -> int:
+    """Remove AI tag(s) and remember that the user didn't want them. An empty tag means all of them."""
+    q, args = "SELECT tag FROM tags WHERE item_id=? AND source='ai'", [item_id]
+    if tag:
+        q, args = q + " AND tag=?", args + [normalize_tag(tag)]
+    gone = [r["tag"] for r in c.execute(q, args)]
+    for t in gone:
+        c.execute("DELETE FROM tags WHERE item_id=? AND tag=? AND source='ai'", (item_id, t))
+        c.execute("INSERT OR IGNORE INTO tag_dismissed(item_id,tag) VALUES (?,?)", (item_id, t))
+    reindex(c, item_id)
+    return len(gone)
+
+
+def clear_all_ai_tags(c: sqlite3.Connection) -> int:
+    """Remove every AI tag in the library (the user's tags and the dismissed memory stay)."""
+    ids = [r["item_id"] for r in c.execute("SELECT DISTINCT item_id FROM tags WHERE source='ai'")]
+    n = c.execute("DELETE FROM tags WHERE source='ai'").rowcount
+    for item_id in ids:
+        reindex(c, item_id)
+    return n
+
+
+def _tags_of(c: sqlite3.Connection, item_id: int) -> tuple[list[str], list[str]]:
+    rows = c.execute("SELECT tag, source FROM tags WHERE item_id=? ORDER BY tag", (item_id,)).fetchall()
+    return [r["tag"] for r in rows if r["source"] == "user"], [r["tag"] for r in rows if r["source"] == "ai"]
 
 
 def get_item(c: sqlite3.Connection, item_id: int) -> dict | None:
@@ -176,13 +250,15 @@ def get_item(c: sqlite3.Connection, item_id: int) -> dict | None:
     if row is None:
         return None
     item = dict(row)
-    item["tags"] = [r["tag"] for r in c.execute("SELECT tag FROM tags WHERE item_id=? ORDER BY tag", (item_id,))]
+    item["tags"], item["ai_tags"] = _tags_of(c, item_id)         # user tags and AI tags, always kept apart
     return item
 
 
 def popular_tags(c: sqlite3.Connection, limit: int = 100) -> list[str]:
+    """The user's own most-used tags. Only these are offered to the AI as vocabulary, so it learns from what you
+    chose and not from its own earlier output."""
     return [r["tag"] for r in c.execute(
-        "SELECT tag, COUNT(*) n FROM tags GROUP BY tag ORDER BY n DESC LIMIT ?", (limit,))]
+        "SELECT tag, COUNT(*) n FROM tags WHERE source='user' GROUP BY tag ORDER BY n DESC LIMIT ?", (limit,))]
 
 
 def fts_query(q: str) -> str:
@@ -192,19 +268,22 @@ def fts_query(q: str) -> str:
 
 
 def search(c: sqlite3.Connection, q: str = "", kind: str = "", tag: str = "",
-           limit: int = 40, offset: int = 0) -> list[dict]:
+           limit: int = 40, offset: int = 0, tag_source: str = "") -> list[dict]:
     where, args = [], []
     if kind:
         where.append("items.kind = ?")
         args.append(kind)
     if tag:
-        where.append("EXISTS (SELECT 1 FROM tags t WHERE t.item_id = items.id AND t.tag = ?)")
+        src = " AND t.source = ?" if tag_source in ("user", "ai") else ""
+        where.append(f"EXISTS (SELECT 1 FROM tags t WHERE t.item_id = items.id AND t.tag = ?{src})")
         args.append(normalize_tag(tag))
+        if src:
+            args.append(tag_source)
     match = fts_query(q)
     if match:
         sql = ("SELECT items.* FROM items_fts JOIN items ON items.id = items_fts.rowid "
                "WHERE items_fts MATCH ?" + "".join(f" AND {w}" for w in where) +
-               " ORDER BY bm25(items_fts, 10, 4, 6, 2, 1, 1), items.created_at DESC LIMIT ? OFFSET ?")
+               " ORDER BY bm25(items_fts, 10, 4, 6, 3, 2, 1, 1), items.created_at DESC LIMIT ? OFFSET ?")
         args = [match, *args]
     else:
         sql = ("SELECT items.* FROM items" + (" WHERE " + " AND ".join(where) if where else "") +
@@ -213,7 +292,7 @@ def search(c: sqlite3.Connection, q: str = "", kind: str = "", tag: str = "",
     items = []
     for r in rows:
         d = dict(r)
-        d["tags"] = [x["tag"] for x in c.execute("SELECT tag FROM tags WHERE item_id=? ORDER BY tag", (d["id"],))]
+        d["tags"], d["ai_tags"] = _tags_of(c, d["id"])
         items.append(d)
     return items
 

@@ -21,12 +21,36 @@
   <div class="side">
     <p class="folio">fol. {{ "%03d"|format(item.id) }}</p>
     <h1>{{ item.title }}</h1>
-    <p class="chips">{% for t in item.tags %}<a href="/?tag={{ t|urlencode }}">#{{ t }}</a>{% endfor %}</p>
+
+    <div class="tagsplit">
+      <div class="tagset">
+        <h3>Your tags</h3>
+        {% if item.tags %}<p class="chips">{% for t in item.tags %}<a href="/?tag={{ t|urlencode }}&src=user">#{{ t }}</a>{% endfor %}</p>
+        {% else %}<p class="hint">None yet. Add your own below</p>{% endif %}
+      </div>
+      <div class="tagset ai">
+        <h3>{{ icon("cpu") }}AI tags
+          {% if item.ai_tags %}<span class="tag-actions">
+            <form method="post" action="/items/{{ item.id }}/ai-tags/keep"><button type="submit" class="link">Keep all</button></form>
+            <form method="post" action="/items/{{ item.id }}/ai-tags/remove"><button type="submit" class="link">Remove all</button></form>
+          </span>{% endif %}</h3>
+        {% if item.ai_tags %}
+        <ul class="chips ai">
+          {% for t in item.ai_tags %}
+          <li><a href="/?tag={{ t|urlencode }}&src=ai">#{{ t }}</a>
+            <form method="post" action="/items/{{ item.id }}/ai-tags/keep"><input type="hidden" name="tag" value="{{ t }}"><button type="submit" title="Keep as one of my tags" aria-label="Keep {{ t }} as my tag">{{ icon("check") }}</button></form>
+            <form method="post" action="/items/{{ item.id }}/ai-tags/remove"><input type="hidden" name="tag" value="{{ t }}"><button type="submit" title="Remove; the AI won't suggest it again" aria-label="Remove {{ t }}">{{ icon("x") }}</button></form>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}<p class="hint">{% if providers.describe %}None yet{% else %}No AI model is set up for naming and tagging{% endif %}</p>{% endif %}
+      </div>
+    </div>
 
     <form method="post" action="/items/{{ item.id }}/edit" class="panel form">
       <label>Title <input name="title" value="{{ item.title }}" maxlength="120"></label>
       <label>Description <textarea name="description" rows="4">{{ item.description }}</textarea></label>
-      <label>Tags <input name="tags" value="{{ item.tags|join(' ') }}" placeholder="Separate with spaces"></label>
+      <label>Your tags <input name="tags" value="{{ item.tags|join(' ') }}" placeholder="Separate with spaces"><span class="hint">AI tags are kept apart and never change when you save</span></label>
       <button class="btn primary" type="submit">Save</button>
     </form>
 

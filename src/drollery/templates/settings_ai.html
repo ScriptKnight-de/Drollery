@@ -51,4 +51,10 @@
   <p class="muted">Models only process items added after you assign them. Run them over your whole library with one click; this queues background jobs, one at a time</p>
   <form method="post" action="/settings/ai/reprocess"><button class="btn" type="submit">{{ icon("retry") }}Process all existing items</button></form>
 </section>
+
+<section class="panel stack">
+  <h2>AI tags</h2>
+  <p class="muted">AI tags are stored apart from the tags you set yourself. Re-running a model replaces an item's AI tags and never touches yours. Tags you remove from an item are not suggested again for it. {{ ai_tag_count }} AI tag{{ "s" if ai_tag_count != 1 }} in the library right now</p>
+  <form method="post" action="/settings/ai/clear-tags" onsubmit="return confirm('Remove every AI tag in the library? Your own tags stay.')"><button class="btn danger" type="submit" {{ "disabled" if not ai_tag_count }}>{{ icon("trash") }}Remove all AI tags</button></form>
+</section>
 {% endblock %}

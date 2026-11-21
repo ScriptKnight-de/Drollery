@@ -125,7 +125,8 @@ def test_describe_job_with_mock_provider(tmp_path, monkeypatch):
     with db.tx() as c:
         item = db.get_item(c, item_id)
         hits = db.search(c, "picard")
-    assert item["title"] == "Picard facepalm" and item["tags"] == ["reaction", "star-trek"]
+    assert item["title"] == "Picard facepalm"
+    assert item["ai_tags"] == ["reaction", "star-trek"] and item["tags"] == []        # AI tags never land in the user's list
     assert [h["id"] for h in hits] == [item_id]
     config.get_settings.cache_clear()
 

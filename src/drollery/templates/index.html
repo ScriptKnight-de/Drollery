@@ -27,11 +27,12 @@
     {% endfor %}
   </div>
   <input type="hidden" name="tag" value="{{ tag }}">
+  <input type="hidden" name="src" value="{{ src }}">
 </form>
 
 {% if tag or pending %}
 <p class="status">
-  {% if tag %}<span class="pill">#{{ tag }} <a href="/?q={{ q|urlencode }}&kind={{ kind|urlencode }}" aria-label="Clear tag filter">×</a></span>{% endif %}
+  {% if tag %}<span class="pill {{ 'ai' if src == 'ai' }}">{% if src == 'ai' %}{{ icon("cpu") }}{% endif %}#{{ tag }}{% if src == 'ai' %} <small>AI tag</small>{% elif src == 'user' %} <small>my tag</small>{% endif %} <a href="/?q={{ q|urlencode }}&kind={{ kind|urlencode }}" aria-label="Clear tag filter">×</a></span>{% endif %}
   {% if pending %}<a href="/jobs"><span class="dot run"></span>{{ pending }} background job{{ "s" if pending != 1 }} running</a>{% endif %}
 </p>
 {% endif %}

@@ -24,6 +24,6 @@
 </div>
 {% endfor %}
 {% if more %}
-<div class="more" hx-get="/?q={{ q|urlencode }}&kind={{ kind|urlencode }}&tag={{ tag|urlencode }}&page={{ page + 1 }}"
+<div class="more" hx-get="/?q={{ q|urlencode }}&kind={{ kind|urlencode }}&tag={{ tag|urlencode }}&src={{ src|urlencode }}&page={{ page + 1 }}"
      hx-trigger="revealed" hx-swap="outerHTML"></div>
 {% endif %}

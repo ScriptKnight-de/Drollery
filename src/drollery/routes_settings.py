@@ -207,7 +207,9 @@ def _ai_page(request: Request, status_code: int = 200, **extra):
         state = aisettings.describe_state(cap, models)
         options = [m for m in models if m["type"] in aisettings.COMPAT[cap]]
         rows.append({"cap": cap, "label": aisettings.CAP_LABEL[cap], "help": aisettings.CAP_HELP[cap], "state": state, "options": options})
-    return render(request, "settings_ai.html", status_code=status_code, tab="ai", models=models, rows=rows,
+    with db.tx() as c:
+        ai_tag_count = c.execute("SELECT COUNT(*) FROM tags WHERE source='ai'").fetchone()[0]
+    return render(request, "settings_ai.html", status_code=status_code, tab="ai", models=models, rows=rows, ai_tag_count=ai_tag_count,
                   types=aisettings.MODEL_TYPES, compat=aisettings.COMPAT, **extra)
 
 
@@ -239,6 +241,13 @@ def ai_reprocess(request: Request):
             if item_id not in busy and pipeline.plan_jobs(c, item_id):
                 count += 1
     return flash_redirect("/settings/ai", f"Queued AI processing for {count} item(s)" if count else "Nothing to queue: no AI model is assigned, or every item is already queued")
+
+
+@router.post("/ai/clear-tags")
+def ai_clear_tags(request: Request):
+    with db.tx() as c:
+        n = db.clear_all_ai_tags(c)
+    return flash_redirect("/settings/ai", f"Removed {n} AI tag{'s' if n != 1 else ''}. Your own tags were not touched")
 
 
 def _model_form(request: Request, model: dict | None, status_code: int = 200, **extra):

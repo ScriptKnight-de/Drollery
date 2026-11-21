@@ -185,9 +185,9 @@ def api_me(request: Request):
 
 
 @app.get("/api/v1/items", dependencies=[Depends(api_auth)])
-def api_list(q: str = "", kind: str = "", tag: str = "", limit: int = PAGE, offset: int = 0):
+def api_list(q: str = "", kind: str = "", tag: str = "", tag_source: str = "", limit: int = PAGE, offset: int = 0):
     with db.tx() as c:
-        items = db.search(c, q, kind, tag, min(max(limit, 1), 200), max(offset, 0))
+        items = db.search(c, q, kind, tag, min(max(limit, 1), 200), max(offset, 0), tag_source)
     return {"items": [_public(i) for i in items]}
 
 
@@ -226,7 +226,7 @@ async def api_patch(item_id: int, request: Request):
         if "description" in body:
             c.execute("UPDATE items SET description=? WHERE id=?", (str(body["description"])[:2000], item_id))
         if "tags" in body:
-            db.set_tags(c, item_id, [str(t) for t in body["tags"]], "user", replace=True)
+            db.set_user_tags(c, item_id, [str(t) for t in body["tags"]])
         c.execute("UPDATE items SET updated_at=? WHERE id=?", (time.time(), item_id))
         db.reindex(c, item_id)
     return _public(_get_or_404(item_id))
@@ -247,14 +247,15 @@ def api_jobs(limit: int = 50):
 # --------------------------------------------------------------------- web
 
 @app.get("/", dependencies=[Depends(web_auth)])
-def home(request: Request, q: str = "", kind: str = "", tag: str = "", page: int = 0):
+def home(request: Request, q: str = "", kind: str = "", tag: str = "", src: str = "", page: int = 0):
     page = max(page, 0)
+    src = src if src in ("user", "ai") else ""
     with db.tx() as c:
-        items = db.search(c, q, kind, tag, PAGE, page * PAGE)
+        items = db.search(c, q, kind, tag, PAGE, page * PAGE, src)
         counts = {r["kind"]: r["n"] for r in c.execute("SELECT kind, COUNT(*) n FROM items GROUP BY kind")}
         pending = c.execute("SELECT COUNT(*) FROM jobs WHERE status IN ('queued','running')").fetchone()[0]
     tpl = "grid.html" if request.headers.get("hx-request") and not request.headers.get("hx-boosted") else "index.html"
-    return render(request, tpl, items=items, q=q, kind=kind, tag=tag, page=page, more=len(items) == PAGE, counts=counts, pending=pending)
+    return render(request, tpl, items=items, q=q, kind=kind, tag=tag, src=src, page=page, more=len(items) == PAGE, counts=counts, pending=pending)
 
 
 @app.post("/add", dependencies=[Depends(web_auth)])
@@ -289,7 +290,25 @@ def item_edit(item_id: int, title: str = Form(""), description: str = Form(""), 
         if title.strip() != item["title"]:
             c.execute("UPDATE items SET title=?, title_locked=1 WHERE id=?", (title.strip()[:120], item_id))
         c.execute("UPDATE items SET description=?, updated_at=? WHERE id=?", (description.strip()[:2000], time.time(), item_id))
-        db.set_tags(c, item_id, _parse_tags(tags), "user", replace=True)
+        db.set_user_tags(c, item_id, _parse_tags(tags))
+    return RedirectResponse(f"/items/{item_id}", status_code=303)
+
+
+@app.post("/items/{item_id}/ai-tags/keep", dependencies=[Depends(web_auth)])
+def item_keep_ai_tags(item_id: int, tag: str = Form("")):
+    """Promote one AI tag (or all of them) to the user's own tags."""
+    _get_or_404(item_id)
+    with db.tx() as c:
+        db.keep_ai_tags(c, item_id, tag)
+    return RedirectResponse(f"/items/{item_id}", status_code=303)
+
+
+@app.post("/items/{item_id}/ai-tags/remove", dependencies=[Depends(web_auth)])
+def item_remove_ai_tags(item_id: int, tag: str = Form("")):
+    """Remove one AI tag (or all of them); the AI will not suggest a removed tag again for this item."""
+    _get_or_404(item_id)
+    with db.tx() as c:
+        db.dismiss_ai_tags(c, item_id, tag)
     return RedirectResponse(f"/items/{item_id}", status_code=303)
 
 
