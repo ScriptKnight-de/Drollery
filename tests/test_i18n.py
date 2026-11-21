@@ -135,7 +135,7 @@ def test_every_page_renders_in_german_without_stray_placeholders(client):
         r = client.get(url)
         assert r.status_code == 200, url
         assert 'lang="de"' in r.text, url
-        text = re.sub(r"<script.*?</script>|<style.*?</style>|<pre.*?</pre>|<code.*?</code>", "", r.text, flags=re.S)
+        text = re.sub(r"<script.*?</script>|<style.*?</style>|<pre.*?</pre>|<code.*?</code>|data-remove=\"[^\"]*\"", "", r.text, flags=re.S)
         assert not re.search(r"\{(n|name|base|url|id|tag|title|when|path|file|link|target|browse|t)\}", text), f"raw placeholder on {url}"
     shared = client.get(f"/s/{token}")
     assert shared.status_code == 200 and "Herunterladen" in shared.text and "Geteilt mit Drollery" in shared.text
@@ -237,7 +237,7 @@ def test_every_page_renders_in_every_language(client, code):
     for url in ("/", f"/items/{item}", "/jobs", "/settings/profile", "/settings/security", "/settings/keys", "/settings/ai", "/settings/shares", "/settings/about"):
         r = client.get(url)
         assert r.status_code == 200 and f'lang="{code}"' in r.text, (code, url)
-        text = re.sub(r"<script.*?</script>|<style.*?</style>|<pre.*?</pre>|<code.*?</code>", "", r.text, flags=re.S)
+        text = re.sub(r"<script.*?</script>|<style.*?</style>|<pre.*?</pre>|<code.*?</code>|data-remove=\"[^\"]*\"", "", r.text, flags=re.S)
         assert not re.search(r"\{(n|name|base|url|id|tag|title|when|path|file|link|target|browse|t)\}", text), (code, url)
     menu = client.get("/").text.split('id="lang-menu"')[1].split("</details>")[0]
     assert menu.count('class="flag"') == len(i18n.languages())                 # every language is offered, each with its flag

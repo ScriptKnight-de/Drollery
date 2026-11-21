@@ -236,6 +236,17 @@ kbd { color: var(--tx3); border: 2px solid var(--ln); border-radius: 6px; paddin
 .form { display: grid; gap: 16px; }
 .form label { display: grid; gap: 4px; font-size: 13px; line-height: 20px; font-weight: 500; color: var(--tx2); }
 .form .btn { justify-self: start; }
+.fld { display: grid; gap: 4px; }
+.fld > label { font-size: 13px; line-height: 20px; font-weight: 500; color: var(--tx2); }
+/* manual tags: small black chips, each with its own red round cross */
+.tagfield { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 44px; padding: 6px 12px; background: var(--s1); border: 2px solid var(--ln); border-radius: 14px; cursor: text; }
+.tagfield:focus-within { border-color: var(--ac); }
+.tagchip { display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 4px 0 10px; border-radius: 13px; background: #0b0b0d; color: #fff; font-size: 13px; font-weight: 500; box-shadow: 0 0 0 1px rgba(255,255,255,.22); }
+.tagchip button { display: grid; place-items: center; width: 18px; height: 18px; padding: 0; border: 0; border-radius: 50%; background: #e5383b; color: #fff; cursor: pointer; transition: transform .15s var(--ease), background .15s; }
+.tagchip button svg { width: 10px; height: 10px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; }
+.tagchip button:hover { background: #ff4d50; transform: scale(1.12); }
+.tagchip button:focus-visible { outline: 2px solid #fff; outline-offset: 1px; }
+.tagfield .tag-entry { flex: 1; min-width: 96px; width: auto; padding: 0; border: 0; outline: 0; background: transparent; box-shadow: none; height: 24px; }
 .side details { border-top: 2px dashed var(--ln); padding-top: 12px; }
 .side summary { cursor: pointer; font-size: 14px; font-weight: 500; color: var(--tx2); list-style: none; display: flex; gap: 8px; align-items: center; }
 .side summary::-webkit-details-marker { display: none; }
