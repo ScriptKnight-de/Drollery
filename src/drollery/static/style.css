@@ -269,6 +269,8 @@ td.clip { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-spa
 .reset-row { margin-top: 16px; }
 
 /* sharing */
+.with-icon { display: flex; align-items: center; gap: 10px; }
+.with-icon .ic { width: 20px; height: 20px; }
 .duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 @media (max-width: 600px) { .duo { grid-template-columns: 1fr; } }
 .links { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
