@@ -1,0 +1,27 @@
+{% from "icons.html" import icon %}{% from "macros.html" import errbox %}
+{% set states = jobs|map(attribute="status")|list %}
+{% set state = "failed" if "failed" in states else "running" if "running" in states else "queued" if "queued" in states else "done" if states else "idle" %}
+{% set active = state in ("failed", "running", "queued") %}
+{% set album = item.kind == "album" %}
+<div class="toolbar" role="group" aria-label="{{ _('Actions') }}">
+  {% if album %}<a class="btn small" href="/albums/{{ item.id }}/download">{{ icon("download") }}{{ _("Download all") }}</a>
+  {% else %}<a class="btn small" href="/media/{{ item.id }}" download="{{ item.original_name }}">{{ icon("download") }}{{ _("Download") }}</a>{% endif %}
+  {% if album and metadata_lookup %}<a class="btn small" href="/albums/{{ item.id }}/lookup?run=1" data-popup="{{ _('Look up details online') }}">{{ icon("search") }}{{ _("Look up details online") }}</a>{% endif %}
+  {% if item.kind != "audio" %}<a class="btn small" href="/items/{{ item.id }}/card" data-popup="{{ _('Card image') }}">{{ icon("crop") }}{{ _("Card image") }}</a>{% endif %}
+  <button class="btn small" type="button" data-toggle="jobs-panel" aria-controls="jobs-panel" aria-expanded="{{ 'true' if active else 'false' }}" title="{{ _('Background jobs') }}: {{ _(state) if states else _('None yet') }}"><span class="dot {{ state }}" aria-hidden="true"></span>{{ _("Background jobs") }}</button>
+  <form method="post" action="/items/{{ item.id }}/delete" data-reload data-confirm="{{ _('Feed this item to the dragon? It cannot be undone.') }}">
+    <button class="btn small danger" type="submit">{{ icon("trash") }}{{ _("Delete") }}</button>
+  </form>
+</div>
+<section class="panel stack jobs" id="jobs-panel" {% if not active %}hidden{% endif %}>
+  <h2>{{ _("Background jobs") }}</h2>
+  <div class="joblist">
+  {% for j in jobs %}<div class="job"><span class="dot {{ j.status }}"></span>{{ job_type(j.type) }} · {{ _(j.status) }}{{ errbox(j.error) }}{% if j.status == "failed" %}<form method="post" action="/jobs/{{ j.id }}/retry" class="inline"><input type="hidden" name="next" value="/items/{{ item.id }}"><button class="link" type="submit">{{ _("Retry") }}</button></form>{% endif %}</div>
+  {% else %}<p class="hint">{{ _("None yet") }}</p>{% endfor %}
+  </div>
+  {% if not album %}
+  {% if providers.transcribe or providers.describe %}
+  <form method="post" action="/items/{{ item.id }}/reprocess"><button class="btn small" type="submit">{{ icon("retry") }}{{ _("Run again") }}</button></form>
+  {% else %}<p class="muted">{{ _("No AI providers are enabled. See {file} in the data volume.", file="<code>config.toml</code>")|safe }}</p>{% endif %}
+  {% endif %}
+</section>

@@ -324,7 +324,7 @@ def test_the_details_panel_is_for_albums_that_have_details(client, album, fake):
     assert "<dd>Album</dd>" in box and "<dt>Tracks</dt><dd>3 tracks</dd>" in box and "<dt>Duration</dt>" in box and "<dt>Size</dt>" in box and " MB</dd>" in box
     for lookup_only in ("Release date", "Record label", "Catalog number", "Genres", "Barcode", "MusicBrainz"):
         assert lookup_only not in box
-    assert "<span>3 tracks</span>" not in page and "3 tracks" not in page.split('class="meta-line"')[1].split("</p>")[0]          # no longer under the cover
+    assert "<span>3 tracks</span>" not in page and "3 tracks" not in page.split('class="toolbar"')[1].split("</div>")[0]          # no longer under the cover
     with db.tx() as c:                                                                           # an album looked up in the first version: only year and label
         c.execute("UPDATE albums SET year='1987', label='Old Label', mbid=? WHERE item_id=?", (REL, aid))
     page = client.get(f"/items/{aid}").text
@@ -524,3 +524,14 @@ def test_the_popup_cookie_frames_pages_too(client, album):
     album = album[0]
     assert '<body class="embed">' in client.get(f"/albums/{album}/lookup", cookies={"drollery_embed": "1"}).text
     assert "drollery-done" in client.get(f"/items/{album}", cookies={"drollery_embed": "1"}).text
+
+
+def test_the_album_actions_look_like_the_ones_on_other_items(client, album):
+    album = album[0]
+    page = client.get(f"/items/{album}").text
+    bar = page.split('class="toolbar"')[1].split("</div>")[0]
+    assert bar.count('class="btn small') == 5
+    for want in ("Download all", "Look up details online", "Card image", "Background jobs", "Delete"):
+        assert want in bar, want
+    assert 'class="meta-line"' not in page and page.count("/delete") == 1
+    assert 'id="jobs-panel"' in page and "/static/toolbar.js" in page

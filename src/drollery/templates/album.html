@@ -65,11 +65,7 @@
         {% if item.has_thumb %}<img src="/albums/{{ item.id }}/cover?v={{ (item.updated_at * 1000)|int }}" alt="{{ item.title }}">
         {% else %}<div class="nocover">{{ icon("book" if isbook else "disc") }}</div>{% endif %}
       </div>
-      <p class="meta-line">
-        <a href="/albums/{{ item.id }}/download">{{ icon("download") }}{{ _("Download all") }}</a>
-        {% if metadata_lookup %}<a href="/albums/{{ item.id }}/lookup?run=1" data-popup="{{ _('Look up details online') }}">{{ icon("search") }}{{ _("Look up details online") }}</a>{% endif %}
-      <a href="/items/{{ item.id }}/card" data-popup="{{ _('Card image') }}">{{ icon("crop") }}{{ _("Card image") }}</a>
-      </p>
+      {% include "item_actions.html" %}
     </div>
 
     <div class="tagset">
@@ -111,9 +107,6 @@
 
     {% include "share_panel.html" %}
 
-    <form method="post" action="/items/{{ item.id }}/delete" data-reload data-confirm="{{ _('Feed this item to the dragon? It cannot be undone.') }}">
-      <button class="btn danger" type="submit">{{ icon("trash") }}{{ _("Delete") }}</button>
-    </form>
   </div>
 </div>
 <dialog id="transcript-dialog" class="modal" aria-labelledby="tr-title" data-q="{{ q }}" data-item="{{ item.id }}"
@@ -127,6 +120,7 @@
 </dialog>
 {% include "popup_dialog.html" %}
 <script src="/static/popup.js" defer></script>
+<script src="/static/toolbar.js" defer></script>
 <script src="/static/transcript.js" defer></script>
 <script src="/static/tagfield.js" defer></script>
 <script src="/static/player.js" defer></script>
