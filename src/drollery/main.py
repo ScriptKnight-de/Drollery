@@ -19,6 +19,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from . import __version__, accounts, albums, db, i18n, media, movies, people, pipeline, shares
 from .config import get_settings
 from .deps import LoginRequired, SetupRequired, api_auth, web_auth
+from .upload_redirect import UploadRedirects
 from .routes_auth import router as auth_router
 from .routes_movie import router as movie_router
 from .routes_people import files as people_files_router
@@ -72,6 +73,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Drollery", version=__version__, lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
+app.add_middleware(UploadRedirects)
 app.include_router(auth_router)
 app.include_router(settings_router)
 app.include_router(card_router)

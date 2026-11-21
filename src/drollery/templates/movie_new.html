@@ -6,7 +6,7 @@
 <div class="page-head"><h1>{{ _("Add a movie") }}</h1></div>
 <p class="muted lead">{{ _("A film, a parody or a synchro (a dub with new voices). One video file; the details can be filled in from IMDb.") }}</p>
 {% if error %}<p class="note error" role="alert">{{ error }}</p>{% endif %}
-<form class="panel form movie-form" method="post" action="/movies" enctype="multipart/form-data">
+<form class="panel form movie-form" method="post" action="/movies" enctype="multipart/form-data" data-upload>
   <label>{{ _("Video file") }} <input type="file" name="file" accept="video/*" required></label>
   <div class="kindpick" role="radiogroup" aria-label="{{ _('Type') }}">
     {% for key, label in subtypes.items() %}<label><input type="radio" name="subtype" value="{{ key }}" {{ "checked" if form.subtype == key }}> {{ _(label) }}</label>{% endfor %}
@@ -25,4 +25,5 @@
     <a class="btn" href="/">{{ _("Cancel") }}</a>
   </div>
 </form>
+{% include "upload_ui.html" %}
 {% endblock %}

@@ -7,7 +7,7 @@
 <p class="muted lead">{{ _("Put a whole music album or audiobook behind one card. Add the audio files, or one ZIP that holds them. The tracks are put in order by their track numbers, then by file name.") }}</p>
 {% if error %}<p class="note error" role="alert">{{ error }}</p>{% endif %}
 
-<form class="panel form narrow-form" method="post" action="/albums" enctype="multipart/form-data" id="album-form">
+<form class="panel form narrow-form" method="post" action="/albums" enctype="multipart/form-data" id="album-form" data-upload>
   <label class="drop">
     {{ icon("upload") }}<span id="picked-text" data-one="{{ _('1 file chosen') }}" data-many="{{ _('{n} files chosen') }}">{{ _("Choose the tracks or a ZIP") }}</span>
     <input type="file" name="files" multiple required accept="audio/*,.mp3,.m4a,.m4b,.aac,.flac,.ogg,.oga,.opus,.wav,.zip,application/zip">
@@ -49,4 +49,5 @@
     });
   })();
 </script>
+{% include "upload_ui.html" %}
 {% endblock %}

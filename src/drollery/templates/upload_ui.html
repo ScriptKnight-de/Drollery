@@ -1,0 +1,17 @@
+{# The texts and the script of the upload progress bar (forms with data-upload use it). #}
+<script type="application/json" id="upload-text">{{ {
+  "uploading": _("Uploading"),
+  "of": _("{sent} of {total}"),
+  "left": _("{time} left"),
+  "sec": _("{n} s"),
+  "min": _("{n} min"),
+  "hour": _("{n} h"),
+  "processing": _("The file is here. Now it is being stored and checked, which takes a moment for big files"),
+  "cancel": _("Cancel upload"),
+  "cancelled": _("Upload cancelled"),
+  "failed": _("The upload failed. Check the connection and try again"),
+  "toolarge": _("That file is too large for the upload limit"),
+  "close": _("Close"),
+  "leave": _("An upload is still running. Leave this page and cancel it?"),
+}|tojson }}</script>
+<script src="/static/upload.js" defer></script>

@@ -602,3 +602,20 @@ body.embed { background: var(--s1); background-image: none; }
 .suggest li a:hover { text-decoration: none; }
 .suggest li a small { margin-left: auto; color: var(--tx3); }
 .suggest li a[aria-selected="true"], .suggest li a:hover { background: var(--s2); }
+
+/* upload progress */
+form.uploading { opacity: .55; pointer-events: none; }
+.upload-panel { position: fixed; z-index: 60; left: 50%; bottom: 24px; transform: translateX(-50%); width: min(560px, 92vw); display: grid; gap: 8px; padding: 16px 20px;
+  background: var(--s1); border: 2px solid var(--ln); border-radius: 20px; box-shadow: 0 8px 0 var(--ln), 0 16px 32px rgba(0, 0, 0, .18); }
+.upload-panel .up-head { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+.upload-panel .up-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+.upload-panel .up-pct { font-variant-numeric: tabular-nums; font-weight: 600; }
+.upload-panel .up-bar { height: 14px; border-radius: 7px; background: var(--s2); box-shadow: inset 0 0 0 2px var(--ln); overflow: hidden; }
+.upload-panel .up-fill { height: 100%; width: 0; border-radius: 7px; background: var(--ac); transition: width .2s linear; }
+.upload-panel.processing .up-fill { background: repeating-linear-gradient(45deg, var(--ac) 0 12px, color-mix(in srgb, var(--ac) 65%, #fff) 12px 24px); background-size: 34px 34px; animation: up-stripes 1s linear infinite; }
+@keyframes up-stripes { to { background-position: 34px 0; } }
+.upload-panel.error { border-color: var(--bad); }
+.upload-panel.error .up-fill { background: var(--bad); }
+.upload-panel .up-detail { margin: 0; font-variant-numeric: tabular-nums; }
+.upload-panel .up-foot { display: flex; justify-content: flex-end; }
+@media (prefers-reduced-motion: reduce) { .upload-panel .up-fill { transition: none; } .upload-panel.processing .up-fill { animation: none; } }

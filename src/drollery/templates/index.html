@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% from "icons.html" import icon %}
 {% block content %}
-<form class="add" method="post" action="/add" enctype="multipart/form-data">
+<form class="add" method="post" action="/add" enctype="multipart/form-data" data-upload>
   <label class="drop">
     {{ icon("upload") }}<span>{{ _("Drop files or {browse}", browse="<u>" ~ _("browse") ~ "</u>")|safe }}</span>
-    <input type="file" name="files" multiple accept="image/*,video/*,audio/*" onchange="this.form.submit()">
+    <input type="file" name="files" multiple accept="image/*,video/*,audio/*" onchange="this.form.requestSubmit()">
   </label>
   <div class="field">
     {{ icon("link") }}
@@ -42,6 +42,7 @@
 {% endif %}
 
 <section id="grid" class="grid">{% include "grid.html" %}</section>
+{% include "upload_ui.html" %}
 <script src="/static/searchsuggest.js" defer></script>
 <script>
   var drop = document.querySelector(".drop");
