@@ -1,35 +1,47 @@
 {% extends "base.html" %}
+{% from "icons.html" import icon %}
 {% block title %}{{ item.title }} · Drollery{% endblock %}
 {% block content %}
-<p><a href="/">← Library</a></p>
+<a class="back" href="/">{{ icon("arrow-left") }}Library</a>
 <div class="detail">
-  <div class="view">
-    {% if item.kind == "image" %}<img src="/media/{{ item.id }}" alt="{{ item.title }}">
-    {% elif item.kind == "video" %}<video src="/media/{{ item.id }}" controls preload="metadata" {% if item.has_thumb %}poster="/thumb/{{ item.id }}"{% endif %}></video>
-    {% else %}<audio src="/media/{{ item.id }}" controls preload="metadata"></audio>{% endif %}
-    <p class="muted">{{ item.kind }} · {{ item.mime }} · {{ "%.1f"|format(item.size / 1048576) }} MB
-      {% if item.width %}· {{ item.width }}×{{ item.height }}{% endif %}
-      · <a href="/media/{{ item.id }}" download="{{ item.original_name }}">download</a>
-      {% if item.source_url %}· <a href="{{ item.source_url }}" rel="noreferrer noopener" target="_blank">source</a>{% endif %}</p>
-  </div>
   <div>
-    <form method="post" action="/items/{{ item.id }}/edit" class="card form">
+    <div class="frame">
+      {% if item.kind == "image" %}<img src="/media/{{ item.id }}" alt="{{ item.title }}">
+      {% elif item.kind == "video" %}<video src="/media/{{ item.id }}" controls preload="metadata" {% if item.has_thumb %}poster="/thumb/{{ item.id }}"{% endif %}></video>
+      {% else %}<audio src="/media/{{ item.id }}" controls preload="metadata"></audio>{% endif %}
+    </div>
+    <p class="meta-line">
+      <span>{{ item.kind }}</span><span>{{ item.mime }}</span><span>{{ "%.1f"|format(item.size / 1048576) }} MB</span>
+      {% if item.width %}<span>{{ item.width }}×{{ item.height }}</span>{% endif %}
+      <a href="/media/{{ item.id }}" download="{{ item.original_name }}">{{ icon("download") }}Download</a>
+      {% if item.source_url %}<a href="{{ item.source_url }}" rel="noreferrer noopener" target="_blank">{{ icon("external") }}Source</a>{% endif %}
+    </p>
+  </div>
+
+  <div class="side">
+    <p class="folio">fol. {{ "%03d"|format(item.id) }}</p>
+    <h1>{{ item.title }}</h1>
+    <p class="chips">{% for t in item.tags %}<a href="/?tag={{ t|urlencode }}">#{{ t }}</a>{% endfor %}</p>
+
+    <form method="post" action="/items/{{ item.id }}/edit" class="panel form">
       <label>Title <input name="title" value="{{ item.title }}" maxlength="120"></label>
       <label>Description <textarea name="description" rows="4">{{ item.description }}</textarea></label>
-      <label>Tags <input name="tags" value="{{ item.tags|join(' ') }}" placeholder="space or comma separated"></label>
-      <button>Save</button>
+      <label>Tags <input name="tags" value="{{ item.tags|join(' ') }}" placeholder="Separate with spaces"></label>
+      <button class="btn primary" type="submit">Save</button>
     </form>
-    <p class="chips">{% for t in item.tags %}<a href="/?tag={{ t|urlencode }}">#{{ t }}</a> {% endfor %}</p>
+
     {% if item.transcript %}<details open><summary>Transcript</summary><p class="pre">{{ item.transcript }}</p></details>{% endif %}
     {% if item.ocr %}<details open><summary>Text in image</summary><p class="pre">{{ item.ocr }}</p></details>{% endif %}
-    <details {{ "open" if jobs }}><summary>Background jobs ({{ jobs|length }})</summary>
-      {% for j in jobs %}<p class="muted">{{ j.type }} — {{ j.status }}{% if j.error %}: {{ j.error }}{% endif %}</p>{% endfor %}
+    <details {{ "open" if jobs }}><summary>Background jobs <i>{{ jobs|length }}</i></summary>
+      {% for j in jobs %}<p class="job"><span class="dot {{ j.status }}"></span>{{ j.type }} · {{ j.status }}{% if j.error %}<span class="bad"> — {{ j.error }}</span>{% endif %}</p>{% endfor %}
       {% if providers.transcribe or providers.describe or providers.ocr %}
-      <form method="post" action="/items/{{ item.id }}/reprocess"><button class="sec">Re-run AI processing</button></form>
+      <form method="post" action="/items/{{ item.id }}/reprocess"><button class="btn" type="submit">{{ icon("retry") }}Run again</button></form>
       {% else %}<p class="muted">No AI providers are enabled. See <code>config.toml</code> in the data volume.</p>{% endif %}
     </details>
+
     <form method="post" action="/items/{{ item.id }}/delete" onsubmit="return confirm('Delete this item permanently?')">
-      <button class="danger">Delete</button></form>
+      <button class="btn danger" type="submit">{{ icon("trash") }}Delete</button>
+    </form>
   </div>
 </div>
 {% endblock %}

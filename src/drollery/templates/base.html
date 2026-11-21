@@ -1,20 +1,30 @@
-<!doctype html>
+{% from "icons.html" import icon %}<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
   <title>{% block title %}Drollery{% endblock %}</title>
   <link rel="stylesheet" href="/static/style.css">
   <script src="/static/htmx.min.js" defer></script>
 </head>
 <body>
-<header>
-  <a class="brand" href="/">Drollery</a>
-  <nav>
-    <a href="/jobs">Jobs</a>
-    {% if auth_enabled %}<form method="post" action="/logout"><button class="link">Log out</button></form>{% endif %}
-  </nav>
+<header class="top">
+  <div class="top-in">
+    <a class="brand" href="/">Drollery</a>
+    <nav>
+      <a class="nav-link" href="/jobs">{{ icon("list") }}Jobs</a>
+      {% if auth_enabled %}<form method="post" action="/logout"><button class="nav-link" type="submit">{{ icon("logout") }}Log out</button></form>{% endif %}
+    </nav>
+  </div>
 </header>
 <main>{% block content %}{% endblock %}</main>
+<script>
+  // "/" focuses search, like most keyboard-driven tools
+  addEventListener("keydown", function (e) {
+    var q = document.getElementById("q");
+    if (e.key === "/" && q && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) { e.preventDefault(); q.focus(); }
+  });
+</script>
 </body>
 </html>

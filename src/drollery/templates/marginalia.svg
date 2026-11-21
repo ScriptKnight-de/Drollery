@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 112" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+  <path d="M8 100H232" opacity=".4"/>
+  <!-- snail: shell spiral, body, eye stalks -->
+  <path d="M178 64A3 3 0 0 1 181 61A6 6 0 0 1 187 67A9 9 0 0 1 178 76A12 12 0 0 1 166 64A15 15 0 0 1 181 49A18 18 0 0 1 199 67A21 21 0 0 1 178 88"/>
+  <path d="M222 100H138C128 100 124 94 124 86V74C124 68 128 64 133 64C138 64 141 68 141 74V86L178 88H206C214 88 220 94 222 100"/>
+  <path d="M129 64L124 54M137 64L141 53"/>
+  <circle cx="124" cy="52" r="1.6"/><circle cx="141" cy="51" r="1.6"/>
+  <!-- knight: helmet, plume, body, legs, shield, raised sword -->
+  <path d="M40 56a8 8 0 0 1 16 0v4H40z"/>
+  <path d="M40 58h16M48 48c-1-5 2-8 7-8"/>
+  <path d="M41 62h14l2 20H39z"/>
+  <path d="M43 82v18M53 82v18"/>
+  <path d="M38 66h-11v9c0 6 4 9 6 10 2-1 5-4 5-10z"/>
+  <path d="M57 68l12-5M69 63l25-16M66 58l6 10"/>
+</svg>

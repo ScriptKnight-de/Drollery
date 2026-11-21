@@ -1,14 +1,22 @@
 {% extends "base.html" %}
+{% from "icons.html" import icon %}
 {% block title %}Jobs · Drollery{% endblock %}
 {% block content %}
-<h1>Background jobs</h1>
-<form method="post" action="/jobs/retry-failed"><button class="sec">Retry all failed</button></form>
+<div class="page-head">
+  <h1>Background jobs</h1>
+  <form method="post" action="/jobs/retry-failed"><button class="btn" type="submit">{{ icon("retry") }}Retry failed</button></form>
+</div>
+<div class="panel flush">
 <table>
-  <tr><th>#</th><th>Type</th><th>Status</th><th>For</th><th>Error</th></tr>
+  <thead><tr><th>#</th><th>Type</th><th>Status</th><th>For</th><th>Error</th></tr></thead>
+  <tbody>
   {% for j in jobs %}
-  <tr class="{{ j.status }}"><td>{{ j.id }}</td><td>{{ j.type }}</td><td>{{ j.status }}{% if j.attempts %} ({{ j.attempts }}){% endif %}</td>
-      <td>{% if j.item_id %}<a href="/items/{{ j.item_id }}">{{ j.label or j.item_id }}</a>{% else %}{{ j.label }}{% endif %}</td>
-      <td class="err">{{ j.error }}</td></tr>
-  {% else %}<tr><td colspan="5" class="muted">No jobs yet.</td></tr>{% endfor %}
+  <tr><td class="mono">{{ j.id }}</td><td>{{ j.type }}</td>
+      <td><span class="dot {{ j.status }}"></span>{{ j.status }}{% if j.attempts > 1 %} <span class="mono muted">×{{ j.attempts }}</span>{% endif %}</td>
+      <td class="clip">{% if j.item_id %}<a href="/items/{{ j.item_id }}">{{ j.label or j.item_id }}</a>{% else %}{{ j.label }}{% endif %}</td>
+      <td class="bad clip">{{ j.error }}</td></tr>
+  {% else %}<tr><td colspan="5" class="muted">No jobs yet</td></tr>{% endfor %}
+  </tbody>
 </table>
+</div>
 {% endblock %}

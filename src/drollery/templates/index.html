@@ -1,20 +1,47 @@
 {% extends "base.html" %}
+{% from "icons.html" import icon %}
 {% block content %}
-<form class="add card" method="post" action="/add" enctype="multipart/form-data">
-  <input type="file" name="files" multiple accept="image/*,video/*,audio/*">
-  <input type="url" name="url" placeholder="…or paste a link (video, image, gallery page)">
-  <button>Add</button>
+<form class="add" method="post" action="/add" enctype="multipart/form-data">
+  <label class="drop">
+    {{ icon("upload") }}<span>Drop files or <u>browse</u></span>
+    <input type="file" name="files" multiple accept="image/*,video/*,audio/*" onchange="this.form.submit()">
+  </label>
+  <div class="field">
+    {{ icon("link") }}
+    <input type="url" name="url" placeholder="Paste a link" aria-label="Link to download">
+    <button class="btn primary" type="submit">Add</button>
+  </div>
 </form>
-{% if pending %}<p class="muted">{{ pending }} background job{{ "s" if pending != 1 }} running — <a href="/jobs">view</a></p>{% endif %}
 
-<form class="search" method="get" action="/" hx-get="/" hx-target="#grid" hx-trigger="input changed delay:250ms from:#q, change from:#kind" hx-push-url="false" hx-include="#kind,#tag">
-  <input id="q" type="search" name="q" value="{{ q }}" placeholder="Search titles, descriptions, tags, transcripts, text in images…" autofocus>
-  <select id="kind" name="kind">
-    <option value="">All ({{ counts.values()|sum }})</option>
-    {% for k in ("image","video","audio") %}<option value="{{ k }}" {{ "selected" if kind == k }}>{{ k }} ({{ counts.get(k, 0) }})</option>{% endfor %}
-  </select>
-  <input type="hidden" id="tag" name="tag" value="{{ tag }}">
+<form class="toolbar" method="get" action="/" hx-get="/" hx-target="#grid" hx-swap="innerHTML"
+      hx-trigger="input changed delay:250ms from:#q, change from:.seg" hx-push-url="false">
+  <div class="field grow">
+    {{ icon("search") }}
+    <input id="q" type="search" name="q" value="{{ q }}" placeholder="Search" aria-label="Search" autocomplete="off">
+    <kbd>/</kbd>
+  </div>
+  <div class="seg" role="radiogroup" aria-label="Type">
+    <label><input type="radio" name="kind" value="" {{ "checked" if not kind }}><span>All <i>{{ counts.values()|sum }}</i></span></label>
+    {% for k, label in (("image","Images"),("video","Video"),("audio","Audio")) %}
+    <label><input type="radio" name="kind" value="{{ k }}" {{ "checked" if kind == k }}><span>{{ label }} <i>{{ counts.get(k, 0) }}</i></span></label>
+    {% endfor %}
+  </div>
+  <input type="hidden" name="tag" value="{{ tag }}">
 </form>
-{% if tag %}<p>Tag: <b>{{ tag }}</b> · <a href="/?q={{ q|urlencode }}&kind={{ kind|urlencode }}">clear</a></p>{% endif %}
+
+{% if tag or pending %}
+<p class="status">
+  {% if tag %}<span class="pill">#{{ tag }} <a href="/?q={{ q|urlencode }}&kind={{ kind|urlencode }}" aria-label="Clear tag filter">×</a></span>{% endif %}
+  {% if pending %}<a href="/jobs"><span class="dot run"></span>{{ pending }} background job{{ "s" if pending != 1 }} running</a>{% endif %}
+</p>
+{% endif %}
+
 <section id="grid" class="grid">{% include "grid.html" %}</section>
+<script>
+  var drop = document.querySelector(".drop");
+  if (drop) {
+    ["dragenter", "dragover"].forEach(function (n) { drop.addEventListener(n, function () { drop.classList.add("over"); }); });
+    ["dragleave", "drop"].forEach(function (n) { drop.addEventListener(n, function () { drop.classList.remove("over"); }); });
+  }
+</script>
 {% endblock %}
