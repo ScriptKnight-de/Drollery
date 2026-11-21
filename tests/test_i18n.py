@@ -246,5 +246,5 @@ def test_every_page_renders_in_every_language(client, code):
 def test_language_menu_lists_every_language_with_its_own_name(anon):
     accounts.create_user("boss", "a-long-enough-pass")
     menu = anon.get("/login").text.split('id="lang-menu"')[1].split("</details>")[0]
-    for name in ("English", "Deutsch", "Español", "Français", "Nederlands", "Polski", "Svenska", "Ελληνικά"):
+    for name in ("English", "Deutsch", "Español", "Français", "Italiano", "Nederlands", "Polski", "Svenska", "Ελληνικά"):
         assert f"<span>{name}</span>" in menu, name

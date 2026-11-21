@@ -21,7 +21,7 @@ instantly with full-text search.
 - **Share a picture or clip** with a public link, permanent or temporary (1 hour to 1 year), with an optional label, a view counter and instant revoke. The page needs no login, shows only the title and description (never your tags), and has link-preview tags for chat apps.
 - **Your tags and the AI's tags stay apart.** Editing yours never touches the AI's, a re-run replaces only the AI's, and a tag you remove is not suggested again.
 - **Accounts and security.** First-run admin setup, scrypt-hashed password, optional two-factor authentication (TOTP with backup codes), login throttling, and per-device API keys for the browser extension and the Android app.
-- **Multilingual.** English, German, Spanish, French, Dutch, Polish, Swedish and Greek; each person picks a language under Settings › Profile, or lets it follow the browser. Adding a language is one file (see Translating).
+- **Multilingual.** English, German, Spanish, French, Italian, Dutch, Polish, Swedish and Greek; each person picks a language under Settings › Profile, or lets it follow the browser. Adding a language is one file (see Translating).
 - **One container**, one data volume, no external services.
 
 ## Quick start
