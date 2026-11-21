@@ -7,7 +7,7 @@
 <p class="muted lead">{{ _("Search IMDb for the movie. For a parody or a synchro, search for the original film. Only the title in the field below is sent.") }}</p>
 {% if error %}<p class="note error" role="alert">{{ error }}</p>{% endif %}
 
-<form class="panel form" method="get" action="/movies/{{ item.id }}/lookup">
+<form class="panel form" method="get" action="/movies/{{ item.id }}/lookup" data-busy="{{ _('Searching IMDb…') }}">
   <input type="hidden" name="run" value="1">
   <label>{{ _("Title") }} <input name="q" value="{{ q }}" maxlength="100" autofocus></label>
   <button class="btn primary" type="submit">{{ icon("search") }}{{ _("Search") }}</button>
@@ -20,7 +20,7 @@
   <ul class="lookup-list movie-list">
     {% for r in results %}
     <li>
-      <a class="lookup-pick" href="/movies/{{ item.id }}/lookup/{{ r.imdb_id }}">
+      <a class="lookup-pick" href="/movies/{{ item.id }}/lookup/{{ r.imdb_id }}" data-busy="{{ _('Loading the title details…') }}">
         <b>{{ r.title }}</b>{% if r.year %} <span class="muted">({{ r.year }})</span>{% endif %}
         <span class="muted small">{{ r.kind }}{% if r.cast %} · {{ r.cast }}{% endif %}</span>
       </a>

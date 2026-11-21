@@ -619,3 +619,14 @@ form.uploading { opacity: .55; pointer-events: none; }
 .upload-panel .up-detail { margin: 0; font-variant-numeric: tabular-nums; }
 .upload-panel .up-foot { display: flex; justify-content: flex-end; }
 @media (prefers-reduced-motion: reduce) { .upload-panel .up-fill { transition: none; } .upload-panel.processing .up-fill { animation: none; } }
+
+/* the working signal of a lookup (spinner card over the page, or over the popup while its page loads) */
+.busy { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; background: color-mix(in srgb, var(--bg) 72%, transparent); backdrop-filter: blur(2px); cursor: progress; }
+.busy.in-dialog { position: absolute; inset: 64px 0 0 0; z-index: 5; border-radius: 0 0 18px 18px; background: color-mix(in srgb, var(--s1) 86%, transparent); }
+.busy-card { display: grid; justify-items: center; gap: 6px; padding: 24px 32px; min-width: 240px; max-width: min(420px, 86vw); text-align: center; background: var(--s1); border: 2px solid var(--ln); border-radius: 20px; box-shadow: 0 8px 0 var(--ln); }
+.busy-spin { width: 44px; height: 44px; margin-bottom: 8px; border-radius: 50%; border: 5px solid var(--s2); border-top-color: var(--ac); animation: busy-turn .9s linear infinite; }
+@keyframes busy-turn { to { transform: rotate(360deg); } }
+.busy-msg { margin: 0; font-weight: 600; }
+.busy-hint, .busy-time { margin: 0; min-height: 1.2em; }
+.busy-time { font-variant-numeric: tabular-nums; }
+@media (prefers-reduced-motion: reduce) { .busy-spin { animation: none; border-top-color: var(--s2); border-right-color: var(--ac); } }

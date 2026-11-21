@@ -17,6 +17,8 @@
   {% block head %}{% endblock %}
   <link rel="stylesheet" href="/static/style.css">
   <script src="/static/htmx.min.js" defer></script>
+  <script type="application/json" id="busy-text">{{ {"loading": _("Loading…"), "hint": _("This can take a few seconds"), "slow": _("Still working. The service is slow right now"), "sec": _("{n} s")}|tojson }}</script>
+  <script src="/static/busy.js" defer></script>
 </head>
 <body{% if embed %} class="embed"{% endif %}>
 <header class="top">

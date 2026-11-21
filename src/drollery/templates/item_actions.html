@@ -6,8 +6,8 @@
 <div class="toolbar" role="group" aria-label="{{ _('Actions') }}">
   {% if album %}<a class="btn small" href="/albums/{{ item.id }}/download">{{ icon("download") }}{{ _("Download all") }}</a>
   {% else %}<a class="btn small" href="/media/{{ item.id }}" download="{{ item.original_name }}">{{ icon("download") }}{{ _("Download") }}</a>{% endif %}
-  {% if album and metadata_lookup %}<a class="btn small" href="/albums/{{ item.id }}/lookup?run=1" data-popup="{{ _('Look up details online') }}">{{ icon("search") }}{{ _("Look up details online") }}</a>{% endif %}
-  {% if item.kind == "movie" and metadata_lookup %}<a class="btn small" href="/movies/{{ item.id }}/lookup?run=1" data-popup="{{ _('Look up on IMDb') }}">{{ icon("search") }}{{ _("Look up on IMDb") }}</a>{% endif %}
+  {% if album and metadata_lookup %}<a class="btn small" href="/albums/{{ item.id }}/lookup?run=1" data-popup="{{ _('Look up details online') }}" data-busy="{{ _('Searching MusicBrainz…') }}">{{ icon("search") }}{{ _("Look up details online") }}</a>{% endif %}
+  {% if item.kind == "movie" and metadata_lookup %}<a class="btn small" href="/movies/{{ item.id }}/lookup?run=1" data-popup="{{ _('Look up on IMDb') }}" data-busy="{{ _('Searching IMDb…') }}">{{ icon("search") }}{{ _("Look up on IMDb") }}</a>{% endif %}
   {% if item.kind != "audio" %}<a class="btn small" href="/items/{{ item.id }}/card" data-popup="{{ _('Card image') }}">{{ icon("crop") }}{{ _("Card image") }}</a>{% endif %}
   <a class="btn small" href="#share">{{ icon("share") }}{{ _("Share") }}</a>
   <button class="btn small" type="button" data-toggle="jobs-panel" aria-controls="jobs-panel" aria-expanded="{{ 'true' if active else 'false' }}" title="{{ _('Background jobs') }}: {{ _(state) if states else _('None yet') }}"><span class="dot {{ state }}" aria-hidden="true"></span>{{ _("Background jobs") }}</button>

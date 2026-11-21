@@ -708,4 +708,13 @@ MESSAGES = {
     "The upload failed. Check the connection and try again": "Het uploaden is mislukt. Controleer de verbinding en probeer het opnieuw",
     "That file is too large for the upload limit": "Dat bestand is groter dan de uploadlimiet",
     "An upload is still running. Leave this page and cancel it?": "Er loopt nog een upload. Deze pagina verlaten en de upload annuleren?",
+    "Applying the changes…": "Wijzigingen worden toegepast…",
+    "Done. Opening the next page…": "Klaar. De volgende pagina wordt geopend…",
+    "Loading…": "Laden…",
+    "Loading the release details…": "De details van de uitgave worden geladen…",
+    "Loading the title details…": "De details van de titel worden geladen…",
+    "Searching IMDb…": "IMDb wordt doorzocht…",
+    "Searching MusicBrainz…": "MusicBrainz wordt doorzocht…",
+    "Still working. The service is slow right now": "Nog bezig. De dienst is nu traag",
+    "This can take a few seconds": "Dit kan een paar seconden duren",
 }

@@ -708,4 +708,13 @@ MESSAGES = {
     "The upload failed. Check the connection and try again": "Το ανέβασμα απέτυχε. Έλεγξε τη σύνδεση και δοκίμασε ξανά",
     "That file is too large for the upload limit": "Αυτό το αρχείο ξεπερνά το όριο ανεβάσματος",
     "An upload is still running. Leave this page and cancel it?": "Ένα ανέβασμα βρίσκεται ακόμη σε εξέλιξη. Να φύγεις από τη σελίδα και να το ακυρώσεις;",
+    "Applying the changes…": "Εφαρμογή των αλλαγών…",
+    "Done. Opening the next page…": "Έτοιμο. Άνοιγμα της επόμενης σελίδας…",
+    "Loading…": "Φόρτωση…",
+    "Loading the release details…": "Φόρτωση των στοιχείων της έκδοσης…",
+    "Loading the title details…": "Φόρτωση των στοιχείων του τίτλου…",
+    "Searching IMDb…": "Αναζήτηση στο IMDb…",
+    "Searching MusicBrainz…": "Αναζήτηση στο MusicBrainz…",
+    "Still working. The service is slow right now": "Εξακολουθεί να δουλεύει. Η υπηρεσία είναι αργή αυτή τη στιγμή",
+    "This can take a few seconds": "Αυτό μπορεί να πάρει μερικά δευτερόλεπτα",
 }

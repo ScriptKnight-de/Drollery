@@ -708,4 +708,13 @@ MESSAGES = {
     "The upload failed. Check the connection and try again": "La subida falló. Revisa la conexión e inténtalo de nuevo",
     "That file is too large for the upload limit": "Ese archivo supera el límite de subida",
     "An upload is still running. Leave this page and cancel it?": "Aún hay una subida en curso. ¿Salir de esta página y cancelarla?",
+    "Applying the changes…": "Aplicando los cambios…",
+    "Done. Opening the next page…": "Listo. Abriendo la página siguiente…",
+    "Loading…": "Cargando…",
+    "Loading the release details…": "Cargando los detalles de la edición…",
+    "Loading the title details…": "Cargando los detalles del título…",
+    "Searching IMDb…": "Buscando en IMDb…",
+    "Searching MusicBrainz…": "Buscando en MusicBrainz…",
+    "Still working. The service is slow right now": "Sigue trabajando. El servicio va lento ahora",
+    "This can take a few seconds": "Esto puede tardar unos segundos",
 }

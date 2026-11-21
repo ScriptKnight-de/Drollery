@@ -1,4 +1,4 @@
-{% from "icons.html" import icon %}<dialog id="popup-dialog" class="modal framed" aria-labelledby="pp-title">
+{% from "icons.html" import icon %}<dialog id="popup-dialog" class="modal framed" aria-labelledby="pp-title" data-loading="{{ _('Loading…') }}">
   <div class="modal-head">
     <h2 id="pp-title"></h2>
     <button type="button" class="play share" data-close aria-label="{{ _('Close') }}" title="{{ _('Close') }}">{{ icon("x") }}</button>

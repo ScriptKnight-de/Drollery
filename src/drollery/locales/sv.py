@@ -708,4 +708,13 @@ MESSAGES = {
     "The upload failed. Check the connection and try again": "Uppladdningen misslyckades. Kontrollera anslutningen och försök igen",
     "That file is too large for the upload limit": "Filen är större än uppladdningsgränsen",
     "An upload is still running. Leave this page and cancel it?": "En uppladdning pågår fortfarande. Lämna sidan och avbryt den?",
+    "Applying the changes…": "Tillämpar ändringarna…",
+    "Done. Opening the next page…": "Klart. Öppnar nästa sida…",
+    "Loading…": "Laddar…",
+    "Loading the release details…": "Laddar utgåvans uppgifter…",
+    "Loading the title details…": "Laddar titelns uppgifter…",
+    "Searching IMDb…": "Söker på IMDb…",
+    "Searching MusicBrainz…": "Söker på MusicBrainz…",
+    "Still working. The service is slow right now": "Arbetar fortfarande. Tjänsten är långsam just nu",
+    "This can take a few seconds": "Det kan ta några sekunder",
 }

@@ -89,7 +89,7 @@
       if (type.indexOf("application/json") === 0) {
         try {
           var d = JSON.parse(xhr.responseText);
-          if (d.redirect) { busy = false; location.href = d.redirect; return; }
+          if (d.redirect) { busy = false; ui.detail.textContent = text.opening || "…"; location.href = d.redirect; return; }
         } catch (e) {}
       }
       if (xhr.status >= 200 && xhr.status < 300 || xhr.status === 422) {          // the form again, with what is wrong

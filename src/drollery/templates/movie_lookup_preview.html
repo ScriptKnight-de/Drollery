@@ -2,12 +2,12 @@
 {% from "icons.html" import icon %}
 {% block title %}{{ _("Review the changes") }} · Drollery{% endblock %}
 {% block content %}
-<a class="back" href="/movies/{{ item.id }}/lookup?run=1&q={{ info.title|urlencode }}">{{ icon("arrow-left") }}{{ _("Back to the results") }}</a>
+<a class="back" href="/movies/{{ item.id }}/lookup?run=1&q={{ info.title|urlencode }}" data-busy="{{ _('Searching IMDb…') }}">{{ icon("arrow-left") }}{{ _("Back to the results") }}</a>
 <div class="page-head"><h1>{{ _("Review the changes") }}</h1></div>
 <p class="muted lead">{{ _("Tick what should be taken over from IMDb. Nothing changes until you apply.") }} <a href="{{ info.url }}" target="_blank" rel="noopener noreferrer">{{ icon("external") }}IMDb</a></p>
 {% if not info.full %}<p class="note">{{ _("Only the basic data is available without an OMDb key.") }} <a href="/settings/lookup">{{ _("Add a key") }}</a> {{ _("to also take over the plot, genres, directors, the rating and the runtime.") }}</p>{% endif %}
 
-<form class="panel form" method="post" action="/movies/{{ item.id }}/lookup/{{ info.imdb_id }}">
+<form class="panel form" method="post" action="/movies/{{ item.id }}/lookup/{{ info.imdb_id }}" data-busy="{{ _('Applying the changes…') }}">
   <table class="diff">
     <thead><tr><th></th><th>{{ _("Currently") }}</th><th>{{ _("From IMDb") }}</th></tr></thead>
     <tbody>

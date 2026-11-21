@@ -18,11 +18,15 @@
       mark(true);
       frame.src = link.href;
       dlg.showModal();
+      if (window.drolleryBusy) window.drolleryBusy.show(link.dataset.busy || dlg.dataset.loading, dlg);      // until the page inside has arrived
       return;
     }
     if (e.target === dlg || (e.target.closest && e.target.closest("[data-close]") && dlg.contains(e.target))) dlg.close();
   });
-  dlg.addEventListener("close", function () { mark(false); frame.src = "about:blank"; });
+  frame.addEventListener("load", function () {
+    if (frame.getAttribute("src") !== "about:blank" && window.drolleryBusy) window.drolleryBusy.hide();
+  });
+  dlg.addEventListener("close", function () { mark(false); if (window.drolleryBusy) window.drolleryBusy.hide(); frame.src = "about:blank"; });
   window.addEventListener("message", function (e) {
     if (e.origin !== location.origin || e.source !== frame.contentWindow || e.data !== "drollery-done") return;
     mark(false);

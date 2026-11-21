@@ -2,11 +2,11 @@
 {% from "icons.html" import icon %}
 {% block title %}{{ _("Review the changes") }} · Drollery{% endblock %}
 {% block content %}
-<a class="back" href="/albums/{{ item.id }}/lookup?run=1">{{ icon("arrow-left") }}{{ _("Back to the results") }}</a>
+<a class="back" href="/albums/{{ item.id }}/lookup?run=1" data-busy="{{ _('Searching MusicBrainz…') }}">{{ icon("arrow-left") }}{{ _("Back to the results") }}</a>
 <div class="page-head"><h1>{{ _("Review the changes") }}</h1></div>
 <p class="muted lead">{{ _("Tick what should be taken over from MusicBrainz. Nothing changes until you apply.") }} <a href="{{ rel.url }}" target="_blank" rel="noopener noreferrer">{{ icon("external") }}MusicBrainz</a></p>
 
-<form class="panel form" method="post" action="/albums/{{ item.id }}/lookup/{{ rel.mbid }}">
+<form class="panel form" method="post" action="/albums/{{ item.id }}/lookup/{{ rel.mbid }}" data-busy="{{ _('Applying the changes…') }}">
   <table class="diff">
     <thead><tr><th></th><th>{{ _("Currently") }}</th><th>{{ _("From MusicBrainz") }}</th></tr></thead>
     <tbody>

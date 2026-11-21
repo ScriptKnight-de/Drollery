@@ -713,4 +713,13 @@ MESSAGES = {
     "The upload failed. Check the connection and try again": "L'envoi a échoué. Vérifiez la connexion et réessayez",
     "That file is too large for the upload limit": "Ce fichier dépasse la limite d'envoi",
     "An upload is still running. Leave this page and cancel it?": "Un envoi est encore en cours. Quitter cette page et l'annuler ?",
+    "Applying the changes…": "Application des changements…",
+    "Done. Opening the next page…": "Terminé. Ouverture de la page suivante…",
+    "Loading…": "Chargement…",
+    "Loading the release details…": "Chargement des détails de la parution…",
+    "Loading the title details…": "Chargement des détails du titre…",
+    "Searching IMDb…": "Recherche sur IMDb…",
+    "Searching MusicBrainz…": "Recherche sur MusicBrainz…",
+    "Still working. The service is slow right now": "Toujours en cours. Le service est lent en ce moment",
+    "This can take a few seconds": "Cela peut prendre quelques secondes",
 }
