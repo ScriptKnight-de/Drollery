@@ -33,7 +33,7 @@ def test_translations_keep_their_placeholders_and_plurals(code):
     for key, entry in scan.collect().items():
         want = scan.placeholders(key)
         if isinstance(entry["plural"], str):                  # a plural pair in the code needs a pair in the catalog
-            assert isinstance(cat[key], tuple) and len(cat[key]) == 2, f"{key!r}: expected a (one, other) pair"
+            assert isinstance(cat[key], tuple) and len(cat[key]) == i18n.forms(code), f"{key!r}: expected {i18n.forms(code)} plural forms"
             for form in cat[key]:
                 assert scan.placeholders(form) == scan.placeholders(entry["plural"]), f"{key!r}: placeholders differ in {form!r}"
         else:
@@ -63,7 +63,7 @@ def test_t_falls_back_to_english_and_formats():
 
 def test_accept_language_picks_the_best_supported_language():
     pick = i18n.from_accept_language
-    assert pick("de-AT,de;q=0.9,en;q=0.8") == "de" and pick("fr, en;q=0.5") == "en" and pick("fr, de;q=0.4") == "de"
+    assert pick("de-AT,de;q=0.9,en;q=0.8") == "de" and pick("ja, en;q=0.5") == "en" and pick("ja, de;q=0.4") == "de" and pick("fr-CA, de;q=0.4") == "fr"
     assert pick("") == "en" and pick("xx") == "en" and pick("de;q=0") == "en" and pick("de;q=abc") == "en"
     assert i18n.normalize("DE_ch") == "de" and i18n.normalize("klingon") == "" and i18n.normalize("en-GB") == "en"
     assert list(i18n.languages())[0] == "en" and i18n.languages()["de"] == "Deutsch"
@@ -210,3 +210,41 @@ def test_every_language_has_a_flag_that_ships_and_shows_in_the_menu(anon):
     accounts.create_user("boss", "a-long-enough-pass")
     menu = anon.get("/login").text.split('id="lang-menu"')[1].split("</details>")[0]
     assert menu.count('class="flag"') == len(i18n.languages())
+
+
+def test_plural_rules_of_the_languages_that_need_more_than_one_or_other():
+    pl = lambda n: i18n.plural_index("pl", n)                                    # noqa: E731
+    assert [pl(n) for n in (1, 2, 4, 5, 12, 14, 21, 22, 25, 112, 0)] == [0, 1, 1, 2, 2, 2, 2, 1, 2, 2, 2]
+    assert i18n.forms("pl") == 3 and i18n.forms("de") == 2 and i18n.forms("en") == 2
+    assert [i18n.plural_index("fr", n) for n in (0, 1, 2)] == [0, 0, 1]          # French: zero is singular
+    token = i18n.set_language("pl")
+    try:
+        got = [i18n.tn("{n} hour", "{n} hours", n) for n in (1, 2, 5, 12, 22)]
+    finally:
+        i18n._current.reset(token)
+    assert got == ["1 godzina", "2 godziny", "5 godzin", "12 godzin", "22 godziny"]
+    token = i18n.set_language("fr")
+    try:
+        assert i18n.tn("{n} day", "{n} days", 0) == "0 jour" and i18n.tn("{n} day", "{n} days", 2) == "2 jours"
+    finally:
+        i18n._current.reset(token)
+
+
+@pytest.mark.parametrize("code", i18n.LOCALES)
+def test_every_page_renders_in_every_language(client, code):
+    client.post("/settings/profile", data={"email": "", "language": code})
+    item = make_item(client)
+    for url in ("/", f"/items/{item}", "/jobs", "/settings/profile", "/settings/security", "/settings/keys", "/settings/ai", "/settings/shares"):
+        r = client.get(url)
+        assert r.status_code == 200 and f'lang="{code}"' in r.text, (code, url)
+        text = re.sub(r"<script.*?</script>|<style.*?</style>|<pre.*?</pre>|<code.*?</code>", "", r.text, flags=re.S)
+        assert not re.search(r"\{(n|name|base|url|id|tag|title|when|path|file|link|target|browse|t)\}", text), (code, url)
+    menu = client.get("/").text.split('id="lang-menu"')[1].split("</details>")[0]
+    assert menu.count('class="flag"') == len(i18n.languages())                 # every language is offered, each with its flag
+
+
+def test_language_menu_lists_every_language_with_its_own_name(anon):
+    accounts.create_user("boss", "a-long-enough-pass")
+    menu = anon.get("/login").text.split('id="lang-menu"')[1].split("</details>")[0]
+    for name in ("English", "Deutsch", "Español", "Français", "Nederlands", "Polski", "Svenska", "Ελληνικά"):
+        assert f"<span>{name}</span>" in menu, name

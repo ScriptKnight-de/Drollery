@@ -3,7 +3,8 @@ text itself when there is none, so a missing translation never breaks a page.
 
     t("Profile saved")                      plain text
     t("Showing {n} of {total}", n=3, total=9)    placeholders (the catalog entry keeps the same {names})
-    tn("{n} item", "{n} items", count)      plural; the catalog entry is a (one, other) pair
+    tn("{n} item", "{n} items", count)      plural; the catalog entry is a tuple of forms (two by default; a locale
+                                            with more sets FORMS and a plural(n) -> index function)
 
 Templates use the same function as `_()` and `_n()`. The language of a request is chosen once, in the
 middleware, and lives in a context variable, so code deep in a handler needs no request object.
@@ -16,7 +17,7 @@ from __future__ import annotations
 import contextvars
 import importlib
 
-LOCALES = ("de",)              # catalogs in drollery/locales (English is the source text and needs none)
+LOCALES = ("de", "es", "fr", "nl", "pl", "sv", "el")
 DEFAULT = "en"
 COOKIE = "drollery_lang"
 
@@ -95,11 +96,26 @@ def N_(text: str) -> str:
     return text
 
 
+def forms(code: str) -> int:
+    """How many plural forms a language's catalog entries carry (2 unless the locale says FORMS)."""
+    _load()
+    return getattr(importlib.import_module(f"{__package__}.locales.{code}"), "FORMS", 2) if code != DEFAULT else 2
+
+
+def plural_index(code: str, n: int) -> int:
+    """Which form of a plural entry to use for n. A locale can define plural(n) -> int; the default is 0 for 1, else 1."""
+    if code == DEFAULT:
+        return 0 if n == 1 else 1
+    rule = getattr(importlib.import_module(f"{__package__}.locales.{code}"), "plural", None)
+    return rule(n) if rule else (0 if n == 1 else 1)
+
+
 def tn(one: str, other: str, n: int, **kw) -> str:
     _load()
-    entry = _catalogs.get(_current.get(), {}).get("messages", {}).get(one)
-    if isinstance(entry, tuple) and len(entry) == 2:
-        one_t, other_t = entry
+    code = _current.get()
+    entry = _catalogs.get(code, {}).get("messages", {}).get(one)
+    if isinstance(entry, tuple) and len(entry) == forms(code):
+        text = entry[min(plural_index(code, n), len(entry) - 1)]
     else:
-        one_t, other_t = one, other
-    return (one_t if n == 1 else other_t).format(n=n, **kw)
+        text = one if n == 1 else other
+    return text.format(n=n, **kw)
