@@ -4,14 +4,7 @@ Thanks for your interest! Bug reports, ideas and pull requests are welcome.
 
 ## Set up
 
-```bash
-git clone https://forgejo.scriptknight.de/scriptknight/drollery.git && cd drollery
-uv venv && uv pip install -e '.[dev]'      # Python 3.11+; ffmpeg must be on the PATH
-.venv/bin/pytest                           # the whole suite takes about a minute
-DROLLERY_DATA=./data .venv/bin/uvicorn drollery.main:app --reload
-```
-
-The first request opens the setup page; the one-time setup code is printed in the terminal.
+The steps to run it from source and to run the tests are in [docs/development.md](docs/development.md).
 
 ## Before you send a change
 
@@ -32,7 +25,7 @@ Please include the version (*Settings › About*), what you did, what you expect
 
 ## Adding a language
 
-See "Translating" in the README. English is the source text, so a new language is one file plus one line in
+See "Translating" in [docs/development.md](docs/development.md). English is the source text, so a new language is one file plus one line in
 `i18n.LOCALES` and a flag in `templates/flags/`.
 
 ## License

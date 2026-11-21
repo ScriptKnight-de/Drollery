@@ -1,0 +1,101 @@
+# Configuration
+
+Most things are set in the web interface (**Settings**). Two files cover the rest: `.env` next to `docker-compose.yml`
+(for Docker) and `config.toml` inside the data volume (for Drollery itself).
+
+## `.env` (Docker)
+
+Copy `.env.example` to `.env` and fill in what you use. Every line is optional.
+
+| Variable | What it does |
+|---|---|
+| `DROLLERY_PORT` | the port the web interface is published on (default `8080`) |
+| `DROLLERY_SETUP_CODE` | choose your own first-run setup code instead of the generated one |
+| `DROLLERY_COOKIE_SECURE` | set to `1` when the site is served over HTTPS, so cookies are marked Secure |
+| `DROLLERY_PUBLIC_URL` | the address used in share links when you share beyond your home network, e.g. `https://memes.example.org` (can also be set under **Settings › Shares**) |
+| `COMPOSE_PROFILES` | set to `whisper` to start the optional speech-to-text container |
+| `WHISPER_MODEL`, `WHISPER_CPUS`, `WHISPER_MEM_LIMIT` | which Whisper model to use and how much of the machine it may take |
+
+## `config.toml`
+
+On the first start Drollery copies its defaults to `config.toml` in the data volume. Edit that copy and restart:
+
+```bash
+docker compose exec drollery vi /data/config.toml      # or copy it out with docker cp, edit, copy back
+docker compose restart drollery
+```
+
+| Setting | Default | Meaning |
+|---|---|---|
+| `max_upload_mb` | 500 | largest single file you can upload (pictures, clips, sounds) |
+| `max_movie_mb` | 16384 | largest single movie file |
+| `max_album_mb` | 2048 | all tracks of one album together, and the unpacked size of a ZIP |
+| `max_album_tracks` | 500 | most tracks in one album |
+| `metadata_lookup` | `true` | offer the online lookups (MusicBrainz, IMDb); nothing is sent unless you press the button |
+| `metadata_user_agent` | empty | sent to the lookup services; empty means just `Drollery/<version>`. MusicBrainz likes a contact URL here if you query a lot |
+| `worker_concurrency` | 1 | background jobs at once; keep it at 1 on a Raspberry Pi |
+| `job_max_attempts` | 3 | retries before a job is marked failed |
+| `fetch_timeout` | 900 | seconds allowed for one link download |
+| `fetch_max_files` | 4 | files kept from one page or gallery link |
+| `allow_private_fetch` | `false` | see below |
+| `fetch_allow_hosts` | `[]` | see below |
+
+### Fetching links
+
+When you add a link, the **server** downloads it. So that nobody can use that to reach things only the server can reach,
+links that point to **private or local addresses** (`localhost`, `192.168.x.x`, `10.x.x.x`, `172.16–31.x.x`, link-local
+addresses such as the cloud metadata address `169.254.169.254`, and their IPv6 equivalents) are refused by default. The
+check runs when the link is added, again when the download runs, and on every redirect of a direct download.
+
+To fetch from your own network on purpose:
+
+```toml
+allow_private_fetch = true                          # switch the check off, or
+fetch_allow_hosts = ["nas.lan", "10.0.0.0/24"]      # allow just these hosts, addresses or networks
+```
+
+It is a strong defence against the usual attacks, not a sandbox: a hostile DNS server or a redirect that `yt-dlp` or
+`gallery-dl` follow by themselves can still get around it. For strong isolation run the container on a network that
+cannot reach your internal services.
+
+## Optional AI (speech-to-text, naming, tagging)
+
+Nothing is required and nothing is bundled. In the web interface, **Settings › AI models** is where you define a model,
+give it a job and test the connection. Two jobs exist:
+
+| Job | What it does | What it receives |
+|---|---|---|
+| Transcription | writes down what is said in clips, sounds and album tracks, so it becomes searchable | an extracted mono 16 kHz MP3 |
+| Naming and tagging | suggests a title, a description and tags | a 640 px preview picture and/or the transcript |
+
+A model can be:
+
+| Type | Use it for |
+|---|---|
+| OpenAI-compatible API | Ollama (`http://host.docker.internal:11434/v1`), llama.cpp server, LocalAI, faster-whisper-server, OpenAI, OpenRouter… on this machine, on another one in your network, or in the cloud |
+| Command | a local program that prints the result, e.g. `whisper-cli -m /models/ggml-tiny.bin -f {input} -nt` (`{input}` is replaced by the file) |
+
+API keys you enter there are stored in the database inside the data volume and never shown again. Movies are never
+transcribed or named automatically (they run for hours); nothing runs on a file unless a model is assigned.
+
+`config.toml` also accepts `[transcribe]` and `[describe]` sections as a fallback for anything you leave on "From
+config.toml"; see the comments in the file.
+
+### Whisper, as a second container
+
+The compose file includes an optional speech-to-text server ([Speaches](https://github.com/speaches-ai/speaches),
+faster-whisper, int8 on CPU) with the **small** model. It is not published to the host; Drollery reaches it inside the
+Docker network.
+
+```bash
+echo 'COMPOSE_PROFILES=whisper' >> .env     # opt in
+docker compose up -d                        # starts it and downloads the model (about 460 MB) once
+```
+
+Then add a model under **Settings › AI models** with the **Whisper server** preset and assign it to **Transcription**.
+The model name must match `WHISPER_MODEL` (default `Systran/faster-whisper-small`; `-tiny`, `-base`, `-medium` and
+`-large-v3` also work).
+
+**Speed depends on your processor.** Whisper's fast int8 code needs a CPU feature called AVX2. On a virtual machine whose
+CPU type hides it (for example a generic "QEMU Virtual CPU"), transcription of the small model runs about as fast as real
+time. Setting the virtual CPU type to `host` in your hypervisor fixes that.
