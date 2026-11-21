@@ -1,5 +1,12 @@
 FROM python:3.12-slim
 
+LABEL org.opencontainers.image.title="Drollery" \
+      org.opencontainers.image.description="Self-hosted library for memes, clips, sounds, albums and movies" \
+      org.opencontainers.image.source="https://github.com/ScriptKnight-de/drollery" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.authors="ScriptKnight" \
+      de.scriptknight.donate="https://ko-fi.com/scriptknight"
+
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ffmpeg ca-certificates \
  && rm -rf /var/lib/apt/lists/*

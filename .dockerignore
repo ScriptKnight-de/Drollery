@@ -1,7 +1,8 @@
-.git
-.venv
 data
-.env
-__pycache__
 *.egg-info
+.env
+.forgejo
+.git
+__pycache__
 tests
+.venv
