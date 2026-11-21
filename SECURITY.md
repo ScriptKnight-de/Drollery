@@ -23,8 +23,12 @@ a multi-tenant service and does not try to isolate users from each other.
 
 Known and documented trade-offs, which are not vulnerabilities by themselves:
 
-- Anyone who holds a valid API key or session can make the server fetch URLs (`/api/v1/ingest`, "add a link"),
-  including addresses on your own network. Revoke keys you no longer use.
+- Anyone who holds a valid API key or session can make the server fetch public URLs (`/api/v1/ingest`, "add a link").
+  Links to private, loopback and link-local addresses are refused by default, when the link is added, when the download
+  runs and on every redirect of a direct download (`allow_private_fetch` and `fetch_allow_hosts` in `config.toml` relax
+  this on purpose). The check is best effort: a hostile DNS server that changes its answer between the check and the
+  connection, or a redirect that `yt-dlp` or `gallery-dl` follow on their own, can still get around it. For strong
+  isolation run the container on a network that cannot reach your internal services. Revoke keys you no longer use.
 - A **share link** is a capability URL: anyone who has it can open that single item until it expires or is revoked.
 - Without HTTPS, passwords and keys travel unencrypted. Run it behind HTTPS if it leaves your LAN and set
   `DROLLERY_COOKIE_SECURE=1`.
@@ -35,7 +39,8 @@ Known and documented trade-offs, which are not vulnerabilities by themselves:
 
 Authentication or authorization bypass, injection (SQL, template, command), path traversal, stored/reflected script
 injection, request forgery against the web interface, leaking a secret or another person's content, and bypassing the
-limits on uploads and fetches.
+limits on uploads and fetches, and any way of making the server fetch a private or local address although
+`allow_private_fetch` is off (other than the best-effort cases listed above).
 
 ## Hardening checklist for a public deployment
 

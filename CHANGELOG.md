@@ -26,5 +26,10 @@ First public release.
 - First-run setup code, scrypt password hashing, optional two-factor authentication with backup codes, login
   throttling, per-device API keys, and confirmation dialogs inside the app.
 
+### Hardening
+- Links to private, loopback and link-local addresses are not fetched by default (checked when a link is added, when the
+  download runs and on redirects); `allow_private_fetch` and `fetch_allow_hosts` in `config.toml` relax it on purpose.
+- The interactive API docs and the schema are not served, and the public health check no longer reports the version.
+
 ### Interface
 - Light, dark or system theme, ten highlight colours, English and German, and an optional Impressum page.

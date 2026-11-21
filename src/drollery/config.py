@@ -39,6 +39,8 @@ class Settings(BaseModel):
     job_max_attempts: int = 3
     fetch_timeout: int = 900
     fetch_max_files: int = 4
+    allow_private_fetch: bool = False  # False: a link is only fetched when it points at a public address (see netguard.py); True: fetch from anywhere
+    fetch_allow_hosts: list[str] = []  # hosts, addresses or networks that may be fetched although they are private, e.g. ["nas.lan", "10.0.0.0/24"]
     transcribe: Provider = Provider()
     describe: Provider = Provider()
     # runtime values (not read from the TOML file)

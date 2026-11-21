@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 
 import httpx
 
-from . import aisettings, db, media, providers
+from . import aisettings, db, media, netguard, providers
 from .config import get_settings
 
 log = logging.getLogger("drollery")
@@ -200,30 +200,52 @@ def _safe_name(name: str) -> str:
     return re.sub(r"[^\w.\- ]+", "_", name).strip()[:150] or "download"
 
 
+def _get_checked(client: httpx.Client, url: str) -> httpx.Response:
+    """GET a link, following redirects by hand so that every address on the way is checked (see netguard.py)."""
+    for _ in range(netguard.MAX_HOPS + 1):
+        netguard.check_url(url)
+        r = client.send(client.build_request("GET", url), stream=True, follow_redirects=False)
+        location = r.headers.get("location")
+        if r.status_code in netguard.REDIRECTS and location:
+            url = str(httpx.URL(url).join(location))
+            r.close()
+            continue
+        return r
+    raise providers.ProviderError("too many redirects")
+
+
 def _direct_download(url: str, td: Path) -> list[Path]:
     """If the URL itself is an image/video/audio file, fetch it directly."""
     try:
-        with httpx.stream("GET", url, follow_redirects=True, timeout=30) as r:
-            ctype = r.headers.get("content-type", "").split(";")[0].strip()
-            if r.status_code != 200 or ctype.split("/")[0] not in media.KINDS:
-                return []
-            name = Path(urlparse(str(r.url)).path).name or "download"
-            if not Path(name).suffix:
-                ext = {"image/jpeg": ".jpg", "image/png": ".png", "image/gif": ".gif", "image/webp": ".webp",
-                       "video/mp4": ".mp4", "video/webm": ".webm", "audio/mpeg": ".mp3"}.get(ctype, "")
-                name += ext
-            dest = td / _safe_name(name)
-            limit = get_settings().max_upload_mb * 1024 * 1024
-            size = 0
-            with dest.open("wb") as f:
-                for chunk in r.iter_bytes():
-                    size += len(chunk)
-                    if size > limit:
-                        raise providers.ProviderError("file exceeds max_upload_mb")
-                    f.write(chunk)
-            return [dest]
+        with netguard.make_client() as client:
+            r = _get_checked(client, url)
+            try:
+                return _save_direct(r, td)
+            finally:
+                r.close()
     except httpx.HTTPError:
         return []
+
+
+def _save_direct(r: httpx.Response, td: Path) -> list[Path]:
+    ctype = r.headers.get("content-type", "").split(";")[0].strip()
+    if r.status_code != 200 or ctype.split("/")[0] not in media.KINDS:
+        return []
+    name = Path(urlparse(str(r.url)).path).name or "download"
+    if not Path(name).suffix:
+        ext = {"image/jpeg": ".jpg", "image/png": ".png", "image/gif": ".gif", "image/webp": ".webp",
+               "video/mp4": ".mp4", "video/webm": ".webm", "audio/mpeg": ".mp3"}.get(ctype, "")
+        name += ext
+    dest = td / _safe_name(name)
+    limit = get_settings().max_upload_mb * 1024 * 1024
+    size = 0
+    with dest.open("wb") as f:
+        for chunk in r.iter_bytes():
+            size += len(chunk)
+            if size > limit:
+                raise providers.ProviderError("file exceeds max_upload_mb")
+            f.write(chunk)
+    return [dest]
 
 
 def _run_tool(cmd: list[str], timeout: int) -> subprocess.CompletedProcess:
@@ -235,11 +257,13 @@ def job_fetch(job: dict) -> None:
     url = json.loads(job["payload"])["url"]
     if urlparse(url).scheme not in ("http", "https"):
         raise providers.ProviderError("only http(s) URLs are supported")
+    netguard.check_url(url)                           # also here: a job may have been queued before the check existed, or the address may have changed
     with tempfile.TemporaryDirectory(dir=s.tmp_dir) as tds:
         td = Path(tds)
         meta: dict[Path, dict] = {}
         files = _direct_download(url, td)
         if not files:
+            netguard.check_redirects(url)             # yt-dlp and gallery-dl follow redirects themselves: make sure the way is clean first
             # Prefer H.264/AAC up to 1080p and always merge to .mp4: it plays in every browser. Without this, YouTube
             # pairs like H.264 video + Opus audio are merged into .mkv, which many browsers cannot play.
             r = _run_tool(["yt-dlp", "--no-playlist", "--no-warnings", "--write-info-json",

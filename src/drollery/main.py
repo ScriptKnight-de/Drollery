@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import __version__, accounts, albums, db, i18n, media, movies, people, pipeline, shares
+from . import __version__, accounts, albums, db, i18n, media, movies, netguard, people, pipeline, shares
 from .config import get_settings
 from .deps import LoginRequired, SetupRequired, api_auth, web_auth
 from .upload_redirect import UploadRedirects
@@ -257,6 +257,10 @@ async def api_ingest(request: Request):
     url = str(body.get("url", "")).strip()
     if not url.startswith(("http://", "https://")):
         raise HTTPException(422, "url must start with http:// or https://")
+    try:
+        await asyncio.to_thread(netguard.check_url, url)          # refuse private and local addresses up front
+    except netguard.BlockedAddress as e:
+        raise HTTPException(422, str(e)) from None
     with db.tx() as c:
         job_id = db.enqueue(c, "fetch", None, json.dumps({"url": url}))
     return {"job_id": job_id}
@@ -333,6 +337,10 @@ async def add(files: list[UploadFile] = File(default=[]), url: str = Form("")):
         except media.MediaError:
             continue
     if url.strip().startswith(("http://", "https://")):
+        try:
+            await asyncio.to_thread(netguard.check_url, url.strip())
+        except netguard.BlockedAddress as e:
+            return flash_redirect("/", e.message(), "error")
         with db.tx() as c:
             db.enqueue(c, "fetch", None, json.dumps({"url": url.strip()}))
         return RedirectResponse("/jobs", status_code=303)

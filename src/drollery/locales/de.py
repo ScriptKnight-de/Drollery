@@ -747,4 +747,6 @@ MESSAGES = {
     "TMDB rating": "TMDB-Bewertung",
     "TV series": "Serie",
     "Results in {language}, the language chosen for this page": "Ergebnisse auf {language}, der für diese Seite gewählten Sprache",
+    "This link points to a private or local network address ({host}), which Drollery does not fetch by default. To allow it, set allow_private_fetch or fetch_allow_hosts in config.toml": "Dieser Link zeigt auf eine private oder lokale Netzwerkadresse ({host}), die Drollery standardmäßig nicht abruft. Zum Erlauben allow_private_fetch oder fetch_allow_hosts in der config.toml setzen",
+    "That link has no address to fetch": "Dieser Link enthält keine Adresse zum Abrufen",
 }
