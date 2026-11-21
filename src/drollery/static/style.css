@@ -576,8 +576,6 @@ body.embed { background: var(--s1); background-image: none; }
   transition: transform .1s var(--ease), box-shadow .1s var(--ease), filter .15s; }
 .sound-play:hover { filter: brightness(1.06); }
 .sound-play:active, .sound-play.playing { transform: translateY(5px); box-shadow: 0 2px 0 hsl(var(--h) 70% 30%), 0 4px 8px rgba(0, 0, 0, .18); }
-.sound-play.playing { animation: sp-colors 5s linear infinite; }       /* the colours keep changing while it plays */
-@keyframes sp-colors { to { filter: hue-rotate(360deg); } }
 .sound-play:focus-visible { outline: 3px solid var(--ac); outline-offset: 4px; }
 .sound-play::after { content: ""; position: absolute; inset: -7px; border-radius: 50%; pointer-events: none; opacity: 0; transition: opacity .15s;
   background: conic-gradient(var(--ac) calc(var(--p) * 1%), transparent 0);
@@ -591,7 +589,7 @@ body.embed { background: var(--s1); background-image: none; }
 .sound-play.over { width: 28%; opacity: .92; }
 .tile.sound > .cap { display: block; color: var(--tx); }
 .tile.sound > .cap:hover { text-decoration: none; }
-@media (prefers-reduced-motion: reduce) { .sound-play { transition: none; } .sound-play.playing { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .sound-play { transition: none; } }
 .sound-stage { --h: 140; display: grid; place-items: center; min-height: 340px; border-radius: 16px; background: color-mix(in srgb, hsl(var(--h) 75% 55%) 14%, var(--s2)); }
 .sound-stage .sound-play { width: min(240px, 62%); }
 .sound-stage { width: 100%; }

@@ -74,10 +74,11 @@ def test_every_sound_card_has_its_own_colour_that_stays_the_same(client, tmp_pat
     assert again == hues                                                   # a sound keeps its colour from visit to visit
 
 
-def test_the_colour_animates_while_playing_unless_motion_is_reduced():
+def test_the_button_keeps_its_own_colour_while_playing():
     css = open("src/drollery/static/style.css").read()
-    assert ".sound-play.playing { animation: sp-colors" in css and "@keyframes sp-colors" in css
-    assert ".sound-play.playing { animation: none; }" in css
+    assert "sp-colors" not in css and "hue-rotate" not in css          # no colour cycling, only the pressed look and the ring
+    assert ".sound-play { --p: 0;" in css and "hsl(var(--h)" in css      # the colour comes from the card's own hue
+
 
 
 def test_a_sound_page_shows_the_same_play_button_instead_of_the_default_player(client, sound_id):
