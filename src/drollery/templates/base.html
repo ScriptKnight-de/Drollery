@@ -8,9 +8,10 @@
   <script>
     /* apply saved theme before first paint to avoid a flash */
     try {
-      var r = document.documentElement, t = localStorage.getItem("drollery.theme"), a = localStorage.getItem("drollery.accent");
+      var r = document.documentElement, t = localStorage.getItem("drollery.theme"), a = localStorage.getItem("drollery.accent"), g = localStorage.getItem("drollery.bg");
       if (t === "light" || t === "dark") r.dataset.theme = t;
       if (a) r.dataset.accent = a;
+      if (g) r.dataset.bg = g;
     } catch (e) {}
   </script>
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
@@ -33,6 +34,12 @@
             <button type="button" data-theme-set="dark">{{ icon("moon") }}Dark</button>
             <button type="button" data-theme-set="system">{{ icon("monitor") }}Auto</button>
           </div>
+          <p class="pop-h">Backdrop</p>
+          <div class="modes plain" role="group" aria-label="Backdrop">
+            <button type="button" data-bg-set="diamonds">Diamonds</button>
+            <button type="button" data-bg-set="checks">Checks</button>
+            <button type="button" data-bg-set="plain">Plain</button>
+          </div>
           <p class="pop-h">Highlight</p>
           <div class="swatches" role="group" aria-label="Highlight color">
             {% for key, label in (("gold","Gold"),("tomato","Tomato"),("pink","Bubblegum"),("grape","Grape"),("indigo","Indigo"),("sky","Sky"),("teal","Teal"),("mint","Mint"),("lime","Lime"),("orange","Tangerine")) %}
@@ -51,16 +58,18 @@
     var root = document.documentElement, menu = document.getElementById("theme-menu");
     function save(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
     function sync() {
-      var t = root.dataset.theme || "system", a = root.dataset.accent || "gold";
+      var t = root.dataset.theme || "system", a = root.dataset.accent || "gold", g = root.dataset.bg || "diamonds";
       document.querySelectorAll("[data-theme-set]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.themeSet === t); });
       document.querySelectorAll("[data-accent-set]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.accentSet === a); });
+      document.querySelectorAll("[data-bg-set]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.bgSet === g); });
     }
     document.addEventListener("click", function (e) {
-      var th = e.target.closest("[data-theme-set]"), ac = e.target.closest("[data-accent-set]");
+      var th = e.target.closest("[data-theme-set]"), ac = e.target.closest("[data-accent-set]"), bg = e.target.closest("[data-bg-set]");
       if (th) {
         if (th.dataset.themeSet === "system") { delete root.dataset.theme; save("drollery.theme", "system"); }
         else { root.dataset.theme = th.dataset.themeSet; save("drollery.theme", th.dataset.themeSet); }
         sync();
+      } else if (bg) { root.dataset.bg = bg.dataset.bgSet; save("drollery.bg", bg.dataset.bgSet); sync();
       } else if (ac) { root.dataset.accent = ac.dataset.accentSet; save("drollery.accent", ac.dataset.accentSet); sync(); }
       else if (menu && menu.open && !menu.contains(e.target)) menu.open = false;
     });
