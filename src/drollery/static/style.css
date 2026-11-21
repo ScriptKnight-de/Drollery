@@ -524,8 +524,9 @@ body.embed { background: var(--s1); background-image: none; }
 .album-head .toolbar { margin-top: 4px; }
 
 /* people: the field on an item, the popup form, the list and a person's page */
-.people { margin: 8px 0 20px; }
-.people h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 14px; }
+.people { display: grid; gap: 8px; margin: 0; }
+.people-label { margin: 0; font-size: 13px; line-height: 20px; font-weight: 500; color: var(--tx2); }
+.people .hint, .people .persons { margin: 0; }
 .persons { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 12px; padding: 0; list-style: none; }
 .person-chip { display: inline-flex; align-items: center; gap: 4px; height: 32px; padding: 0 4px 0 4px; border-radius: 16px; background: var(--s1); border: 2px solid var(--ln); font-size: 13px; font-weight: 500; }
 .person-chip a { display: inline-flex; align-items: center; gap: 8px; color: var(--tx); padding-right: 4px; }
@@ -559,3 +560,4 @@ body.embed { background: var(--s1); background-image: none; }
 .person-card .avatar { width: 72px; height: 72px; font-size: 28px; }
 .pc-name { font-weight: 600; overflow-wrap: anywhere; }
 .embed .person-form { max-width: none; border: 0; box-shadow: none; padding: 0; background: transparent; }
+#edit-form { display: none; }

@@ -17,7 +17,6 @@
   <div class="side" id="side">
     <p class="folio">{{ _("fol.") }} {{ "%03d"|format(item.id) }}</p>
     <h1>{{ item.title }}</h1>
-    {% include "people_field.html" %}
 
     <div class="tagsplit">
       <div class="tagset">
@@ -57,16 +56,18 @@
       {% if item.transcript %}<details open><summary>{{ _("Transcript") }}</summary><p class="pre">{{ item.transcript }}</p></details>{% endif %}
     </section>
 
-    <form method="post" action="/items/{{ item.id }}/edit" class="panel form">
-      <label>{{ _("Title") }} <input name="title" value="{{ item.title }}" maxlength="120"></label>
-      <label>{{ _("Description") }} <textarea name="description" rows="4">{{ item.description }}</textarea></label>
+    <div class="panel form" id="edit-tile">
+      <form id="edit-form" method="post" action="/items/{{ item.id }}/edit"></form>
+      <label>{{ _("Title") }} <input form="edit-form" name="title" value="{{ item.title }}" maxlength="120"></label>
+      <label>{{ _("Description") }} <textarea form="edit-form" name="description" rows="4">{{ item.description }}</textarea></label>
+      {% include "people_field.html" %}
       <div class="fld" id="tag-fld" data-remove="{{ _('Remove {tag}') }}">
         <label for="tags-in">{{ _("Your tags") }}</label>
-        <input id="tags-in" name="tags" value="{{ item.tags|join(' ') }}" placeholder="{{ _('Separate with spaces') }}" autocomplete="off">
+        <input form="edit-form" id="tags-in" name="tags" value="{{ item.tags|join(' ') }}" placeholder="{{ _('Separate with spaces') }}" autocomplete="off">
         <span class="hint">{{ _("AI tags are kept apart and never change when you save") }}</span>
       </div>
-      <button class="btn primary" type="submit">{{ _("Save") }}</button>
-    </form>
+      <button class="btn primary" type="submit" form="edit-form">{{ _("Save") }}</button>
+    </div>
 
     {% include "share_panel.html" %}
 

@@ -154,7 +154,7 @@ def test_item_page_shows_two_separate_groups(client):
         db.set_ai_tags(c, i, ["robotic"])
     html = client.get(f"/items/{i}").text
     mine_part = html[html.index("Your tags"):html.index("AI tags")]
-    ai_part = html[html.index("AI tags"):html.index("<form method=\"post\" action=\"/items/%d/edit\"" % i)]
+    ai_part = html[html.index("AI tags"):html.index("id=\"edit-tile\"")]
     assert "#mine" in mine_part and "#robotic" not in mine_part
     assert "#robotic" in ai_part and "#mine" not in ai_part
     assert f"/items/{i}/ai-tags/keep" in html and f"/items/{i}/ai-tags/remove" in html

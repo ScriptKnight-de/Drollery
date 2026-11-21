@@ -260,3 +260,15 @@ def test_people_need_a_login(client):
         r = getattr(v, method)(url)
         assert r.status_code in (303, 307) and r.headers["location"] == "/login", (method, url, r.status_code)
     assert v.get("/people/1/picture").status_code == 401                 # files: key or session
+
+
+def test_the_people_field_sits_in_the_tile_with_title_and_tags_but_in_its_own_form(client, item_id, mp3s):
+    upload(client, [mp3s["one"]], title="Frog Opera")
+    for i in (item_id, album_id(client)):
+        page = client.get(f"/items/{i}").text
+        tile = page.split('id="edit-tile"')[1].split("</section>")[0] if False else page.split('id="edit-tile"')[1]
+        before_tags = tile.split('id="tag-fld"')[0]
+        assert "person-add" in before_tags and 'name="title"' in before_tags and 'id="tags-in"' in tile
+        assert page.count('class="person-add"') == 1 and page.count('id="people"') == 1
+        assert page.index('id="people"') > page.index('id="edit-tile"')           # no longer up under the title
+        assert 'form="edit-form"' in tile and 'id="edit-form"' in page

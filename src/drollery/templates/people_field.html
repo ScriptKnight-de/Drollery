@@ -1,6 +1,6 @@
 {% from "icons.html" import icon %}{% from "macros.html" import avatar %}
 <div class="people" id="people">
-  <h3>{{ icon("users") }}{{ _("Creators and people involved") }}</h3>
+  <p class="people-label">{{ _("Creators and people involved") }}</p>
   {% if item_people %}
   <ul class="persons">
     {% for p in item_people %}
