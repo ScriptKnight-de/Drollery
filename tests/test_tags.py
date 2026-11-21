@@ -166,7 +166,7 @@ def test_a_describe_job_writes_ai_tags_only(client, monkeypatch):
     client.post("/settings/ai/models", data={"name": "m", "type": "openai", "base_url": "http://x/v1", "model": "m", "api_key": "", "command": "",
                                               "langs": "eng", "language": "", "prompt": "", "timeout": 60, "send_image": "1"})
     mid = str(accounts.list_models()[0]["id"])
-    client.post("/settings/ai/assign", data={"transcribe": "default", "describe": mid, "ocr": "default"})
+    client.post("/settings/ai/assign", data={"transcribe": "default", "describe": mid})
     monkeypatch.setattr(providers, "describe", lambda *a, **k: {"name": "n", "description": "d", "tags": ["Alpha", "beta"]})
     i = make_item(client)
     client.patch(f"/api/v1/items/{i}", json={"tags": ["mine"]})

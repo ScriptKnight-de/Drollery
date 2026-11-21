@@ -219,8 +219,8 @@ def ai_page(request: Request):
 
 
 @router.post("/ai/assign")
-def ai_assign(request: Request, transcribe: str = Form("default"), describe: str = Form("default"), ocr: str = Form("default")):
-    chosen = {"transcribe": transcribe, "describe": describe, "ocr": ocr}
+def ai_assign(request: Request, transcribe: str = Form("default"), describe: str = Form("default")):
+    chosen = {"transcribe": transcribe, "describe": describe}
     models = {str(m["id"]): m for m in accounts.list_models()}
     for cap, value in chosen.items():
         if value == "default":

@@ -280,7 +280,7 @@ def test_assignment_drives_the_pipeline_without_a_restart(client):
     assert aisettings.provider("describe").enabled is False                    # nothing in config.toml, nothing assigned
     client.post("/settings/ai/models", data=MODEL)
     mid = str(accounts.list_models()[0]["id"])
-    client.post("/settings/ai/assign", data={"transcribe": "default", "describe": mid, "ocr": "default"})
+    client.post("/settings/ai/assign", data={"transcribe": "default", "describe": mid})
 
     p = aisettings.provider("describe")
     assert p.enabled and p.type == "openai" and p.model == "moondream" and p.api_key == "sk-secret-123"
@@ -291,21 +291,23 @@ def test_assignment_drives_the_pipeline_without_a_restart(client):
         jobs = [row["type"] for row in c.execute("SELECT type FROM jobs")]
     assert jobs == ["describe"]
 
-    client.post("/settings/ai/assign", data={"transcribe": "default", "describe": "off", "ocr": "default"})
+    client.post("/settings/ai/assign", data={"transcribe": "default", "describe": "off"})
     assert aisettings.provider("describe").enabled is False
 
 
 def test_a_model_cannot_be_assigned_to_a_job_it_cannot_do(client):
     client.post("/settings/ai/models", data=MODEL)                              # an OpenAI chat model
     mid = str(accounts.list_models()[0]["id"])
-    client.post("/settings/ai/assign", data={"transcribe": "default", "describe": "default", "ocr": mid})   # OCR needs tesseract/command
-    assert accounts.get_setting("ai.ocr") is None
+    client.post("/settings/ai/models", data={**MODEL, "name": "Local cmd", "type": "command", "command": "echo {input}"})
+    cmd = str(next(m["id"] for m in accounts.list_models() if m["type"] == "command"))
+    client.post("/settings/ai/assign", data={"transcribe": "default", "describe": cmd})          # chat naming needs an API model
+    assert accounts.get_setting("ai.describe") is None
 
 
 def test_deleting_a_model_unassigns_it(client):
     client.post("/settings/ai/models", data=MODEL)
     mid = accounts.list_models()[0]["id"]
-    client.post("/settings/ai/assign", data={"transcribe": "default", "describe": str(mid), "ocr": "default"})
+    client.post("/settings/ai/assign", data={"transcribe": "default", "describe": str(mid)})
     client.post(f"/settings/ai/models/{mid}/delete")
     assert accounts.list_models() == [] and accounts.get_setting("ai.describe") is None
 
@@ -313,7 +315,7 @@ def test_deleting_a_model_unassigns_it(client):
 def test_ui_defined_model_is_used_for_describe_jobs(client, monkeypatch):
     client.post("/settings/ai/models", data=MODEL)
     mid = str(accounts.list_models()[0]["id"])
-    client.post("/settings/ai/assign", data={"transcribe": "default", "describe": mid, "ocr": "default"})
+    client.post("/settings/ai/assign", data={"transcribe": "default", "describe": mid})
     seen = {}
 
     class Resp:
@@ -364,7 +366,7 @@ def test_reprocess_existing_items(client):
     assert "Nothing to queue" in r.text                                        # no model assigned yet
     client.post("/settings/ai/models", data=MODEL)
     mid = str(accounts.list_models()[0]["id"])
-    client.post("/settings/ai/assign", data={"transcribe": "default", "describe": mid, "ocr": "default"})
+    client.post("/settings/ai/assign", data={"transcribe": "default", "describe": mid})
     r = client.post("/settings/ai/reprocess")
     assert "Queued AI processing for 2 item(s)" in r.text
     assert "Nothing to queue" in client.post("/settings/ai/reprocess").text    # already queued: no duplicates

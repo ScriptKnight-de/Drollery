@@ -1,8 +1,8 @@
 """Resolve which AI provider is active for each capability, and test model definitions.
 
-Precedence per capability (transcribe / describe / ocr):
+Precedence per capability (transcribe / describe):
   1. an assignment made in Settings > AI models (a model id, or "off")
-  2. otherwise the [transcribe] / [describe] / [ocr] section of config.toml
+  2. otherwise the [transcribe] / [describe] section of config.toml
 Reads the database on every call, so changes apply immediately without a restart.
 """
 from __future__ import annotations
@@ -15,22 +15,20 @@ import httpx
 from . import accounts
 from .config import Provider, get_settings
 
-CAPS = ("transcribe", "describe", "ocr")
-CAP_LABEL = {"transcribe": "Transcription", "describe": "Naming and tagging", "ocr": "Text in images (OCR)"}
+CAPS = ("transcribe", "describe")
+CAP_LABEL = {"transcribe": "Transcription", "describe": "Naming and tagging"}
 CAP_HELP = {
     "transcribe": "Speech-to-text for audio and video clips",
     "describe": "Writes title, description and tags from the preview image and transcript",
-    "ocr": "Reads text printed inside images, which memes are full of",
 }
-MODEL_TYPES = {"openai": "OpenAI-compatible API", "command": "Local command", "tesseract": "Tesseract OCR"}
-COMPAT = {"transcribe": ("openai", "command"), "describe": ("openai",), "ocr": ("tesseract", "command")}
+MODEL_TYPES = {"openai": "OpenAI-compatible API", "command": "Local command"}
+COMPAT = {"transcribe": ("openai", "command"), "describe": ("openai",)}
 
 PRESETS = [
     {"label": "Ollama (local vision)", "type": "openai", "base_url": "http://host.docker.internal:11434/v1", "model": "moondream", "name": "Ollama vision"},
     {"label": "OpenAI", "type": "openai", "base_url": "https://api.openai.com/v1", "model": "gpt-4o-mini", "name": "OpenAI"},
     {"label": "Whisper server", "type": "openai", "base_url": "http://whisper:8000/v1", "model": "Systran/faster-whisper-small", "name": "Whisper small"},
     {"label": "Whisper (OpenAI)", "type": "openai", "base_url": "https://api.openai.com/v1", "model": "whisper-1", "name": "OpenAI Whisper"},
-    {"label": "Tesseract", "type": "tesseract", "base_url": "", "model": "", "name": "Tesseract"},
 ]
 
 
@@ -100,10 +98,6 @@ def test_model(data: dict) -> tuple[bool, str, list[str]]:
         if wanted and ids and wanted not in ids:
             note = f" The model “{wanted}” is not in that list."
         return True, f"Connected. {len(ids)} model(s) available.{note}", ids[:200]
-    if kind == "tesseract":
-        found = shutil.which("tesseract")
-        return (True, "Tesseract is installed.", []) if found else (
-            False, "Tesseract is not installed in this container. Rebuild the image with WITH_TESSERACT=1.", [])
     if kind == "command":
         try:
             program = shlex.split(data.get("command") or "")[0]

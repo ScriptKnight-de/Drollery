@@ -15,8 +15,7 @@ fetch_max_files = 4       # max files kept from a single page/gallery URL
 #   "openai"  any OpenAI-compatible HTTP API: Ollama (http://host.docker.internal:11434/v1),
 #             llama.cpp server, LocalAI, faster-whisper-server, OpenAI, OpenRouter, ...
 #   "command" run a local program; "{input}" is replaced by the file path and the
-#             program must print the result to stdout (e.g. whisper.cpp, tesseract)
-#   "tesseract" OCR shortcut (needs the image built with WITH_TESSERACT=1)
+#             program must print the result to stdout (e.g. whisper.cpp)
 
 # Speech-to-text for audio and video clips.
 [transcribe]
@@ -41,9 +40,3 @@ type = "none"
 # send_image = true                    # set false for text-only models (uses transcript only)
 # timeout = 300
 # prompt = ""                          # empty = built-in prompt; "{tags}" is replaced by existing tags
-
-# Text found inside images (memes are mostly text).
-[ocr]
-type = "none"
-# type = "tesseract"
-# langs = "eng"                        # e.g. "eng+deu"

@@ -186,6 +186,10 @@ def init() -> None:
         # jobs left 'running' by a crash/restart go back to the queue
         c.execute("UPDATE jobs SET status='queued' WHERE status='running'")
         c.execute("DELETE FROM sessions WHERE expires_at < ?", (time.time(),))
+        # OCR was removed: drop what is left of it
+        c.execute("DELETE FROM jobs WHERE type='ocr'")
+        c.execute("DELETE FROM settings WHERE key='ai.ocr'")
+        c.execute("DELETE FROM ai_models WHERE type='tesseract'")
 
 
 # ---------------------------------------------------------------- items

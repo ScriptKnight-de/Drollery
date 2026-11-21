@@ -34,10 +34,6 @@
     <label>Command <input name="command" value="{{ model.command }}" placeholder="whisper-cli -m /models/ggml-tiny.bin -f {input} -nt"><span class="hint"><code>{input}</code> becomes the file path. The program must print the result</span></label>
   </div>
 
-  <div class="form grp" data-types="tesseract command">
-    <label>OCR languages <input name="langs" value="{{ model.langs }}" placeholder="eng+deu"></label>
-  </div>
-
   <label>Timeout in seconds <input type="number" name="timeout" value="{{ model.timeout }}" min="5" max="3600"></label>
 
   <div class="actions">

@@ -31,7 +31,7 @@
   <tr>
     <td>{{ m.name }}</td>
     <td>{{ types[m.type] }}</td>
-    <td class="clip muted">{% if m.type == "openai" %}{{ m.base_url }} · {{ m.model }}{% elif m.type == "command" %}{{ m.command }}{% else %}tesseract ({{ m.langs }}){% endif %}{% if m.api_key %} · key set{% endif %}</td>
+    <td class="clip muted">{% if m.type == "openai" %}{{ m.base_url }} · {{ m.model }}{% elif m.type == "command" %}{{ m.command }}{% endif %}{% if m.api_key %} · key set{% endif %}</td>
     <td>{% for r in rows if r.state.value == m.id|string %}<span class="badge">{{ r.label }}</span> {% endfor %}</td>
     <td class="actions"><div class="acts">
       <button class="btn small" type="button" hx-post="/settings/ai/test" hx-target="#test-{{ m.id }}" hx-swap="innerHTML"

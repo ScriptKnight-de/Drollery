@@ -76,15 +76,6 @@ def extract_audio(src: Path, dst: Path) -> None:
         raise MediaError(f"audio extraction failed: {r.stderr.strip()[:2000]}")
 
 
-def ocr_image(src: Path, dst: Path, kind: str) -> None:
-    """1600px PNG still (video: a frame from the middle) for OCR."""
-    seek = ["-ss", "1"] if kind == "video" else []
-    r = _run(["ffmpeg", "-y", "-v", "error", *seek, "-i", str(src), "-frames:v", "1",
-              "-vf", "scale='min(1600,iw)':-2", str(dst)])
-    if r.returncode != 0 or not dst.exists():
-        raise MediaError(f"frame extraction failed: {r.stderr.strip()[:2000]}")
-
-
 FRAME_MAX = 1600     # width cap of the still the cropper works on
 CARD_SIZE = 480      # edge of the square card image
 

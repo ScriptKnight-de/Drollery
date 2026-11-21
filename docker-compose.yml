@@ -2,8 +2,6 @@ services:
   drollery:
     build:
       context: .
-      args:
-        WITH_TESSERACT: "0"   # set to "1" to bake Tesseract OCR into the image
     restart: unless-stopped
     ports:
       - "${DROLLERY_PORT:-8080}:8080"

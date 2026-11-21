@@ -1,4 +1,4 @@
-"""AI providers. Each capability (transcribe / describe / ocr) is selected by `type` in config.toml.
+"""AI providers. Each capability (transcribe / describe) is selected by `type` in config.toml.
 
 To add a provider: write a function and register it in the matching dict at the bottom.
 """
@@ -131,23 +131,3 @@ def describe(cfg: Provider, image: Path | None, transcript: str, existing_tags: 
     if fn is None:
         raise ProviderError(f"unknown describe provider type {cfg.type!r}")
     return fn(cfg, image, transcript, existing_tags)
-
-
-# ------------------------------------------------------------------- ocr
-
-def _ocr_tesseract(cfg: Provider, image: Path) -> str:
-    return _command(cfg.command or "tesseract {input} stdout -l {langs}", image, cfg.langs)
-
-
-def _ocr_command(cfg: Provider, image: Path) -> str:
-    return _command(cfg.command, image, cfg.langs)
-
-
-OCR = {"tesseract": _ocr_tesseract, "command": _ocr_command}
-
-
-def ocr(cfg: Provider, image: Path) -> str:
-    fn = OCR.get(cfg.type)
-    if fn is None:
-        raise ProviderError(f"unknown ocr provider type {cfg.type!r}")
-    return re.sub(r"\s+", " ", fn(cfg, image)).strip()

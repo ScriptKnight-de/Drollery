@@ -36,7 +36,6 @@ class Settings(BaseModel):
     fetch_max_files: int = 4
     transcribe: Provider = Provider()
     describe: Provider = Provider()
-    ocr: Provider = Provider()
     # runtime values (not read from the TOML file)
     data_dir: Path = Path("data")
     cookie_secure: bool = False

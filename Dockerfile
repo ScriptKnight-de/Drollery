@@ -1,9 +1,7 @@
 FROM python:3.12-slim
 
-ARG WITH_TESSERACT=0
 RUN apt-get update \
  && apt-get install -y --no-install-recommends ffmpeg ca-certificates \
- && if [ "$WITH_TESSERACT" = "1" ]; then apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-eng tesseract-ocr-deu; fi \
  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app

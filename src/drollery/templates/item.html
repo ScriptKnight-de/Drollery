@@ -57,7 +57,6 @@
     </form>
 
     {% if item.transcript %}<details open><summary>Transcript</summary><p class="pre">{{ item.transcript }}</p></details>{% endif %}
-    {% if item.ocr %}<details open><summary>Text in image</summary><p class="pre">{{ item.ocr }}</p></details>{% endif %}
     <section class="panel stack" id="share">
       <h2 class="with-icon">{{ icon("share") }}Share</h2>
       <p class="muted">Anyone with a link can see this {{ item.kind }}, no account needed. Make it temporary, or permanent until you revoke it</p>
@@ -104,7 +103,7 @@
 
     <details {{ "open" if jobs }}><summary>Background jobs <i>{{ jobs|length }}</i></summary>
       {% for j in jobs %}<div class="job"><span class="dot {{ j.status }}"></span>{{ j.type }} · {{ j.status }}{{ errbox(j.error) }}{% if j.status == "failed" %}<form method="post" action="/jobs/{{ j.id }}/retry" class="inline"><input type="hidden" name="next" value="/items/{{ item.id }}"><button class="link" type="submit">Retry</button></form>{% endif %}</div>{% endfor %}
-      {% if providers.transcribe or providers.describe or providers.ocr %}
+      {% if providers.transcribe or providers.describe %}
       <form method="post" action="/items/{{ item.id }}/reprocess"><button class="btn" type="submit">{{ icon("retry") }}Run again</button></form>
       {% else %}<p class="muted">No AI providers are enabled. See <code>config.toml</code> in the data volume.</p>{% endif %}
     </details>

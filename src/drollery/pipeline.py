@@ -84,8 +84,6 @@ def plan_jobs(c, item_id: int) -> list[str]:
     """Queue the background jobs that the enabled providers can do for this item."""
     item = db.get_item(c, item_id)
     queued = []
-    if item["kind"] == "image" and aisettings.enabled("ocr"):
-        queued.append("ocr")
     has_speech = item["kind"] != "image" and item["has_audio"] and aisettings.enabled("transcribe")
     if has_speech:
         queued.append("transcribe")          # transcribe chains into describe when it finishes
@@ -137,18 +135,6 @@ def job_describe(job: dict) -> None:
             c.execute("UPDATE items SET description=? WHERE id=?", (result["description"], item["id"]))
         c.execute("UPDATE items SET updated_at=? WHERE id=?", (time.time(), item["id"]))
         db.set_ai_tags(c, item["id"], result["tags"])
-
-
-def job_ocr(job: dict) -> None:
-    s = get_settings()
-    item = _item(job["item_id"])
-    with tempfile.TemporaryDirectory(dir=s.tmp_dir) as td:
-        still = Path(td) / "still.png"
-        media.ocr_image(media_path(item), still, item["kind"])
-        text = providers.ocr(aisettings.provider("ocr"), still)
-    with db.tx() as c:
-        c.execute("UPDATE items SET ocr=?, updated_at=? WHERE id=?", (text, time.time(), item["id"]))
-        db.reindex(c, item["id"])
 
 
 # ------------------------------------------------------------- download
@@ -244,7 +230,7 @@ def job_fetch(job: dict) -> None:
             raise providers.ProviderError(f"downloaded files were not recognised as images, video or audio: {names}")
 
 
-HANDLERS = {"fetch": job_fetch, "transcribe": job_transcribe, "describe": job_describe, "ocr": job_ocr}
+HANDLERS = {"fetch": job_fetch, "transcribe": job_transcribe, "describe": job_describe}
 
 
 def run_job(job: dict) -> None:

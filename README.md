@@ -60,13 +60,12 @@ Then open **Settings > AI models**, add a model with the **Whisper server** pres
 
 ### AI providers
 
-Three independent capabilities, each off by default (`type = "none"`):
+Two independent capabilities, each off by default (`type = "none"`):
 
 | Section | Does | Input |
 |---|---|---|
 | `[transcribe]` | speech-to-text for audio and video | extracted mono 16 kHz MP3 |
 | `[describe]` | title, description and tags | 640 px preview image and/or the transcript |
-| `[ocr]` | text inside images | 1600 px still |
 
 Provider types:
 
@@ -74,7 +73,6 @@ Provider types:
 |---|---|
 | `openai` | **Any OpenAI-compatible HTTP API.** Ollama (`http://host.docker.internal:11434/v1`), llama.cpp server, LocalAI, faster-whisper-server, OpenAI, OpenRouter… Run the model on the Pi, on another box in your network, or in the cloud — it is just a URL. |
 | `command` | A local program that prints the result to stdout, e.g. `whisper-cli -m /models/ggml-tiny.bin -f {input} -nt`. `{input}` is replaced by the file path. |
-| `tesseract` | OCR shortcut. Build with `WITH_TESSERACT: "1"` in `docker-compose.yml`. |
 
 API keys are never stored in the config: set `api_key_env = "DESCRIBE_API_KEY"` and put the key in `.env`.
 
