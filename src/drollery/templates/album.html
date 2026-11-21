@@ -36,6 +36,9 @@
           <p class="hint">{{ _("Give a track a new number to move it; the others follow") }}</p>
           <button class="btn" type="submit">{{ _("Save tracks") }}</button>
         </form>
+        <form class="trackedit" method="post" action="/albums/{{ item.id }}/rescan" onsubmit="return confirm({{ _('This replaces any names and order you set by hand')|tojson|forceescape }})">
+          <button class="btn small" type="submit">{{ icon("retry") }}{{ _("Read order and titles from the files again") }}</button>
+        </form>
       </details>
     </section>
   </div>

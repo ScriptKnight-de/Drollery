@@ -80,9 +80,19 @@ def natural_key(text: str) -> list:
     return [int(p) if p.isdigit() else p.lower() for p in re.split(r"(\d+)", text)]
 
 
+def numbers_from_name(name: str) -> tuple[int, int]:
+    """(disc, track) written at the start of a file name: '1-19. Title' -> (1, 19), '07 - Title' -> (0, 7), 'Title' -> (0, 0)."""
+    stem = Path(name).stem
+    m = re.match(r"\s*(\d{1,2})\s*[-.]\s*(\d{1,3})\b", stem)
+    if m:
+        return int(m.group(1)), int(m.group(2))
+    m = re.match(r"\s*(?:(?:track|titel|title|kapitel|chapter)\s*)?(\d{1,3})(?:\s*[-._)\]:]|$)", stem, flags=re.I)
+    return (0, int(m.group(1))) if m else (0, 0)
+
+
 def title_from_name(name: str) -> str:
     stem = Path(name).stem
-    stem = re.sub(r"^\s*(?:track|titel|title|kapitel|chapter)?\s*\d{1,3}\s*[-._)\]:]*\s*", "", stem, flags=re.I)   # "01 - ", "03_", "Track 4."
+    stem = re.sub(r"^\s*(?:(?:track|titel|title|kapitel|chapter)\s*)?(?:\d{1,3}\s*[-._)\]:]+\s*){1,2}", "", stem, flags=re.I)   # "01 - ", "1-19. ", "Track 4."
     return re.sub(r"[\s_]+", " ", stem).strip()[:120] or re.sub(r"[\s_]+", " ", Path(name).stem).strip()[:120] or "track"
 
 
@@ -132,6 +142,43 @@ def _tag_int(value: str) -> int:
     return int(m.group(1)) if m else 0
 
 
+def describe(path: Path, name: str) -> dict:
+    """What a track file says about itself: its tags, and where it belongs (disc, track number) and what it is called.
+    Numbers and titles missing from the tags are taken from the file name. Raises media.MediaError if it is not audio."""
+    info = media.probe(path)
+    if not info["has_audio"]:
+        raise media.MediaError("no audio stream")
+    tg = info["tags"]
+    base = Path(name).name
+    d_name, n_name = numbers_from_name(base)
+    return {"info": info, "name": name,
+            "disc": _tag_int(tg.get("disc") or tg.get("discnumber")) or d_name,
+            "num": _tag_int(tg.get("track") or tg.get("tracknumber")) or n_name,
+            "title": (tg.get("title") or "").strip()[:120] or title_from_name(base)}
+
+
+def order_tracks(rows: list[dict]) -> None:
+    """Sort in place: disc, then track number, then file name. Disc only counts when the tracks really span several discs;
+    otherwise a few files that state one and others that do not would be split apart."""
+    if len({r["disc"] for r in rows if r["disc"]}) <= 1:
+        for r in rows:
+            r["disc"] = 0
+    rows.sort(key=lambda r: (r["disc"], r["num"] or 10 ** 6, natural_key(r["name"])))
+
+
+def _most_common(values) -> str:
+    counts: dict[str, int] = {}
+    for v in values:
+        if v:
+            counts[v] = counts.get(v, 0) + 1
+    return max(counts, key=counts.get) if counts else ""
+
+
+def _artist_tag(info: dict) -> str:
+    tg = info["tags"]
+    return (tg.get("album_artist") or tg.get("albumartist") or tg.get("artist") or "").strip()
+
+
 def _hash(path: Path) -> str:
     h = hashlib.sha256()
     with path.open("rb") as f:
@@ -177,22 +224,17 @@ def create_album(uploads: list[Upload], work: Path, cover: Upload | None = None,
     rows = []
     for up in audio:
         try:
-            info = media.probe(up.path)
+            row = describe(up.path, up.name)
         except media.MediaError:
             raise AlbumError(t("A file in the album could not be read as audio")) from None
-        if not info["has_audio"]:
-            raise AlbumError(t("A file in the album could not be read as audio"))
-        tg = info["tags"]
-        rows.append({"up": up, "info": info, "disc": _tag_int(tg.get("disc") or tg.get("discnumber")),
-                     "num": _tag_int(tg.get("track") or tg.get("tracknumber")),
-                     "title": (tg.get("title") or "").strip()[:120] or title_from_name(up.name), "sha": _hash(up.path)})
-    rows.sort(key=lambda r: (r["disc"], r["num"] or 10 ** 6, natural_key(r["up"].name)))
+        row.update(up=up, sha=_hash(up.path))
+        rows.append(row)
+    order_tracks(rows)
 
-    first_tags = rows[0]["info"]["tags"]
-    artists = {r["info"]["tags"].get("album_artist") or r["info"]["tags"].get("artist") or "" for r in rows}
-    album_title = (title.strip() or first_tags.get("album", "").strip() or (zip_names[0] if zip_names else "")
+    # the album's own title and artist: what most tracks say (some files may carry no tags at all), else the ZIP's or folder's name
+    album_title = (title.strip() or _most_common(r["info"]["tags"].get("album", "").strip() for r in rows) or (zip_names[0] if zip_names else "")
                    or Path(rows[0]["up"].name).parent.name or "").strip()[:120] or "Untitled album"
-    album_artist = (artist.strip() or (artists.pop() if len(artists) == 1 else "")).strip()[:120]
+    album_artist = (artist.strip() or _most_common(_artist_tag(r["info"]) for r in rows)).strip()[:120]
 
     sha = hashlib.sha256("\n".join(sorted(r["sha"] for r in rows)).encode()).hexdigest()
     with db.tx() as c:
@@ -251,6 +293,31 @@ def create_album(uploads: list[Upload], work: Path, cover: Upload | None = None,
 
 
 # --------------------------------------------------------------- editing
+
+def rescan(item_id: int) -> None:
+    """Read the order and the titles from the track files again (their tags, then their file names). This replaces what
+    was renamed or reordered by hand; the artist is filled in when it is empty."""
+    with db.tx() as c:
+        item = db.get_item(c, item_id)
+        tracks = tracks_of(c, item_id)
+        info = get(c, item_id)
+    rows = []
+    for tr in tracks:
+        try:
+            row = describe(track_path(item, tr), tr["original_name"] or tr["filename"])
+        except media.MediaError:
+            row = {"info": {"tags": {}}, "name": tr["original_name"] or tr["filename"], "disc": 0, "num": 0, "title": tr["title"]}
+        row["tr"] = tr
+        rows.append(row)
+    order_tracks(rows)
+    with db.tx() as c:
+        for n, row in enumerate(rows, 1):
+            c.execute("UPDATE tracks SET position=?, title=? WHERE id=?", (n, row["title"], row["tr"]["id"]))
+        if info is not None and not info["artist"]:
+            c.execute("UPDATE albums SET artist=? WHERE item_id=?", (_most_common(_artist_tag(r["info"]) for r in rows)[:120], item_id))
+        c.execute("UPDATE items SET updated_at=? WHERE id=?", (time.time(), item_id))
+        db.reindex(c, item_id)
+
 
 def save_tracks(c, item_id: int, titles: dict[int, str], order: dict[int, int]) -> None:
     """Rename tracks and put them in a new order. `order` maps track id -> the position the person typed; ties keep the old order."""

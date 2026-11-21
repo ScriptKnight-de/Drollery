@@ -512,4 +512,9 @@ MESSAGES = {
     "Share this track": "Udostępnij ten utwór",
     "Share this chapter": "Udostępnij ten rozdział",
     "That track does not exist": "Taki utwór nie istnieje",
+
+    # ---- re-reading an album
+    "Order and titles read from the files again": "Kolejność i tytuły odczytano ponownie z plików",
+    "This replaces any names and order you set by hand": "To zastąpi nazwy i kolejność ustawione ręcznie",
+    "Read order and titles from the files again": "Odczytaj ponownie kolejność i tytuły z plików",
 }

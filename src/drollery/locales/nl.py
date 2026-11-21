@@ -498,4 +498,9 @@ MESSAGES = {
     "Share this track": "Dit nummer delen",
     "Share this chapter": "Dit hoofdstuk delen",
     "That track does not exist": "Dat nummer bestaat niet",
+
+    # ---- re-reading an album
+    "Order and titles read from the files again": "Volgorde en titels opnieuw uit de bestanden gelezen",
+    "This replaces any names and order you set by hand": "Dit vervangt alle namen en de volgorde die je met de hand hebt ingesteld",
+    "Read order and titles from the files again": "Volgorde en titels opnieuw uit de bestanden lezen",
 }

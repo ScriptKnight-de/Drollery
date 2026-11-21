@@ -98,6 +98,16 @@ async def save_tracks(request: Request, item_id: int):
     return flash_redirect(f"/items/{item_id}#tracks", t("Tracks saved"))
 
 
+@router.post("/albums/{item_id}/rescan")
+async def rescan(item_id: int):
+    with db.tx() as c:
+        item = db.get_item(c, item_id)
+    if item is None or item["kind"] != "album":
+        raise HTTPException(404, "album not found")
+    await asyncio.to_thread(albums.rescan, item_id)
+    return flash_redirect(f"/items/{item_id}#tracks", t("Order and titles read from the files again"))
+
+
 # ------------------------------------------------------------------ files
 
 def _album_or_404(item_id: int) -> dict:

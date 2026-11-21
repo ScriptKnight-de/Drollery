@@ -498,4 +498,9 @@ MESSAGES = {
     "Share this track": "Dela det här spåret",
     "Share this chapter": "Dela det här kapitlet",
     "That track does not exist": "Det spåret finns inte",
+
+    # ---- re-reading an album
+    "Order and titles read from the files again": "Ordning och titlar lästa från filerna igen",
+    "This replaces any names and order you set by hand": "Det här ersätter namn och ordning som du har satt för hand",
+    "Read order and titles from the files again": "Läs ordning och titlar från filerna igen",
 }

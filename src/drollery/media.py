@@ -50,7 +50,13 @@ def probe(path: Path) -> dict:
     streams = data.get("streams", [])
     video = next((s for s in streams if s.get("codec_type") == "video"), {})
     duration = data.get("format", {}).get("duration")
-    tags = {str(k).lower(): str(v).strip() for k, v in (data.get("format", {}).get("tags") or {}).items()}   # ID3 / Vorbis / MP4 tags
+    # tags live in the container for MP3/MP4 and in the audio stream for Ogg/Opus/FLAC; take both, the container's first
+    tags = {}
+    for s in streams:
+        if s.get("codec_type") == "audio":
+            for k, v in (s.get("tags") or {}).items():
+                tags.setdefault(str(k).lower(), str(v).strip())
+    tags.update({str(k).lower(): str(v).strip() for k, v in (data.get("format", {}).get("tags") or {}).items()})
     return {
         "width": video.get("width"),
         "height": video.get("height"),

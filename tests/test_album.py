@@ -261,3 +261,86 @@ def test_helpers_for_titles_and_ordering():
     assert albums.title_from_name("Track 04_the_end.mp3") == "the end" and albums.title_from_name("07.mp3") == "07"
     assert sorted(["t10", "t2", "t1"], key=albums.natural_key) == ["t1", "t2", "t10"]
     assert albums.safe_filename('a/b:c*"d') == "a_b_c_d"
+
+
+# ----------------------------------------- a mixed album, like a real one: some files tagged, some not
+
+def make_audio(path: Path, codec: str, seconds=1, freq=300, **tags) -> Path:
+    cmd = ["ffmpeg", "-y", "-v", "error", "-f", "lavfi", "-i", f"sine=frequency={freq}:duration={seconds}", "-c:a", codec]
+    for k, v in tags.items():
+        cmd += ["-metadata", f"{k}={v}"]
+    subprocess.run(cmd + [str(path)], check=True)
+    return path
+
+
+@pytest.fixture()
+def mixed_zip(tmp_path):
+    """.opus files without any tags and .m4a files with full tags (disc and 'n/5' track numbers), named '1-N. title'."""
+    d = tmp_path / "mixed"
+    d.mkdir()
+    entries = {}
+    plan = [(1, "Interlude_ The Bard Is Late", "opus", None), (2, "Overture for a Cheap King", "m4a", "Overture for a Cheap King"), (3, "Taxes Are Funny", "m4a", "Taxes Are Funny"),
+            (4, "The Dragon Files a Complaint", "opus", None), (5, "Interlude_ The Tax Collector", "m4a", "Interlude: The Tax Collector")]
+    for n, name, ext, title in plan:
+        if ext == "opus":
+            p = make_audio(d / f"f{n}.opus", "libopus", freq=200 + n * 70)
+        else:
+            p = make_audio(d / f"f{n}.m4a", "aac", freq=200 + n * 70, title=title, track=f"{n}/5", disc="1/1", album="Realm Anthems", artist="The Court Jesters")
+        entries[f"Satire Hall/1-{n}. {name}.{ext}"] = p.read_bytes()
+    return make_zip(entries)
+
+
+def test_untagged_and_tagged_files_end_up_in_one_correct_order(client, mixed_zip):
+    r = client.post("/albums", files=[("files", ("Satire Hall.zip", mixed_zip, "application/zip"))], data={})
+    assert r.status_code == 200
+    aid = album_id(client)
+    with db.tx() as c:
+        tracks, item, info = albums.tracks_of(c, aid), db.get_item(c, aid), albums.get(c, aid)
+    # file-name numbers place the untagged .opus files between the tagged .m4a files, not in front of them
+    assert [t["original_name"] for t in tracks][:5] == [f"1-{n}. {x}" for n, x in
+        ((1, "Interlude_ The Bard Is Late.opus"), (2, "Overture for a Cheap King.m4a"), (3, "Taxes Are Funny.m4a"), (4, "The Dragon Files a Complaint.opus"), (5, "Interlude_ The Tax Collector.m4a"))]
+    assert [t["title"] for t in tracks] == ["Interlude The Bard Is Late", "Overture for a Cheap King", "Taxes Are Funny", "The Dragon Files a Complaint", "Interlude: The Tax Collector"]   # no "1." left in front
+    assert info["artist"] == "The Court Jesters"                     # the untagged files do not blank the artist
+    assert item["title"] == "Realm Anthems"                              # what most tracks say, rather than the ZIP's name
+
+
+def test_ogg_and_opus_tags_are_read_from_the_stream(tmp_path):
+    from drollery import media
+    p = make_audio(tmp_path / "t.opus", "libopus", title="Opus Title", artist="Opus Artist", track="7")
+    tags = media.probe(p)["tags"]
+    assert tags.get("title") == "Opus Title" and tags.get("artist") == "Opus Artist" and tags.get("track") == "7"
+
+
+def test_reading_the_files_again_repairs_order_and_titles(client, mixed_zip):
+    client.post("/albums", files=[("files", ("x.zip", mixed_zip, "application/zip"))], data={})
+    aid = album_id(client)
+    with db.tx() as c:
+        good = [(t["id"], t["title"]) for t in albums.tracks_of(c, aid)]
+        albums.save_tracks(c, aid, {good[0][0]: "Renamed by hand"}, {good[0][0]: 5, good[4][0]: 1})         # scramble it
+        c.execute("UPDATE albums SET artist='' WHERE item_id=?", (aid,))
+    r = client.post(f"/albums/{aid}/rescan")
+    assert r.status_code == 200 and "read from the files again" in r.text
+    with db.tx() as c:
+        again = [(t["id"], t["title"]) for t in albums.tracks_of(c, aid)]
+        assert albums.get(c, aid)["artist"] == "The Court Jesters"
+    assert again == good
+    assert client.post("/albums/99999/rescan").status_code == 404
+    assert 'action="/albums/%d/rescan"' % aid in client.get(f"/items/{aid}").text
+
+
+def test_numbers_and_titles_from_file_names():
+    n = albums.numbers_from_name
+    assert n("1-19. The Fool's Monday.opus") == (1, 19) and n("07 - X.mp3") == (0, 7) and n("Track 4.mp3") == (0, 4)
+    assert n("3 Doors Down.mp3") == (0, 0) and n("2024-05-10 Live.mp3") == (0, 0) and n("Plain.mp3") == (0, 0) and n("2-03 Title.mp3") == (2, 3)
+    t = albums.title_from_name
+    assert t("1-19. The Fool's Monday.opus") == "The Fool's Monday" and t("3 Doors Down.mp3") == "3 Doors Down"
+    assert t("1-1. Interlude_ The Bard Is Late.opus") == "Interlude The Bard Is Late" and t("07.mp3") == "07"
+
+
+def test_disc_numbers_only_split_albums_that_really_have_several_discs(client, tmp_path):
+    rows = [{"disc": 1, "num": 2, "name": "b"}, {"disc": 0, "num": 1, "name": "a"}, {"disc": 1, "num": 3, "name": "c"}]
+    albums.order_tracks(rows)
+    assert [r["name"] for r in rows] == ["a", "b", "c"]                                  # one stated disc plus unstated ones: not split
+    rows = [{"disc": 2, "num": 1, "name": "d2t1"}, {"disc": 1, "num": 9, "name": "d1t9"}, {"disc": 1, "num": 2, "name": "d1t2"}]
+    albums.order_tracks(rows)
+    assert [r["name"] for r in rows] == ["d1t2", "d1t9", "d2t1"]                         # two discs: disc first

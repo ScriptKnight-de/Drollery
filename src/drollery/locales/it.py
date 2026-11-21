@@ -498,4 +498,9 @@ MESSAGES = {
     "Share this track": "Condividi questa traccia",
     "Share this chapter": "Condividi questo capitolo",
     "That track does not exist": "Quella traccia non esiste",
+
+    # ---- re-reading an album
+    "Order and titles read from the files again": "Ordine e titoli riletti dai file",
+    "This replaces any names and order you set by hand": "Questo sostituisce i nomi e l’ordine impostati a mano",
+    "Read order and titles from the files again": "Rileggi ordine e titoli dai file",
 }

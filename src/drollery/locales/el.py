@@ -498,4 +498,9 @@ MESSAGES = {
     "Share this track": "Κοινοποίηση αυτού του κομματιού",
     "Share this chapter": "Κοινοποίηση αυτού του κεφαλαίου",
     "That track does not exist": "Αυτό το κομμάτι δεν υπάρχει",
+
+    # ---- re-reading an album
+    "Order and titles read from the files again": "Η σειρά και οι τίτλοι διαβάστηκαν ξανά από τα αρχεία",
+    "This replaces any names and order you set by hand": "Αυτό αντικαθιστά τα ονόματα και τη σειρά που όρισες με το χέρι",
+    "Read order and titles from the files again": "Ξαναδιάβασε τη σειρά και τους τίτλους από τα αρχεία",
 }
