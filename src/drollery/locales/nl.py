@@ -528,7 +528,6 @@ MESSAGES = {
     "No cover available for this release": "Geen hoes beschikbaar voor deze uitgave",
     "A custom card crop is reset when the cover changes": "Een eigen kaartuitsnede wordt teruggezet als de hoes verandert",
     "Track names": "Nummernamen",
-    "Take over the track names ticked below": "De hieronder aangevinkte nummernamen overnemen",
     "Your track": "Jouw nummer",
     "Online": "Online",
     "Apply selected": "Selectie toepassen",

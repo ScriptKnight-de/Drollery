@@ -287,6 +287,7 @@ def test_preview_shows_what_would_change_and_changes_nothing(client, album, fake
         assert text in page.text
     assert "Bonus: The Fool" not in page.text                                            # the fourth online track has no local counterpart
     assert f'name="track_{tracks[0]["id"]}"' in page.text and f'/albums/{aid}/lookup/{REL}/cover' in page.text
+    assert 'id="pick-all"' in page.text and 'name="tracks"' not in page.text                  # one "All" box in the table head, no separate master switch
     with db.tx() as c:
         assert (db.get_item(c, aid)["title"], [t["title"] for t in albums.tracks_of(c, aid)]) == before
 
@@ -363,6 +364,25 @@ def test_applying_only_what_was_ticked(client, album, fake):
     assert titles[0] == "Opening Fanfare (Remastered)" and titles[1:] == before[2][1:]
     nothing = client.post(f"/albums/{aid}/lookup/{REL}", data={})
     assert "nothing changed" in nothing.text
+
+
+def test_ticking_all_tracks_and_none(client, album, fake):
+    aid, tracks = album
+    with db.tx() as c:
+        before = [t["title"] for t in albums.tracks_of(c, aid)]
+    client.post(f"/albums/{aid}/lookup/{REL}", data={"artist": "1"})                      # no track box ticked: no track is renamed
+    with db.tx() as c:
+        assert [t["title"] for t in albums.tracks_of(c, aid)] == before
+    client.post(f"/albums/{aid}/lookup/{REL}", data={f"track_{t['id']}": "1" for t in tracks})   # every box ticked (what "All" does), no other field
+    with db.tx() as c:
+        assert [t["title"] for t in albums.tracks_of(c, aid)] == ["Opening Fanfare (Remastered)", "The King's Tax Return", "Ballad of the Cheese Wizard"]
+
+
+def test_the_all_box_is_not_offered_when_nothing_matches(client, album, fake, monkeypatch):
+    aid, _ = album
+    monkeypatch.setattr(metadata, "match_tracks", lambda local, remote: {})
+    page = client.get(f"/albums/{aid}/lookup/{REL}").text
+    assert 'id="pick-all"' not in page and "have no match online" in page
 
 
 def test_a_forged_track_id_cannot_rename_someone_elses_track(client, mp3s, album, fake):

@@ -528,7 +528,6 @@ MESSAGES = {
     "No cover available for this release": "Nessuna copertina per questa edizione",
     "A custom card crop is reset when the cover changes": "Un ritaglio personalizzato della scheda viene ripristinato quando cambia la copertina",
     "Track names": "Nomi delle tracce",
-    "Take over the track names ticked below": "Prendi i nomi delle tracce selezionati qui sotto",
     "Your track": "La tua traccia",
     "Online": "Online",
     "Apply selected": "Applica la selezione",

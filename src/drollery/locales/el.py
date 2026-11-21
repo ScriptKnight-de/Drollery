@@ -528,7 +528,6 @@ MESSAGES = {
     "No cover available for this release": "Δεν υπάρχει εξώφυλλο για αυτή την κυκλοφορία",
     "A custom card crop is reset when the cover changes": "Μια προσαρμοσμένη περικοπή κάρτας επαναφέρεται όταν αλλάζει το εξώφυλλο",
     "Track names": "Ονόματα κομματιών",
-    "Take over the track names ticked below": "Πάρε τα ονόματα κομματιών που είναι τσεκαρισμένα παρακάτω",
     "Your track": "Το κομμάτι σου",
     "Online": "Online",
     "Apply selected": "Εφαρμογή επιλεγμένων",

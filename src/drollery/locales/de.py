@@ -529,7 +529,6 @@ MESSAGES = {
     "No cover available for this release": "Für diese Veröffentlichung gibt es kein Cover",
     "A custom card crop is reset when the cover changes": "Ein eigener Kartenausschnitt wird zurückgesetzt, wenn sich das Cover ändert",
     "Track names": "Titelnamen",
-    "Take over the track names ticked below": "Die unten angehakten Titelnamen übernehmen",
     "Your track": "Dein Titel",
     "Online": "Online",
     "Apply selected": "Auswahl anwenden",

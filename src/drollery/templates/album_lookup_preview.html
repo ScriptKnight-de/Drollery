@@ -23,9 +23,8 @@
   {% if item.has_card %}<p class="hint">{{ _("A custom card crop is reset when the cover changes") }}</p>{% endif %}
 
   <h2>{{ _("Track names") }}</h2>
-  <label class="check"><input type="checkbox" name="tracks" value="1" checked> {{ _("Take over the track names ticked below") }}</label>
   <table class="diff">
-    <thead><tr><th></th><th>{{ _("Your track") }}</th><th>{{ _("Online") }}</th></tr></thead>
+    <thead><tr><th>{% if rows|selectattr("remote")|list %}<label class="check"><input type="checkbox" id="pick-all"> {{ _("All") }}</label>{% endif %}</th><th>{{ _("Your track") }}</th><th>{{ _("Online") }}</th></tr></thead>
     <tbody>
       {% for r in rows %}
       <tr>
@@ -43,4 +42,20 @@
     <a class="btn" href="/items/{{ item.id }}">{{ _("Cancel") }}</a>
   </div>
 </form>
+<script>
+  // the "All" box in the table head ticks or clears every track; it shows a dash when only some are ticked
+  (function () {
+    var all = document.getElementById("pick-all");
+    if (!all) return;
+    var boxes = Array.prototype.slice.call(document.querySelectorAll('input[name^="track_"]'));
+    function sync() {
+      var n = boxes.filter(function (b) { return b.checked; }).length;
+      all.checked = n > 0 && n === boxes.length;
+      all.indeterminate = n > 0 && n < boxes.length;
+    }
+    all.addEventListener("change", function () { boxes.forEach(function (b) { b.checked = all.checked; }); sync(); });
+    boxes.forEach(function (b) { b.addEventListener("change", sync); });
+    sync();
+  })();
+</script>
 {% endblock %}

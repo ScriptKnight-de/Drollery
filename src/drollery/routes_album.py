@@ -185,17 +185,16 @@ def lookup_cover(item_id: int, mbid: str):
 async def lookup_apply(request: Request, item_id: int, mbid: str):
     _lookup_album(item_id)
     form = await request.form()
-    want = {k: k in form for k in ("title", "artist", "details", "cover", "tracks")}
+    want = {k: k in form for k in ("title", "artist", "details", "cover")}
     try:
         rel, mine, match = await asyncio.to_thread(_plan, item_id, mbid)
         cover_bytes = await asyncio.to_thread(metadata.cover, mbid) if want["cover"] else None
     except MetadataError as e:
         return flash_redirect(f"/albums/{item_id}/lookup/{mbid}", str(e), "error")
     titles = {}
-    if want["tracks"]:
-        for tr in mine:
-            if tr["id"] in match and f"track_{tr['id']}" in form:
-                titles[tr["id"]] = rel.tracks[match[tr["id"]]].title
+    for tr in mine:                                      # a track is renamed when its own box is ticked (and the release really has it)
+        if tr["id"] in match and f"track_{tr['id']}" in form:
+            titles[tr["id"]] = rel.tracks[match[tr["id"]]].title
     done = await asyncio.to_thread(albums.apply_details, item_id, rel, cover_bytes, title=want["title"], artist=want["artist"],
                                    details=want["details"], cover=want["cover"], track_titles=titles)
     if not done:

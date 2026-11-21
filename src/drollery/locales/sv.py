@@ -528,7 +528,6 @@ MESSAGES = {
     "No cover available for this release": "Inget omslag finns för den här utgåvan",
     "A custom card crop is reset when the cover changes": "Ett eget kortutsnitt återställs när omslaget byts",
     "Track names": "Spårnamn",
-    "Take over the track names ticked below": "Hämta de spårnamn som är ikryssade nedan",
     "Your track": "Ditt spår",
     "Online": "Online",
     "Apply selected": "Tillämpa valda",

@@ -542,7 +542,6 @@ MESSAGES = {
     "No cover available for this release": "Brak okładki dla tego wydania",
     "A custom card crop is reset when the cover changes": "Własne przycięcie karty jest resetowane, gdy zmienia się okładka",
     "Track names": "Nazwy utworów",
-    "Take over the track names ticked below": "Przejmij zaznaczone poniżej nazwy utworów",
     "Your track": "Twój utwór",
     "Online": "Online",
     "Apply selected": "Zastosuj zaznaczone",

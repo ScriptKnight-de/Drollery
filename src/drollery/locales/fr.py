@@ -533,7 +533,6 @@ MESSAGES = {
     "No cover available for this release": "Aucune pochette pour cette édition",
     "A custom card crop is reset when the cover changes": "Un recadrage de carte personnalisé est réinitialisé quand la pochette change",
     "Track names": "Noms des pistes",
-    "Take over the track names ticked below": "Reprendre les noms de pistes cochés ci-dessous",
     "Your track": "Ta piste",
     "Online": "En ligne",
     "Apply selected": "Appliquer la sélection",
