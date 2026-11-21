@@ -239,7 +239,15 @@ kbd { color: var(--tx3); border: 2px solid var(--ln); border-radius: 6px; paddin
 .cover img, .cover .nocover { width: 100%; aspect-ratio: 1; border-radius: 12px; display: block; object-fit: cover; background: var(--s2); }
 .cover .nocover { display: grid; place-items: center; color: var(--k-album); background: color-mix(in srgb, var(--k-album) 14%, var(--s2)); }
 .cover .nocover .ic { width: 64px; height: 64px; stroke-width: 1.25; }
-.player { margin-top: 16px; display: grid; gap: 8px; }
+.player { margin-bottom: 16px; display: grid; gap: 8px; }
+.album-head { display: grid; gap: 16px; }
+.album-head .cover + .meta-line { margin: -4px 0 0; }
+/* on a phone the order is: title and cover, then the tracks, then everything you edit */
+@media (max-width: 800px) {
+  .detail.album .side { display: contents; }
+  .detail.album .album-head { order: 1; } .detail.album .tracks-col { order: 2; } .detail.album .side > :not(.album-head) { order: 3; }
+  .detail.album .side > * + * { margin-top: 0; }
+}
 .player audio { width: 100%; }
 .nowplaying { margin: 0; font-size: 14px; line-height: 20px; color: var(--tx2); min-height: 20px; }
 .nowplaying b { color: var(--tx); font-weight: 500; }
