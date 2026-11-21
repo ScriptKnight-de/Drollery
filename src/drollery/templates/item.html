@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% from "icons.html" import icon %}
-{% from "macros.html" import errbox %}
+{% from "macros.html" import errbox, sound_play %}
 {% block title %}{{ item.title }} · Drollery{% endblock %}
 {% block content %}
 <a class="back" href="/">{{ icon("arrow-left") }}{{ _("Library") }}</a>
@@ -9,7 +9,7 @@
     <div class="frame">
       {% if item.kind in ("image", "gif") %}<img src="/media/{{ item.id }}" alt="{{ item.title }}">
       {% elif item.kind == "video" %}<video src="/media/{{ item.id }}" controls preload="metadata" {% if item.has_thumb %}poster="/thumb/{{ item.id }}"{% endif %}></video>
-      {% else %}<audio src="/media/{{ item.id }}" controls preload="metadata"></audio>{% endif %}
+      {% else %}<div class="sound-stage" style="--h: {{ ((item.id * 137.508) % 360)|round|int }}">{{ sound_play(item) }}</div>{% endif %}
     </div>
     {% include "item_actions.html" %}
   </div>
@@ -78,6 +78,7 @@
 <script src="/static/popup.js" defer></script>
 <script src="/static/people.js" defer></script>
 <script src="/static/toolbar.js" defer></script>
+{% if item.kind == "audio" %}<script src="/static/soundboard.js" defer></script>{% endif %}
 <script src="/static/tagfield.js" defer></script>
 <script src="/static/sharepanel.js" defer></script>
 <script src="/static/keepplaying.js" defer></script>

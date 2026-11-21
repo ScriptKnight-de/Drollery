@@ -1,4 +1,5 @@
 {% from "icons.html" import icon %}
+{% from "macros.html" import sound_play %}
 {% for it in items %}
 {% if it.kind == "audio" %}
 {% set pic = it.has_card or it.has_thumb %}
@@ -6,9 +7,7 @@
   <div class="thumb">
     {% if it.has_card %}<img loading="lazy" src="/card/{{ it.id }}?v={{ it.updated_at|int }}" alt="">
     {% elif it.has_thumb %}<img loading="lazy" src="/thumb/{{ it.id }}?v={{ (it.updated_at * 1000)|int }}" alt="">{% endif %}
-    <button type="button" class="sound-play{{ ' over' if pic }}" data-src="/media/{{ it.id }}" data-id="{{ it.id }}" aria-pressed="false" aria-label="{{ _('Play') }}: {{ it.title }}" title="{{ _('Play') }}">
-      <span class="sp-play">{{ icon("play") }}</span><span class="sp-pause">{{ icon("pause") }}</span>
-    </button>
+    {{ sound_play(it, pic) }}
     <span class="chip k-audio" title="{{ kind_label(it.kind) }}">{{ icon("lute") }}</span>
   </div>
   <a class="cap" href="/items/{{ it.id }}{% if q %}?q={{ q|urlencode }}{% endif %}">

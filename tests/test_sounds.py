@@ -78,3 +78,18 @@ def test_the_colour_animates_while_playing_unless_motion_is_reduced():
     css = open("src/drollery/static/style.css").read()
     assert ".sound-play.playing { animation: sp-colors" in css and "@keyframes sp-colors" in css
     assert ".sound-play.playing { animation: none; }" in css
+
+
+def test_a_sound_page_shows_the_same_play_button_instead_of_the_default_player(client, sound_id):
+    page = client.get(f"/items/{sound_id}").text
+    assert "<audio" not in page
+    assert f'class="sound-play" data-src="/media/{sound_id}"' in page and "/static/soundboard.js" in page
+    hue = re.search(r'class="sound-stage" style="--h: (\d+)"', page).group(1)
+    card = re.search(r'--h: (\d+)', tile_of(client.get("/").text, sound_id)).group(1)
+    assert hue == card                                                     # the page keeps the card's colour
+
+
+def test_other_item_pages_keep_their_own_players(client, sound_id):
+    clip = client.post("/api/v1/items", files={"file": ("pic.png", png(40), "image/png")}).json()["id"]
+    page = client.get(f"/items/{clip}").text
+    assert "sound-play" not in page and "/static/soundboard.js" not in page

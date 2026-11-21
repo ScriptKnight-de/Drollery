@@ -592,3 +592,6 @@ body.embed { background: var(--s1); background-image: none; }
 .tile.sound > .cap { display: block; color: var(--tx); }
 .tile.sound > .cap:hover { text-decoration: none; }
 @media (prefers-reduced-motion: reduce) { .sound-play { transition: none; } .sound-play.playing { animation: none; } }
+.sound-stage { --h: 140; display: grid; place-items: center; min-height: 340px; border-radius: 16px; background: color-mix(in srgb, hsl(var(--h) 75% 55%) 14%, var(--s2)); }
+.sound-stage .sound-play { width: min(240px, 62%); }
+.sound-stage { width: 100%; }

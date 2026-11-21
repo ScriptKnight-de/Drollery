@@ -12,3 +12,10 @@
 {% macro avatar(p) -%}
 <span class="avatar" aria-hidden="true">{% if p.has_picture %}<img src="/people/{{ p.id }}/picture?v={{ (p.updated_at * 1000)|int }}" alt="" loading="lazy">{% else %}{{ p.name[:1]|upper }}{% endif %}</span>
 {%- endmacro %}
+
+{# The round play button of a sound: the same on its library card and on its own page. #}
+{% macro sound_play(it, over=False) -%}
+<button type="button" class="sound-play{{ ' over' if over }}" data-src="/media/{{ it.id }}" data-id="{{ it.id }}" aria-pressed="false" aria-label="{{ _('Play') }}: {{ it.title }}" title="{{ _('Play') }}">
+  <span class="sp-play">{{ icon("play") }}</span><span class="sp-pause">{{ icon("pause") }}</span>
+</button>
+{%- endmacro %}
