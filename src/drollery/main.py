@@ -297,10 +297,11 @@ def api_jobs(limit: int = 50):
 # --------------------------------------------------------------------- web
 
 @app.get("/", dependencies=[Depends(web_auth)])
-def home(request: Request, q: str = "", kind: str = "", tag: str = "", src: str = "", page: int = 0, person: int = 0):
+def home(request: Request, q: str = "", kind: str = "", tag: str = "", src: str = "", page: int = 0, person: str = ""):
     page = max(page, 0)
     src = src if src in ("user", "ai") else ""
     with db.tx() as c:
+        person = int(person) if person.strip().isdigit() else 0          # the form sends person= (empty) when nobody is selected
         person_row = people.get(c, person) if person > 0 else None
         person = person_row["id"] if person_row else 0                 # an unknown person is simply not a filter
         items = db.search(c, q, kind, tag, PAGE, page * PAGE, src, person)

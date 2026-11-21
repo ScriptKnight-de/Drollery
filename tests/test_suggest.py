@@ -84,3 +84,17 @@ def test_the_library_can_be_filtered_by_a_person(client, library):
 def test_the_search_bar_is_wired_for_suggestions(client):
     page = client.get("/").text
     assert 'data-suggest="/suggest"' in page and "/static/searchsuggest.js" in page and 'role="combobox"' in page
+
+
+@pytest.mark.parametrize("value", ["", " ", "abc", "-3", "0", "1.5"])
+def test_an_empty_or_odd_person_value_is_just_no_filter(client, library, value):
+    # the search form always sends person=; an empty value must not break the page or the live search
+    for headers in ({}, {"HX-Request": "true"}):
+        r = client.get("/", params={"q": "", "kind": "", "tag": "", "src": "", "person": value}, headers=headers)
+        assert r.status_code == 200 and f'href="/items/{library[0]}"' in r.text and f'href="/items/{library[1]}"' in r.text
+
+
+def test_the_links_that_clear_a_filter_never_carry_a_broken_value(client, library):
+    page = client.get("/", params={"tag": "cat"}).text
+    assert "&person=" in page                                              # they do carry the (empty) value ...
+    assert client.get("/?q=&kind=&person=").status_code == 200              # ... and that works
