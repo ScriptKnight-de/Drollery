@@ -69,6 +69,12 @@ def test_web_pages_render(client):
     assert client.get("/jobs").status_code == 200
 
 
+def test_jobs_and_settings_pages_link_back_to_the_library(client):
+    for url in ("/jobs", "/settings/profile", "/settings/security", "/settings/keys", "/settings/ai", "/settings/ai/models/new"):
+        html = client.get(url).text
+        assert '<a class="back" href="/">' in html and "Back to library" in html, url
+
+
 def test_friendly_404_for_browsers_json_for_api(client):
     page = client.get("/items/999", headers={"accept": "text/html"})
     assert page.status_code == 404 and "Nothing here" in page.text

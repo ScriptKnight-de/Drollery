@@ -2,6 +2,7 @@
 {% from "icons.html" import icon %}
 {% block title %}Jobs · Drollery{% endblock %}
 {% block content %}
+<a class="back" href="/">{{ icon("arrow-left") }}Back to library</a>
 <div class="page-head">
   <h1>Background jobs</h1>
   <form method="post" action="/jobs/retry-failed"><button class="btn" type="submit">{{ icon("retry") }}Retry failed</button></form>

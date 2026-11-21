@@ -2,6 +2,7 @@
 {% from "icons.html" import icon %}
 {% block title %}Settings · Drollery{% endblock %}
 {% block content %}
+<a class="back" href="/">{{ icon("arrow-left") }}Back to library</a>
 <div class="page-head"><h1>Settings</h1></div>
 <nav class="tabs" aria-label="Settings sections">
   <a href="/settings/profile" class="{{ 'on' if tab == 'profile' }}">{{ icon("user") }}Profile</a>
