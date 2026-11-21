@@ -57,7 +57,7 @@
 * { box-sizing: border-box; }
 body { margin: 0; color: var(--tx); font: 400 16px/24px var(--sans); -webkit-font-smoothing: antialiased; min-height: 100vh; display: flex; flex-direction: column;
   background-color: var(--bg); }
-/* backdrops. Default "texture": parchment grain in light mode, a stone-block wall in dark mode. "glow": soft highlight light from the top. "plain": flat. */
+/* backdrops. Default "texture": a weathered stone wall (night stone in dark mode, limestone in light). "glow": soft highlight light from the top. "plain": flat. */
 body {
   background-image: var(--tex-vig), var(--tex-grain), var(--tex-blocks), var(--tex-mottle);
   background-size: auto, 200px 200px, 960px 480px, 600px 600px;
@@ -103,22 +103,6 @@ nav form { margin: 0; }
 .icon-btn .ic { width: 20px; height: 20px; }
 .icon-btn::-webkit-details-marker { display: none; }
 main { max-width: 1280px; width: 100%; margin: 0 auto; padding: 24px; flex: 1; }
-
-/* hall decor: torches, banner, chain, shield and swords hang in the empty side margins of wide screens,
-   repeating down the page and scrolling with the wall. The banner is a mask painted in the highlight color. */
-body { position: relative; }
-.wall { display: none; position: absolute; top: 60px; bottom: 56px; width: 280px; pointer-events: none; z-index: 0; background-repeat: repeat-y; background-position: 0 0; }
-.wall.left { left: calc((100vw - 1280px) / 4 - 140px); background-image: url("/static/wall-left.svg"); }
-.wall.right { right: calc((100vw - 1280px) / 4 - 140px); background-image: url("/static/wall-right.svg"); }
-.wall.left::after { content: ""; position: absolute; inset: 0; background: var(--ac); opacity: .92;
-  -webkit-mask: url("/static/banner-mask.svg") repeat-y 0 0 / 280px 960px; mask: url("/static/banner-mask.svg") repeat-y 0 0 / 280px 960px; }
-@media (min-width: 1460px) { .wall { display: block; } }
-@media (prefers-reduced-motion: reduce) {
-  .wall.left { background-image: url("/static/wall-left-still.svg"); }
-  .wall.right { background-image: url("/static/wall-right-still.svg"); }
-}
-main, .skyline, .top { position: relative; z-index: 1; }
-.top { position: sticky; z-index: 10; }
 
 /* skyline strip: tiny medieval scenery along the bottom edge, tinted by the highlight */
 .skyline { flex: none; height: 56px; margin-top: 40px; opacity: .45; background: var(--ac);
