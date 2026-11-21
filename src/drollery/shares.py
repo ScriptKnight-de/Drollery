@@ -9,9 +9,10 @@ from pathlib import Path
 from fastapi import Request
 
 from . import accounts, db, security
+from .i18n import N_, t, tn
 
 PRESETS = {"never": None, "1h": 3600, "1d": 86400, "7d": 7 * 86400, "30d": 30 * 86400}
-PRESET_LABELS = [("never", "Never expires"), ("1h", "1 hour"), ("1d", "24 hours"), ("7d", "7 days"), ("30d", "30 days"), ("custom", "Custom…")]
+PRESET_LABELS = [("never", N_("Never expires")), ("1h", N_("1 hour")), ("1d", N_("24 hours")), ("7d", N_("7 days")), ("30d", N_("30 days")), ("custom", N_("Custom…"))]
 UNITS = {"minutes": 60, "hours": 3600, "days": 86400}
 MAX_SECONDS = 365 * 86400
 MIN_SECONDS = 60
@@ -23,33 +24,35 @@ def expiry_seconds(preset: str, amount: int = 0, unit: str = "hours") -> tuple[i
         return PRESETS[preset], ""
     if preset == "custom":
         if unit not in UNITS or amount < 1:
-            return None, "Enter how long the link should work"
+            return None, t("Enter how long the link should work")
         seconds = amount * UNITS[unit]
         if seconds < MIN_SECONDS or seconds > MAX_SECONDS:
-            return None, "A link can last between 1 minute and 1 year"
+            return None, t("A link can last between 1 minute and 1 year")
         return seconds, ""
-    return None, "Choose how long the link should work"
+    return None, t("Choose how long the link should work")
 
 
 def humanize(seconds: float) -> str:
     seconds = int(seconds)
-    for size, name in ((86400, "day"), (3600, "hour"), (60, "minute")):
-        if seconds >= size:
-            n = seconds // size
-            return f"{n} {name}{'s' if n != 1 else ''}"
-    return "under a minute"
+    if seconds >= 86400:
+        return tn("{n} day", "{n} days", seconds // 86400)
+    if seconds >= 3600:
+        return tn("{n} hour", "{n} hours", seconds // 3600)
+    if seconds >= 60:
+        return tn("{n} minute", "{n} minutes", seconds // 60)
+    return t("under a minute")
 
 
 def state(share: dict, now: float | None = None) -> dict:
     """{kind: permanent|active|expired|revoked, text}."""
     now = now if now is not None else time.time()
     if share["revoked_at"]:
-        return {"kind": "revoked", "text": "Revoked"}
+        return {"kind": "revoked", "text": t("Revoked")}
     if share["expires_at"] is None:
-        return {"kind": "permanent", "text": "Permanent"}
+        return {"kind": "permanent", "text": t("Permanent")}
     if share["expires_at"] <= now:
-        return {"kind": "expired", "text": "Expired"}
-    return {"kind": "active", "text": f"Expires in {humanize(share['expires_at'] - now)}"}
+        return {"kind": "expired", "text": t("Expired")}
+    return {"kind": "active", "text": t("Expires in {when}", when=humanize(share["expires_at"] - now))}
 
 
 def create(item_id: int, user_id: int | None, expires_in: int | None, label: str = "") -> dict:

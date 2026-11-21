@@ -1,21 +1,21 @@
 {% extends "base.html" %}
-{% block title %}Set up · Drollery{% endblock %}
+{% block title %}{{ _('Set up') }} · Drollery{% endblock %}
 {% block content %}
 <div class="login-wrap wide">
 <div class="doodle">{% include "doodles/castle.svg" %}</div>
 <form class="panel login" method="post" action="/setup">
-  <h1>Welcome to Drollery</h1>
-  <p class="muted">Create the admin account for this library. You can turn on two-factor authentication afterwards in Settings</p>
+  <h1>{{ _("Welcome to Drollery") }}</h1>
+  <p class="muted">{{ _("Create the admin account for this library. You can turn on two-factor authentication afterwards in Settings") }}</p>
   {% if error %}<p class="note error" role="alert">{{ error }}</p>{% endif %}
-  <label>Setup code
+  <label>{{ _("Setup code") }}
     <input name="code" autocomplete="off" autofocus required>
-    <span class="hint">Printed in the container log: <code>docker compose logs drollery</code>. It proves you control this server</span>
+    <span class="hint">{{ _("Printed in the container log:") }} <code>docker compose logs drollery</code>. {{ _("It proves you control this server") }}</span>
   </label>
-  <label>Username <input name="username" value="{{ form.username or '' }}" autocomplete="username" required></label>
-  <label>Password <input type="password" name="password" autocomplete="new-password" minlength="10" required>
-    <span class="hint">At least 10 characters</span></label>
-  <label>Repeat password <input type="password" name="password2" autocomplete="new-password" required></label>
-  <button class="btn primary" type="submit">Create admin account</button>
+  <label>{{ _("Username") }} <input name="username" value="{{ form.username or '' }}" autocomplete="username" required></label>
+  <label>{{ _("Password") }} <input type="password" name="password" autocomplete="new-password" minlength="10" required>
+    <span class="hint">{{ _("At least 10 characters") }}</span></label>
+  <label>{{ _("Repeat password") }} <input type="password" name="password2" autocomplete="new-password" required></label>
+  <button class="btn primary" type="submit">{{ _("Create admin account") }}</button>
 </form>
 </div>
 {% endblock %}

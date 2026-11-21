@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% from "icons.html" import icon %}
-{% block title %}Settings · Drollery{% endblock %}
+{% block title %}{{ _('Settings') }} · Drollery{% endblock %}
 {% block content %}
-<a class="back" href="/">{{ icon("arrow-left") }}Back to library</a>
-<div class="page-head"><h1>Settings</h1></div>
-<nav class="tabs" aria-label="Settings sections">
-  <a href="/settings/profile" class="{{ 'on' if tab == 'profile' }}">{{ icon("user") }}Profile</a>
-  <a href="/settings/security" class="{{ 'on' if tab == 'security' }}">{{ icon("shield") }}Security</a>
-  <a href="/settings/keys" class="{{ 'on' if tab == 'keys' }}">{{ icon("key") }}API keys</a>
-  <a href="/settings/ai" class="{{ 'on' if tab == 'ai' }}">{{ icon("cpu") }}AI models</a>
-  <a href="/settings/shares" class="{{ 'on' if tab == 'shares' }}">{{ icon("share") }}Shares</a>
+<a class="back" href="/">{{ icon("arrow-left") }}{{ _("Back to library") }}</a>
+<div class="page-head"><h1>{{ _("Settings") }}</h1></div>
+<nav class="tabs" aria-label="{{ _('Settings sections') }}">
+  <a href="/settings/profile" class="{{ 'on' if tab == 'profile' }}">{{ icon("user") }}{{ _("Profile") }}</a>
+  <a href="/settings/security" class="{{ 'on' if tab == 'security' }}">{{ icon("shield") }}{{ _("Security") }}</a>
+  <a href="/settings/keys" class="{{ 'on' if tab == 'keys' }}">{{ icon("key") }}{{ _("API keys") }}</a>
+  <a href="/settings/ai" class="{{ 'on' if tab == 'ai' }}">{{ icon("cpu") }}{{ _("AI models") }}</a>
+  <a href="/settings/shares" class="{{ 'on' if tab == 'shares' }}">{{ icon("share") }}{{ _("Shares") }}</a>
   <a href="/settings/impressum" class="{{ 'on' if tab == 'impressum' }}">{{ icon("list") }}Impressum</a>
 </nav>
 {% if ok %}<p class="note ok" role="status">{{ ok }}</p>{% endif %}

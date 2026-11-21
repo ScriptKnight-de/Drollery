@@ -1,9 +1,16 @@
 {% extends "settings_base.html" %}
 {% block settings %}
 <form class="panel form narrow-form" method="post" action="/settings/profile">
-  <h2>Profile</h2>
-  <label>Username <input value="{{ me.username }}" disabled><span class="hint">Used to sign in; it can't be changed</span></label>
-  <label>Email <input type="email" name="email" value="{{ me.email }}" maxlength="200" autocomplete="email"><span class="hint">Optional. Only shown here; Drollery never sends email</span></label>
-  <button class="btn primary" type="submit">Save profile</button>
+  <h2>{{ _("Profile") }}</h2>
+  <label>{{ _("Username") }} <input value="{{ me.username }}" disabled><span class="hint">{{ _("Used to sign in; it can't be changed") }}</span></label>
+  <label>{{ _("Language") }}
+    <select name="language">
+      <option value="" {{ "selected" if not me.language }}>{{ _("Automatic (follow the browser)") }}</option>
+      {% for code, name in languages.items() %}<option value="{{ code }}" {{ "selected" if me.language == code }}>{{ name }}</option>{% endfor %}
+    </select>
+    <span class="hint">{{ _("Applies to the whole interface. Your own titles, tags and Impressum text are not translated") }}</span>
+  </label>
+  <label>{{ _("Email") }} <input type="email" name="email" value="{{ me.email }}" maxlength="200" autocomplete="email"><span class="hint">{{ _("Optional. Only shown here; Drollery never sends email") }}</span></label>
+  <button class="btn primary" type="submit">{{ _("Save profile") }}</button>
 </form>
 {% endblock %}

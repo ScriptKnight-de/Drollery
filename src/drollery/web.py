@@ -8,7 +8,7 @@ from fastapi import Request
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
 
-from . import accounts, aisettings
+from . import accounts, aisettings, i18n
 
 BASE = Path(__file__).parent
 templates = Jinja2Templates(directory=BASE / "templates")
@@ -24,16 +24,23 @@ def _timestamp(value) -> str:
 
 
 templates.env.filters["timestamp"] = _timestamp
+templates.env.globals.update({"_": i18n.t, "_n": i18n.tn, "lang": i18n.current})
 
 
 def flash_redirect(url: str, text: str, kind: str = "ok") -> RedirectResponse:
     """Redirect and show a one-time message on the next page. kind: ok | error."""
     resp = RedirectResponse(url, status_code=303)
-    resp.set_cookie(FLASH, quote(f"{kind}|{text}"), max_age=60, httponly=True, samesite="lax")
+    resp.set_cookie(FLASH, quote(f"{kind}|{i18n.t(text)}"), max_age=60, httponly=True, samesite="lax")
     return resp
 
 
 def render(request: Request, name: str, status_code: int = 200, **ctx):
+    user = getattr(request.state, "user", None)
+    if user and user.get("language"):                      # a signed-in user's own choice beats the browser's
+        i18n.set_language(user["language"])
+    for key in ("error", "ok"):
+        if isinstance(ctx.get(key), str):
+            ctx[key] = i18n.t(ctx[key])
     raw = request.cookies.get(FLASH)
     flash = None
     if raw:

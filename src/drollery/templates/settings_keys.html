@@ -3,49 +3,49 @@
 {% block settings %}
 {% if new_key %}
 <div class="reveal" role="alert">
-  <h3>{{ "New key for" if new_key.regenerated else "Key created for" }} “{{ new_key.name }}”</h3>
-  <p>Copy it now and paste it into the {{ "browser extension" if new_key.kind == "browser" else "app" if new_key.kind == "app" else "client" }}. It is stored only as a hash, so it can't be shown again{{ ". The old key stopped working" if new_key.regenerated }}</p>
+  <h3>{{ _("New key for “{name}”", name=new_key.name) if new_key.regenerated else _("Key created for “{name}”", name=new_key.name) }}</h3>
+  <p>{{ _("Copy it now and paste it into the {target}. It is stored only as a hash, so it can't be shown again", target=(_("browser extension") if new_key.kind == "browser" else _("app") if new_key.kind == "app" else _("client"))) }}{% if new_key.regenerated %}. {{ _("The old key stopped working") }}{% endif %}</p>
   <p class="keyline" id="new-key">{{ new_key.token }}</p>
-  <button class="btn primary" type="button" data-copy="{{ new_key.token }}">{{ icon("copy") }}Copy key</button>
+  <button class="btn primary" type="button" data-copy="{{ new_key.token }}">{{ icon("copy") }}{{ _("Copy key") }}</button>
 </div>
 {% endif %}
 
 <section class="panel stack">
-  <h2>API keys</h2>
-  <p class="muted">Keys let the browser extension and the Android app save to this library without your password. Make one per device or app, so you can revoke a single one if it is lost</p>
+  <h2>{{ _("API keys") }}</h2>
+  <p class="muted">{{ _("Keys let the browser extension and the Android app save to this library without your password. Make one per device or app, so you can revoke a single one if it is lost") }}</p>
   <form class="form row" method="post" action="/settings/keys">
-    <label>Name <input name="name" placeholder="Firefox on laptop" maxlength="60"></label>
-    <label>For
-      <select name="kind"><option value="browser">Browser extension</option><option value="app">Android app</option><option value="other">Something else</option></select>
+    <label>{{ _("Name") }} <input name="name" placeholder="{{ _('Firefox on laptop') }}" maxlength="60"></label>
+    <label>{{ _("For") }}
+      <select name="kind"><option value="browser">{{ _("Browser extension") }}</option><option value="app">{{ _("Android app") }}</option><option value="other">{{ _("Something else") }}</option></select>
     </label>
-    <button class="btn primary" type="submit">{{ icon("plus") }}Create key</button>
+    <button class="btn primary" type="submit">{{ icon("plus") }}{{ _("Create key") }}</button>
   </form>
 </section>
 
 <div class="panel flush">
 <table>
-  <thead><tr><th>Name</th><th>For</th><th>Key</th><th>Created</th><th>Last used</th><th></th></tr></thead>
+  <thead><tr><th>{{ _("Name") }}</th><th>{{ _("For") }}</th><th>{{ _("Key") }}</th><th>{{ _("Created") }}</th><th>{{ _("Last used") }}</th><th></th></tr></thead>
   <tbody>
   {% for k in keys %}
   <tr>
     <td>{{ k.name }}</td>
-    <td>{{ {"browser": "Browser", "app": "App", "other": "Other"}[k.kind] }}</td>
+    <td>{{ {"browser": _("Browser"), "app": _("App"), "other": _("Other")}[k.kind] }}</td>
     <td class="muted">{{ k.prefix }}…</td>
     <td class="muted">{{ k.created_at|int|timestamp }}</td>
-    <td class="muted">{{ k.last_used_at|int|timestamp if k.last_used_at else "never" }}</td>
+    <td class="muted">{{ k.last_used_at|int|timestamp if k.last_used_at else _("never") }}</td>
     <td class="actions"><div class="acts">
-      <form method="post" action="/settings/keys/{{ k.id }}/regenerate" onsubmit="return confirm('Make a new key? The current one stops working at once.')"><button class="btn small" type="submit">{{ icon("retry") }}Regenerate</button></form>
-      <form method="post" action="/settings/keys/{{ k.id }}/delete" onsubmit="return confirm('Revoke this key?')"><button class="btn small danger" type="submit">{{ icon("trash") }}Revoke</button></form>
+      <form method="post" action="/settings/keys/{{ k.id }}/regenerate" onsubmit="return confirm({{ _('Make a new key? The current one stops working at once.')|tojson|forceescape }})"><button class="btn small" type="submit">{{ icon("retry") }}{{ _("Regenerate") }}</button></form>
+      <form method="post" action="/settings/keys/{{ k.id }}/delete" onsubmit="return confirm({{ _('Revoke this key?')|tojson|forceescape }})"><button class="btn small danger" type="submit">{{ icon("trash") }}{{ _("Revoke") }}</button></form>
     </div></td>
   </tr>
-  {% else %}<tr><td colspan="6" class="muted">No keys yet</td></tr>{% endfor %}
+  {% else %}<tr><td colspan="6" class="muted">{{ _("No keys yet") }}</td></tr>{% endfor %}
   </tbody>
 </table>
 </div>
 
 <section class="panel stack">
-  <h2>Using a key</h2>
-  <p class="muted">Server address for the extension or app: <code>{{ base_url }}</code>. Send the key as a bearer token:</p>
+  <h2>{{ _("Using a key") }}</h2>
+  <p class="muted">{{ _("Server address for the extension or app: {url}. Send the key as a bearer token:", url="<code>" ~ base_url|e ~ "</code>")|safe }}</p>
   <pre class="snippet">curl -H "Authorization: Bearer drl_…" {{ base_url }}/api/v1/me
 curl -H "Authorization: Bearer drl_…" -X POST -H "Content-Type: application/json" \
      -d '{"url":"https://example.com/funny.mp4"}' {{ base_url }}/api/v1/ingest</pre>

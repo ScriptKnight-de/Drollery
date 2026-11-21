@@ -5,8 +5,9 @@ import segno
 from fastapi import APIRouter, Depends, Form, Request
 from fastapi.responses import RedirectResponse
 
-from . import accounts, aisettings, db, pipeline, security
+from . import accounts, aisettings, db, i18n, pipeline, security
 from .deps import SESSION_COOKIE, web_auth
+from .i18n import t, tn
 from .web import flash_redirect, render
 
 router = APIRouter(prefix="/settings", dependencies=[Depends(web_auth)])
@@ -29,16 +30,22 @@ def index():
 
 @router.get("/profile")
 def profile(request: Request):
-    return render(request, "settings_profile.html", tab="profile", me=_fresh(request))
+    return render(request, "settings_profile.html", tab="profile", me=_fresh(request), languages=i18n.languages())
 
 
 @router.post("/profile")
-def profile_save(request: Request, email: str = Form("")):
+def profile_save(request: Request, email: str = Form(""), language: str = Form("")):
+    language = i18n.normalize(language)                       # "" = follow the browser
+    request.state.user["language"] = language                 # the page that answers (even an error) already speaks it
+    i18n.set_language(language or i18n.from_accept_language(request.headers.get("accept-language", "")))
     if email.strip() and ("@" not in email or " " in email.strip()):
-        return render(request, "settings_profile.html", status_code=422, tab="profile", me=_fresh(request) | {"email": email},
-                      error="That email address does not look right")
+        return render(request, "settings_profile.html", status_code=422, tab="profile", languages=i18n.languages(),
+                      me=_fresh(request) | {"email": email, "language": language}, error=t("That email address does not look right"))
     accounts.update_profile(_user(request)["id"], email)
-    return flash_redirect("/settings/profile", "Profile saved")
+    accounts.set_language(_user(request)["id"], language)
+    resp = flash_redirect("/settings/profile", "Profile saved")
+    resp.set_cookie(i18n.COOKIE, language, max_age=365 * 86400, samesite="lax") if language else resp.delete_cookie(i18n.COOKIE)
+    return resp
 
 
 # --------------------------------------------------------------- impressum
@@ -57,15 +64,15 @@ def impressum_save(request: Request, text: str = Form(""), enabled: str = Form("
     text = text.replace("\r\n", "\n").strip()
     if len(text) > IMPRESSUM_MAX:
         return render(request, "settings_impressum.html", status_code=422, tab="impressum", text=text[:IMPRESSUM_MAX], on=bool(enabled), live=False,
-                      error=f"That is too long. The limit is {IMPRESSUM_MAX} characters")
+                      error=t("That is too long. The limit is {max} characters", max=IMPRESSUM_MAX))
     accounts.set_setting("impressum", text or None)
     accounts.set_setting("impressum_on", "1" if enabled else None)
     if enabled and not text:
-        msg = "Saved, but the page stays hidden until you write some text"
+        msg = t("Saved, but the page stays hidden until you write some text")
     elif enabled:
-        msg = "Impressum saved and published. It is linked in the footer of every page"
+        msg = t("Impressum saved and published. It is linked in the footer of every page")
     else:
-        msg = "Impressum saved. It is switched off, so the page and the footer link are hidden"
+        msg = t("Impressum saved. It is switched off, so the page and the footer link are hidden")
     return flash_redirect("/settings/impressum", msg)
 
 
@@ -125,18 +132,18 @@ def _check_password(request: Request, password: str) -> bool:
 def change_password(request: Request, current: str = Form(""), new: str = Form(""), new2: str = Form("")):
     me = _fresh(request)
     if security.login_throttle.blocked(f"pw|{me['id']}"):
-        return _security_page(request, 429, error="Too many attempts. Wait a few minutes")
+        return _security_page(request, 429, error=t("Too many attempts. Wait a few minutes"))
     if not security.verify_password(current, me["password_hash"]):
         security.login_throttle.fail(f"pw|{me['id']}")
-        return _security_page(request, 401, error="The current password is not correct")
+        return _security_page(request, 401, error=t("The current password is not correct"))
     problem = security.password_problem(new, me["username"])
     if problem:
         return _security_page(request, 422, error=problem)
     if new != new2:
-        return _security_page(request, 422, error="The two new passwords do not match")
+        return _security_page(request, 422, error=t("The two new passwords do not match"))
     accounts.set_password(me["id"], new)
     accounts.delete_user_sessions(me["id"], keep_hash=me["_session_hash"])   # everyone else is signed out
-    return flash_redirect("/settings/security", "Password changed. Other devices were signed out")
+    return flash_redirect("/settings/security", t("Password changed. Other devices were signed out"))
 
 
 @router.post("/security/2fa/start")
@@ -160,18 +167,18 @@ def twofa_enable(request: Request, code: str = Form("")):
         return RedirectResponse("/settings/security#two-factor", status_code=303)
     step = security.totp_verify(me["totp_pending"], code)
     if step is None:
-        return _security_page(request, 422, error="That code is not valid. Check the clock on your phone and try the next code")
+        return _security_page(request, 422, error=t("That code is not valid. Check the clock on your phone and try the next code"))
     codes = accounts.enable_2fa(me["id"], me["totp_pending"], step)
-    return _security_page(request, new_backup_codes=codes, ok="Two-factor authentication is on")
+    return _security_page(request, new_backup_codes=codes, ok=t("Two-factor authentication is on"))
 
 
 @router.post("/security/2fa/disable")
 def twofa_disable(request: Request, password: str = Form("")):
     me = _fresh(request)
     if not security.verify_password(password, me["password_hash"]):
-        return _security_page(request, 401, error="The password is not correct")
+        return _security_page(request, 401, error=t("The password is not correct"))
     accounts.disable_2fa(me["id"])
-    return flash_redirect("/settings/security#two-factor", "Two-factor authentication is off")
+    return flash_redirect("/settings/security#two-factor", t("Two-factor authentication is off"))
 
 
 @router.post("/security/2fa/backup")
@@ -180,15 +187,15 @@ def twofa_backup(request: Request, password: str = Form("")):
     if not me["totp_enabled"]:
         return RedirectResponse("/settings/security#two-factor", status_code=303)
     if not security.verify_password(password, me["password_hash"]):
-        return _security_page(request, 401, error="The password is not correct")
-    return _security_page(request, new_backup_codes=accounts.regenerate_backup_codes(me["id"]), ok="New backup codes created; the old ones no longer work")
+        return _security_page(request, 401, error=t("The password is not correct"))
+    return _security_page(request, new_backup_codes=accounts.regenerate_backup_codes(me["id"]), ok=t("New backup codes created; the old ones no longer work"))
 
 
 @router.post("/security/sessions/revoke-others")
 def revoke_others(request: Request):
     me = _user(request)
     accounts.delete_user_sessions(me["id"], keep_hash=me["_session_hash"])
-    return flash_redirect("/settings/security", "Signed out of all other devices")
+    return flash_redirect("/settings/security", t("Signed out of all other devices"))
 
 
 # --------------------------------------------------------------- API keys
@@ -215,7 +222,7 @@ def key_create(request: Request, name: str = Form(""), kind: str = Form("browser
 def key_regenerate(request: Request, key_id: int):
     token = accounts.regenerate_api_key(key_id, _user(request)["id"])
     if token is None:
-        return flash_redirect("/settings/keys", "That key no longer exists", "error")
+        return flash_redirect("/settings/keys", t("That key no longer exists"), "error")
     key = next(k for k in accounts.list_api_keys(_user(request)["id"]) if k["id"] == key_id)
     return _keys_page(request, new_key={"token": token, "name": key["name"], "kind": key["kind"], "regenerated": True})
 
@@ -223,7 +230,7 @@ def key_regenerate(request: Request, key_id: int):
 @router.post("/keys/{key_id}/delete")
 def key_delete(request: Request, key_id: int):
     accounts.delete_api_key(key_id, _user(request)["id"])
-    return flash_redirect("/settings/keys", "API key revoked")
+    return flash_redirect("/settings/keys", t("API key revoked"))
 
 
 # -------------------------------------------------------------- AI models
@@ -257,7 +264,7 @@ def ai_assign(request: Request, transcribe: str = Form("default"), describe: str
             accounts.set_setting(f"ai.{cap}", "off")
         elif value in models and models[value]["type"] in aisettings.COMPAT[cap]:
             accounts.set_setting(f"ai.{cap}", value)
-    return flash_redirect("/settings/ai", "AI assignments saved. They apply to new items right away")
+    return flash_redirect("/settings/ai", t("AI assignments saved. They apply to new items right away"))
 
 
 @router.post("/ai/reprocess")
@@ -268,14 +275,14 @@ def ai_reprocess(request: Request):
         for (item_id,) in c.execute("SELECT id FROM items ORDER BY id").fetchall():
             if item_id not in busy and pipeline.plan_jobs(c, item_id):
                 count += 1
-    return flash_redirect("/settings/ai", f"Queued AI processing for {count} item(s)" if count else "Nothing to queue: no AI model is assigned, or every item is already queued")
+    return flash_redirect("/settings/ai", tn("Queued AI processing for {n} item", "Queued AI processing for {n} items", count) if count else t("Nothing to queue: no AI model is assigned, or every item is already queued"))
 
 
 @router.post("/ai/clear-tags")
 def ai_clear_tags(request: Request):
     with db.tx() as c:
         n = db.clear_all_ai_tags(c)
-    return flash_redirect("/settings/ai", f"Removed {n} AI tag{'s' if n != 1 else ''}. Your own tags were not touched")
+    return flash_redirect("/settings/ai", tn("Removed {n} AI tag. Your own tags were not touched", "Removed {n} AI tags. Your own tags were not touched", n))
 
 
 def _model_form(request: Request, model: dict | None, status_code: int = 200, **extra):
@@ -295,25 +302,25 @@ def model_new(request: Request):
 def model_edit(request: Request, model_id: int):
     model = accounts.get_model(model_id)
     if model is None:
-        return flash_redirect("/settings/ai", "That model no longer exists", "error")
+        return flash_redirect("/settings/ai", t("That model no longer exists"), "error")
     return _model_form(request, model | {"has_key": bool(model["api_key"]), "api_key": ""})
 
 
 def _validate_model(data: dict, model_id: int | None) -> str:
     if not data["name"].strip():
-        return "Give the model a name"
+        return t("Give the model a name")
     other = next((m for m in accounts.list_models() if m["name"].lower() == data["name"].strip().lower() and m["id"] != model_id), None)
     if other:
-        return "Another model already has that name"
+        return t("Another model already has that name")
     if data["type"] not in aisettings.MODEL_TYPES:
-        return "Choose a model type"
+        return t("Choose a model type")
     if data["type"] == "openai":
         if not data["base_url"].startswith(("http://", "https://")):
-            return "The base URL must start with http:// or https://"
+            return t("The base URL must start with http:// or https://")
         if not data["model"].strip():
-            return "Enter the model name the server should use"
+            return t("Enter the model name the server should use")
     if data["type"] == "command" and "{input}" not in data["command"]:
-        return "The command must contain {input}, which is replaced by the file path"
+        return t("The command must contain {input}, which is replaced by the file path")
     return ""
 
 
@@ -332,7 +339,7 @@ def model_create(request: Request, name: str = Form(""), type: str = Form("opena
     if err:
         return _model_form(request, data | {"id": None}, 422, error=err)
     accounts.save_model(None, data)
-    return flash_redirect("/settings/ai", f"Model “{data['name']}” added. Assign it below to start using it")
+    return flash_redirect("/settings/ai", t("Model “{name}” added. Assign it below to start using it", name=data["name"]))
 
 
 @router.post("/ai/models/{model_id}")
@@ -341,19 +348,19 @@ def model_update(request: Request, model_id: int, name: str = Form(""), type: st
                  prompt: str = Form(""), timeout: int = Form(300), send_image: str = Form(""), clear_key: str = Form("")):
     existing = accounts.get_model(model_id)
     if existing is None:
-        return flash_redirect("/settings/ai", "That model no longer exists", "error")
+        return flash_redirect("/settings/ai", t("That model no longer exists"), "error")
     data = _form_data(name, type, base_url, model, api_key, command, langs, language, prompt, timeout, send_image)
     err = _validate_model(data, model_id)
     if err:
         return _model_form(request, data | {"id": model_id, "has_key": bool(existing["api_key"])}, 422, error=err)
     accounts.save_model(model_id, data, clear_key=bool(clear_key))
-    return flash_redirect("/settings/ai", f"Model “{data['name']}” saved")
+    return flash_redirect("/settings/ai", t("Model “{name}” saved", name=data["name"]))
 
 
 @router.post("/ai/models/{model_id}/delete")
 def model_delete(request: Request, model_id: int):
     accounts.delete_model(model_id)
-    return flash_redirect("/settings/ai", "Model deleted")
+    return flash_redirect("/settings/ai", t("Model deleted"))
 
 
 @router.post("/ai/test")

@@ -37,7 +37,7 @@ def client(tmp_path, monkeypatch):
     from drollery import accounts
     from drollery.main import app
     with TestClient(app, follow_redirects=False) as c:
-        accounts.create_user("admin", PASSWORD, "Admin Person")
+        accounts.create_user("admin", PASSWORD)
         r = c.post("/login", data={"username": "admin", "password": PASSWORD})
         assert r.status_code == 303 and "drollery_session" in c.cookies
         c.follow_redirects = True

@@ -6,6 +6,7 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 
 from . import accounts, db, pipeline, shares
 from .deps import api_auth, client_ip, web_auth
+from .i18n import t, tn
 from .web import flash_redirect, render
 
 public = APIRouter()
@@ -101,21 +102,21 @@ def create_share(request: Request, item_id: int, preset: str = Form("7d"), amoun
     if err:
         return flash_redirect(back + "#share", err, "error")
     shares.create(item_id, request.state.user["id"], seconds, label)
-    return flash_redirect(back + "#share", "Link created. Copy it below" if seconds else "Permanent link created. Copy it below")
+    return flash_redirect(back + "#share", t("Link created. Copy it below") if seconds else t("Permanent link created. Copy it below"))
 
 
 @manage.post("/shares/{share_id}/revoke")
 def revoke_share(share_id: int, next: str = Form("/settings/shares")):
     share = shares.get(share_id)
     shares.revoke(share_id)
-    return flash_redirect(shares.safe_next(next, "/settings/shares") + ("#share" if share and f"/items/{share['item_id']}" in next else ""), "Link revoked. It no longer works")
+    return flash_redirect(shares.safe_next(next, "/settings/shares") + ("#share" if share and f"/items/{share['item_id']}" in next else ""), t("Link revoked. It no longer works"))
 
 
 @manage.post("/shares/{share_id}/delete")
 def delete_share(share_id: int, next: str = Form("/settings/shares")):
     share = shares.get(share_id)
     shares.delete(share_id)
-    return flash_redirect(shares.safe_next(next, "/settings/shares") + ("#share" if share and f"/items/{share['item_id']}" in next else ""), "Link removed")
+    return flash_redirect(shares.safe_next(next, "/settings/shares") + ("#share" if share and f"/items/{share['item_id']}" in next else ""), t("Link removed"))
 
 
 @manage.get("/settings/shares")
@@ -133,15 +134,15 @@ def shares_page(request: Request):
 def set_public_url(request: Request, public_url: str = Form("")):
     value = public_url.strip().rstrip("/")
     if value and not shares.valid_public_url(value):
-        return flash_redirect("/settings/shares", "Enter an address like https://memes.example.org (no spaces)", "error")
+        return flash_redirect("/settings/shares", t("Enter an address like https://memes.example.org (no spaces)"), "error")
     accounts.set_setting("public_url", value or None)
-    return flash_redirect("/settings/shares", "Public address saved" if value else "Public address cleared; links use the address you browse with")
+    return flash_redirect("/settings/shares", t("Public address saved") if value else t("Public address cleared; links use the address you browse with"))
 
 
 @manage.post("/settings/shares/purge")
 def purge(request: Request):
     n = shares.purge_inactive()
-    return flash_redirect("/settings/shares", f"Removed {n} expired or revoked link{'s' if n != 1 else ''}")
+    return flash_redirect("/settings/shares", tn("Removed {n} expired or revoked link", "Removed {n} expired or revoked links", n))
 
 
 # ---------------------------------------------------------------- API

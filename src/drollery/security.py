@@ -11,6 +11,8 @@ import time
 from collections import defaultdict
 from urllib.parse import quote
 
+from .i18n import t
+
 SCRYPT_N, SCRYPT_R, SCRYPT_P = 2 ** 14, 8, 1
 MIN_PASSWORD = 10
 
@@ -43,11 +45,11 @@ def verify_password(password: str, stored: str) -> bool:
 def password_problem(password: str, username: str = "") -> str:
     """Return a human-readable reason the password is unacceptable, or '' if fine."""
     if len(password) < MIN_PASSWORD:
-        return f"Use at least {MIN_PASSWORD} characters"
+        return t("Use at least {n} characters", n=MIN_PASSWORD)
     if username and password.lower() == username.lower():
-        return "The password must not be the same as the username"
+        return t("The password must not be the same as the username")
     if len(set(password)) < 4:
-        return "That password is too repetitive"
+        return t("That password is too repetitive")
     return ""
 
 

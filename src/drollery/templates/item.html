@@ -3,7 +3,7 @@
 {% from "macros.html" import errbox %}
 {% block title %}{{ item.title }} · Drollery{% endblock %}
 {% block content %}
-<a class="back" href="/">{{ icon("arrow-left") }}Library</a>
+<a class="back" href="/">{{ icon("arrow-left") }}{{ _("Library") }}</a>
 <div class="detail">
   <div>
     <div class="frame">
@@ -12,104 +12,104 @@
       {% else %}<audio src="/media/{{ item.id }}" controls preload="metadata"></audio>{% endif %}
     </div>
     <p class="meta-line">
-      <span>{{ item.kind }}</span><span>{{ item.mime }}</span><span>{{ "%.1f"|format(item.size / 1048576) }} MB</span>
+      <span>{{ _(item.kind|capitalize) }}</span><span>{{ item.mime }}</span><span>{{ "%.1f"|format(item.size / 1048576) }} MB</span>
       {% if item.width %}<span>{{ item.width }}×{{ item.height }}</span>{% endif %}
-      <a href="/media/{{ item.id }}" download="{{ item.original_name }}">{{ icon("download") }}Download</a>
-      {% if item.kind != "audio" %}<a href="/items/{{ item.id }}/card">{{ icon("crop") }}Card image{% if item.has_card %} (custom){% endif %}</a>{% endif %}
-      {% if item.source_url %}<a href="{{ item.source_url }}" rel="noreferrer noopener" target="_blank">{{ icon("external") }}Source</a>{% endif %}
+      <a href="/media/{{ item.id }}" download="{{ item.original_name }}">{{ icon("download") }}{{ _("Download") }}</a>
+      {% if item.kind != "audio" %}<a href="/items/{{ item.id }}/card">{{ icon("crop") }}{{ _("Card image") }}{% if item.has_card %} {{ _("(custom)") }}{% endif %}</a>{% endif %}
+      {% if item.source_url %}<a href="{{ item.source_url }}" rel="noreferrer noopener" target="_blank">{{ icon("external") }}{{ _("Source") }}</a>{% endif %}
     </p>
   </div>
 
   <div class="side">
-    <p class="folio">fol. {{ "%03d"|format(item.id) }}</p>
+    <p class="folio">{{ _("fol.") }} {{ "%03d"|format(item.id) }}</p>
     <h1>{{ item.title }}</h1>
 
     <div class="tagsplit">
       <div class="tagset">
-        <h3>Your tags</h3>
+        <h3>{{ _("Your tags") }}</h3>
         {% if item.tags %}<p class="chips">{% for t in item.tags %}<a href="/?tag={{ t|urlencode }}&src=user">#{{ t }}</a>{% endfor %}</p>
-        {% else %}<p class="hint">None yet. Add your own below</p>{% endif %}
+        {% else %}<p class="hint">{{ _("None yet. Add your own below") }}</p>{% endif %}
       </div>
       <div class="tagset ai">
-        <h3>{{ icon("cpu") }}AI tags
+        <h3>{{ icon("cpu") }}{{ _("AI tags") }}
           {% if item.ai_tags %}<span class="tag-actions">
-            <form method="post" action="/items/{{ item.id }}/ai-tags/keep"><button type="submit" class="link">Keep all</button></form>
-            <form method="post" action="/items/{{ item.id }}/ai-tags/remove"><button type="submit" class="link">Remove all</button></form>
+            <form method="post" action="/items/{{ item.id }}/ai-tags/keep"><button type="submit" class="link">{{ _("Keep all") }}</button></form>
+            <form method="post" action="/items/{{ item.id }}/ai-tags/remove"><button type="submit" class="link">{{ _("Remove all") }}</button></form>
           </span>{% endif %}</h3>
         {% if item.ai_tags %}
         <ul class="chips ai">
           {% for t in item.ai_tags %}
           <li><a href="/?tag={{ t|urlencode }}&src=ai">#{{ t }}</a>
-            <form method="post" action="/items/{{ item.id }}/ai-tags/keep"><input type="hidden" name="tag" value="{{ t }}"><button type="submit" title="Keep as one of my tags" aria-label="Keep {{ t }} as my tag">{{ icon("check") }}</button></form>
-            <form method="post" action="/items/{{ item.id }}/ai-tags/remove"><input type="hidden" name="tag" value="{{ t }}"><button type="submit" title="Remove; the AI won't suggest it again" aria-label="Remove {{ t }}">{{ icon("x") }}</button></form>
+            <form method="post" action="/items/{{ item.id }}/ai-tags/keep"><input type="hidden" name="tag" value="{{ t }}"><button type="submit" title="{{ _('Keep as one of my tags') }}" aria-label="{{ _('Keep {tag} as my tag', tag=t) }}">{{ icon("check") }}</button></form>
+            <form method="post" action="/items/{{ item.id }}/ai-tags/remove"><input type="hidden" name="tag" value="{{ t }}"><button type="submit" title="{{ _('Remove; the AI won\'t suggest it again') }}" aria-label="{{ _('Remove {tag}', tag=t) }}">{{ icon("x") }}</button></form>
           </li>
           {% endfor %}
         </ul>
-        {% else %}<p class="hint">{% if providers.describe %}None yet{% else %}No AI model is set up for naming and tagging{% endif %}</p>{% endif %}
+        {% else %}<p class="hint">{% if providers.describe %}{{ _("None yet") }}{% else %}{{ _("No AI model is set up for naming and tagging") }}{% endif %}</p>{% endif %}
       </div>
     </div>
 
     <form method="post" action="/items/{{ item.id }}/edit" class="panel form">
-      <label>Title <input name="title" value="{{ item.title }}" maxlength="120"></label>
-      <label>Description <textarea name="description" rows="4">{{ item.description }}</textarea></label>
-      <label>Your tags <input name="tags" value="{{ item.tags|join(' ') }}" placeholder="Separate with spaces"><span class="hint">AI tags are kept apart and never change when you save</span></label>
-      <button class="btn primary" type="submit">Save</button>
+      <label>{{ _("Title") }} <input name="title" value="{{ item.title }}" maxlength="120"></label>
+      <label>{{ _("Description") }} <textarea name="description" rows="4">{{ item.description }}</textarea></label>
+      <label>{{ _("Your tags") }} <input name="tags" value="{{ item.tags|join(' ') }}" placeholder="{{ _('Separate with spaces') }}"><span class="hint">{{ _("AI tags are kept apart and never change when you save") }}</span></label>
+      <button class="btn primary" type="submit">{{ _("Save") }}</button>
     </form>
 
-    {% if item.transcript %}<details open><summary>Transcript</summary><p class="pre">{{ item.transcript }}</p></details>{% endif %}
+    {% if item.transcript %}<details open><summary>{{ _("Transcript") }}</summary><p class="pre">{{ item.transcript }}</p></details>{% endif %}
     <section class="panel stack" id="share">
-      <h2 class="with-icon">{{ icon("share") }}Share</h2>
-      <p class="muted">Anyone with a link can see this {{ item.kind }}, no account needed. Make it temporary, or permanent until you revoke it</p>
+      <h2 class="with-icon">{{ icon("share") }}{{ _("Share") }}</h2>
+      <p class="muted">{{ _("Anyone with a link can see this item, no account needed. Make it temporary, or permanent until you revoke it") }}</p>
       <form class="form" method="post" action="/items/{{ item.id }}/shares#share" id="share-form">
         <input type="hidden" name="next" value="/items/{{ item.id }}">
         <div class="duo">
-          <label>Link works for
-            <select name="preset" id="sh-preset">{% for k, l in share_presets %}<option value="{{ k }}" {{ "selected" if k == "7d" }}>{{ l }}</option>{% endfor %}</select>
+          <label>{{ _("Link works for") }}
+            <select name="preset" id="sh-preset">{% for k, l in share_presets %}<option value="{{ k }}" {{ "selected" if k == "7d" }}>{{ _(l) }}</option>{% endfor %}</select>
           </label>
-          <label>Label <input name="label" maxlength="80" placeholder="Optional, e.g. For Alex"></label>
+          <label>{{ _("Label") }} <input name="label" maxlength="80" placeholder="{{ _('Optional, e.g. For Alex') }}"></label>
         </div>
         <div class="duo" id="sh-custom" hidden>
-          <label>For <input type="number" name="amount" min="1" max="525600" value="2"></label>
-          <label>Unit <select name="unit"><option value="minutes">minutes</option><option value="hours" selected>hours</option><option value="days">days</option></select></label>
+          <label>{{ _("For") }} <input type="number" name="amount" min="1" max="525600" value="2"></label>
+          <label>{{ _("Unit") }} <select name="unit"><option value="minutes">{{ _("minutes") }}</option><option value="hours" selected>{{ _("hours") }}</option><option value="days">{{ _("days") }}</option></select></label>
         </div>
-        <div class="actions"><button class="btn primary" type="submit">{{ icon("plus") }}Create link</button></div>
+        <div class="actions"><button class="btn primary" type="submit">{{ icon("plus") }}{{ _("Create link") }}</button></div>
       </form>
       {% if shares %}
       <ul class="links">
         {% for sh in shares %}
         <li class="{{ sh.state.kind }}">
           <div class="meta-row">
-            <b>{{ sh.label or "Link" }}</b>
+            <b>{{ sh.label or _("Link") }}</b>
             <span class="status {{ sh.state.kind }}">{{ sh.state.text }}</span>
-            <span class="muted small">{{ sh.views }} view{{ "s" if sh.views != 1 }}</span>
+            <span class="muted small">{{ _n("{n} view", "{n} views", sh.views) }}</span>
           </div>
           {% if sh.state.kind in ("permanent", "active") %}
           <p class="keyline small">{{ sh.urls.page }}</p>
           <div class="actions">
-            <button class="btn small" type="button" data-copy="{{ sh.urls.page }}">{{ icon("copy") }}Copy link</button>
-            <button class="btn small" type="button" data-copy="{{ sh.urls.raw }}">{{ icon("copy") }}Copy file link</button>
-            <a class="btn small" href="/s/{{ sh.token }}" target="_blank" rel="noopener">{{ icon("external") }}Open</a>
-            <form method="post" action="/shares/{{ sh.id }}/revoke"><input type="hidden" name="next" value="/items/{{ item.id }}"><button class="btn small danger" type="submit">Revoke</button></form>
+            <button class="btn small" type="button" data-copy="{{ sh.urls.page }}">{{ icon("copy") }}{{ _("Copy link") }}</button>
+            <button class="btn small" type="button" data-copy="{{ sh.urls.raw }}">{{ icon("copy") }}{{ _("Copy file link") }}</button>
+            <a class="btn small" href="/s/{{ sh.token }}" target="_blank" rel="noopener">{{ icon("external") }}{{ _("Open") }}</a>
+            <form method="post" action="/shares/{{ sh.id }}/revoke"><input type="hidden" name="next" value="/items/{{ item.id }}"><button class="btn small danger" type="submit">{{ _("Revoke") }}</button></form>
           </div>
           {% else %}
-          <div class="actions"><form method="post" action="/shares/{{ sh.id }}/delete"><input type="hidden" name="next" value="/items/{{ item.id }}"><button class="btn small" type="submit">{{ icon("trash") }}Remove</button></form></div>
+          <div class="actions"><form method="post" action="/shares/{{ sh.id }}/delete"><input type="hidden" name="next" value="/items/{{ item.id }}"><button class="btn small" type="submit">{{ icon("trash") }}{{ _("Remove") }}</button></form></div>
           {% endif %}
         </li>
         {% endfor %}
       </ul>
       {% endif %}
-      <p class="hint">Links use <code>{{ public_base }}</code>. {% if "localhost" in public_base or "192.168." in public_base or "10." in public_base[:12] %}That address only works on your network. To share beyond it, set a public address under <a href="/settings/shares">Settings › Shares</a>.{% endif %}</p>
+      <p class="hint">{{ _("Links use {base}.", base="<code>" ~ public_base|e ~ "</code>")|safe }} {% if "localhost" in public_base or "192.168." in public_base or "10." in public_base[:12] %}{{ _("That address only works on your network. To share beyond it, set a public address under {link}.", link='<a href="/settings/shares">' ~ _("Settings › Shares") ~ '</a>')|safe }}{% endif %}</p>
     </section>
 
-    <details {{ "open" if jobs }}><summary>Background jobs <i>{{ jobs|length }}</i></summary>
-      {% for j in jobs %}<div class="job"><span class="dot {{ j.status }}"></span>{{ j.type }} · {{ j.status }}{{ errbox(j.error) }}{% if j.status == "failed" %}<form method="post" action="/jobs/{{ j.id }}/retry" class="inline"><input type="hidden" name="next" value="/items/{{ item.id }}"><button class="link" type="submit">Retry</button></form>{% endif %}</div>{% endfor %}
+    <details {{ "open" if jobs }}><summary>{{ _("Background jobs") }} <i>{{ jobs|length }}</i></summary>
+      {% for j in jobs %}<div class="job"><span class="dot {{ j.status }}"></span>{{ _(j.type) }} · {{ _(j.status) }}{{ errbox(j.error) }}{% if j.status == "failed" %}<form method="post" action="/jobs/{{ j.id }}/retry" class="inline"><input type="hidden" name="next" value="/items/{{ item.id }}"><button class="link" type="submit">{{ _("Retry") }}</button></form>{% endif %}</div>{% endfor %}
       {% if providers.transcribe or providers.describe %}
-      <form method="post" action="/items/{{ item.id }}/reprocess"><button class="btn" type="submit">{{ icon("retry") }}Run again</button></form>
-      {% else %}<p class="muted">No AI providers are enabled. See <code>config.toml</code> in the data volume.</p>{% endif %}
+      <form method="post" action="/items/{{ item.id }}/reprocess"><button class="btn" type="submit">{{ icon("retry") }}{{ _("Run again") }}</button></form>
+      {% else %}<p class="muted">{{ _("No AI providers are enabled. See {file} in the data volume.", file="<code>config.toml</code>")|safe }}</p>{% endif %}
     </details>
 
-    <form method="post" action="/items/{{ item.id }}/delete" onsubmit="return confirm('Feed this item to the dragon? It cannot be undone.')">
-      <button class="btn danger" type="submit">{{ icon("trash") }}Delete</button>
+    <form method="post" action="/items/{{ item.id }}/delete" onsubmit="return confirm({{ _('Feed this item to the dragon? It cannot be undone.')|tojson|forceescape }})">
+      <button class="btn danger" type="submit">{{ icon("trash") }}{{ _("Delete") }}</button>
     </form>
   </div>
 </div>

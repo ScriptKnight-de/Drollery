@@ -6,7 +6,8 @@ import re
 from fastapi import APIRouter, Form, Request
 from fastapi.responses import RedirectResponse
 
-from . import accounts, security
+from . import accounts, i18n, security
+from .i18n import t
 from .config import get_settings
 from .deps import PENDING_COOKIE, SESSION_COOKIE, client_ip
 from .web import flash_redirect, render
@@ -23,6 +24,9 @@ def _secure(request: Request) -> bool:
 def _set_session(resp, request: Request, user_id: int) -> None:
     token = accounts.create_session(user_id, "session", request.headers.get("user-agent", ""), client_ip(request))
     resp.set_cookie(SESSION_COOKIE, token, httponly=True, samesite="lax", secure=_secure(request), max_age=accounts.SESSION_TTL)
+    lang = (accounts.get_user(user_id) or {}).get("language", "")
+    if lang:                                                  # carry the account's language to this browser
+        resp.set_cookie(i18n.COOKIE, lang, max_age=365 * 86400, samesite="lax")
 
 
 # ------------------------------------------------------------------ setup
@@ -46,22 +50,22 @@ def setup(request: Request, code: str = Form(""), username: str = Form(""),
         return render(request, "setup.html", status_code=status, form=form, error=msg)
 
     if security.ip_throttle.blocked(f"setup|{ip}"):
-        return fail("Too many attempts. Wait a few minutes and try again", 429)
+        return fail(t("Too many attempts. Wait a few minutes and try again"), 429)
     if not security.safe_equal(code.strip(), accounts.get_setup_code()):
         security.ip_throttle.fail(f"setup|{ip}")
-        return fail("That setup code is not correct. It is printed in the container log")
+        return fail(t("That setup code is not correct. It is printed in the container log"))
     if not USERNAME_RE.match(username.strip()):
-        return fail("Username: 3 to 32 letters, digits, dots, dashes or underscores")
+        return fail(t("Username: 3 to 32 letters, digits, dots, dashes or underscores"))
     problem = security.password_problem(password, username)
     if problem:
         return fail(problem)
     if password != password2:
-        return fail("The two passwords do not match")
+        return fail(t("The two passwords do not match"))
     user_id = accounts.create_first_user(username, password)
     if user_id is None:
         return RedirectResponse("/", status_code=303)
     accounts.clear_setup_code()
-    resp = flash_redirect("/settings/ai", "Admin account created. Next, tell Drollery which AI models to use, or skip this for now")
+    resp = flash_redirect("/settings/ai", t("Admin account created. Next, tell Drollery which AI models to use, or skip this for now"))
     _set_session(resp, request, user_id)
     return resp
 
@@ -83,13 +87,13 @@ def login(request: Request, username: str = Form(""), password: str = Form("")):
     key = f"{ip}|{name}"
     if security.login_throttle.blocked(key) or security.ip_throttle.blocked(ip):
         return render(request, "login.html", status_code=429, form={"username": username},
-                      error="Too many failed attempts. Wait about 15 minutes and try again")
+                      error=t("Too many failed attempts. Wait about 15 minutes and try again"))
     user = accounts.get_user_by_name(username)
     ok = security.verify_password(password, user["password_hash"] if user else DUMMY_HASH) and user is not None
     if not ok:
         security.login_throttle.fail(key)
         security.ip_throttle.fail(ip)
-        return render(request, "login.html", status_code=401, form={"username": username}, error="Wrong username or password")
+        return render(request, "login.html", status_code=401, form={"username": username}, error=t("Wrong username or password"))
     security.login_throttle.reset(key)
     if user["totp_enabled"]:
         token = accounts.create_session(user["id"], "pending", request.headers.get("user-agent", ""), ip)
@@ -113,17 +117,17 @@ def twofa(request: Request, code: str = Form("")):
     token = request.cookies.get(PENDING_COOKIE, "")
     user = accounts.lookup_session(token, "pending")
     if user is None:
-        return flash_redirect("/login", "That sign-in expired. Please start again", "error")
+        return flash_redirect("/login", t("That sign-in expired. Please start again"), "error")
     ip = client_ip(request)
     if security.ip_throttle.blocked(ip):
-        return render(request, "login_2fa.html", status_code=429, error="Too many attempts. Wait a few minutes")
+        return render(request, "login_2fa.html", status_code=429, error=t("Too many attempts. Wait a few minutes"))
     if not accounts.check_second_factor(user, code):
         security.ip_throttle.fail(ip)
         if accounts.note_pending_failure(token) >= accounts.MAX_PENDING_FAILURES:
-            resp = flash_redirect("/login", "Too many wrong codes. Please sign in again", "error")
+            resp = flash_redirect("/login", t("Too many wrong codes. Please sign in again"), "error")
             resp.delete_cookie(PENDING_COOKIE)
             return resp
-        return render(request, "login_2fa.html", status_code=401, error="That code is not valid")
+        return render(request, "login_2fa.html", status_code=401, error=t("That code is not valid"))
     accounts.delete_session(token)
     resp = RedirectResponse("/", status_code=303)
     resp.delete_cookie(PENDING_COOKIE)

@@ -59,6 +59,11 @@ def update_profile(user_id: int, email: str) -> None:
                   (email.strip()[:200], time.time(), user_id))
 
 
+def set_language(user_id: int, code: str) -> None:
+    with db.tx() as c:
+        c.execute("UPDATE users SET language=?, updated_at=? WHERE id=?", (code, time.time(), user_id))
+
+
 def set_password(user_id: int, password: str) -> None:
     with db.tx() as c:
         c.execute("UPDATE users SET password_hash=?, updated_at=? WHERE id=?",

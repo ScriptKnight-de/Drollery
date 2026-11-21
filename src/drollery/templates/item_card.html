@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 {% from "icons.html" import icon %}
-{% block title %}Card image · {{ item.title }} · Drollery{% endblock %}
+{% block title %}{{ _('Card image') }} · {{ item.title }} · Drollery{% endblock %}
 {% block content %}
-<a class="back" href="/items/{{ item.id }}">{{ icon("arrow-left") }}Back to {{ item.title }}</a>
-<div class="page-head"><h1>Card image</h1></div>
-<p class="muted lead">{% if item.kind == "video" %}Choose the moment for the card, then crop it.{% else %}Crop the part of the picture that should show on the card.{% endif %} Your original file is never changed</p>
+<a class="back" href="/items/{{ item.id }}">{{ icon("arrow-left") }}{{ _("Back to {title}", title=item.title) }}</a>
+<div class="page-head"><h1>{{ _("Card image") }}</h1></div>
+<p class="muted lead">{% if item.kind == "video" %}{{ _("Choose the moment for the card, then crop it.") }}{% else %}{{ _("Crop the part of the picture that should show on the card.") }}{% endif %} {{ _("Your original file is never changed") }}</p>
 
 <form class="cardedit" id="card-form" method="post" action="/items/{{ item.id }}/card" data-kind="{{ item.kind }}" data-id="{{ item.id }}"
       {% if crop %}data-x="{{ crop.x }}" data-y="{{ crop.y }}" data-s="{{ crop.s }}"{% endif %}>
@@ -18,38 +18,38 @@
     <div class="snap panel">
       <video id="player" src="/media/{{ item.id }}" controls playsinline preload="metadata" muted></video>
       <div class="snapbar">
-        <div class="nudge" role="group" aria-label="Fine steps">
+        <div class="nudge" role="group" aria-label="{{ _('Fine steps') }}">
           <button type="button" class="btn small" data-step="-1">−1 s</button>
           <button type="button" class="btn small" data-step="-0.1">−0.1</button>
           <button type="button" class="btn small" data-step="0.1">+0.1</button>
           <button type="button" class="btn small" data-step="1">+1 s</button>
         </div>
-        <span class="muted small" id="t-read">Card frame at <b id="t-val">{{ "%.2f"|format(t) }}</b> s</span>
-        <button type="button" class="btn primary small" id="snap">{{ icon("crop") }}Use this frame</button>
+        <span class="muted small" id="t-read">{{ _("Card frame at {t} s", t='<b id="t-val">' ~ ("%.2f"|format(t)) ~ '</b>')|safe }}</span>
+        <button type="button" class="btn primary small" id="snap">{{ icon("crop") }}{{ _("Use this frame") }}</button>
       </div>
     </div>
     {% endif %}
 
     <div class="stage" id="stage">
-      <img id="frame" src="/items/{{ item.id }}/frame{% if item.kind == 'video' %}?t={{ t }}{% endif %}" alt="Frame to crop" draggable="false">
-      <div class="cropbox" id="box" tabindex="0" role="slider" aria-label="Crop area. Drag to move, arrow keys to nudge, plus and minus to resize"></div>
+      <img id="frame" src="/items/{{ item.id }}/frame{% if item.kind == 'video' %}?t={{ t }}{% endif %}" alt="{{ _('Frame to crop') }}" draggable="false">
+      <div class="cropbox" id="box" tabindex="0" role="slider" aria-label="{{ _('Crop area. Drag to move, arrow keys to nudge, plus and minus to resize') }}"></div>
     </div>
-    <p class="hint">Drag the square to move it. Use the slider or the mouse wheel to zoom{% if item.kind == "video" %}. Changing the frame keeps your crop{% endif %}</p>
+    <p class="hint">{{ _("Drag the square to move it. Use the slider or the mouse wheel to zoom") }}{% if item.kind == "video" %}. {{ _("Changing the frame keeps your crop") }}{% endif %}</p>
   </div>
 
   <aside class="cardedit-side panel stack">
-    <h2>Preview</h2>
-    <div class="previewcard"><canvas id="preview" width="240" height="240" aria-label="How the card will look"></canvas></div>
-    <label class="zoom">Zoom <input type="range" id="zoom" min="8" max="100" value="100" aria-label="Zoom"><span class="hint" id="zoom-read">100%</span></label>
+    <h2>{{ _("Preview") }}</h2>
+    <div class="previewcard"><canvas id="preview" width="240" height="240" aria-label="{{ _('How the card will look') }}"></canvas></div>
+    <label class="zoom">{{ _("Zoom") }} <input type="range" id="zoom" min="8" max="100" value="100" aria-label="{{ _('Zoom') }}"><span class="hint" id="zoom-read">100%</span></label>
     <div class="actions">
-      <button class="btn primary" type="submit">Save card image</button>
-      <a class="btn" href="/items/{{ item.id }}">Cancel</a>
+      <button class="btn primary" type="submit">{{ _("Save card image") }}</button>
+      <a class="btn" href="/items/{{ item.id }}">{{ _("Cancel") }}</a>
     </div>
   </aside>
 </form>
 {% if item.has_card %}
-<form method="post" action="/items/{{ item.id }}/card/reset" onsubmit="return confirm('Go back to the automatic card image?')" class="reset-row">
-  <button class="btn danger small" type="submit">{{ icon("retry") }}Reset to automatic</button>
+<form method="post" action="/items/{{ item.id }}/card/reset" onsubmit="return confirm({{ _('Go back to the automatic card image?')|tojson|forceescape }})" class="reset-row">
+  <button class="btn danger small" type="submit">{{ icon("retry") }}{{ _("Reset to automatic") }}</button>
 </form>
 {% endif %}
 

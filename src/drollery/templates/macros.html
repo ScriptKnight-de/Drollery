@@ -2,8 +2,8 @@
 {# An error message: one truncated line that opens in place to the whole text, with a copy button. #}
 {% macro errbox(error) -%}
 {% if error %}<details class="errbox">
-  <summary title="Click to read the whole message"><span class="s-short">{{ error }}</span><span class="s-hide">Hide full error</span></summary>
+  <summary title="{{ _('Click to read the whole message') }}"><span class="s-short">{{ error }}</span><span class="s-hide">{{ _("Hide full error") }}</span></summary>
   <pre>{{ error }}</pre>
-  <button type="button" class="btn small" data-copy="{{ error }}">{{ icon("copy") }}Copy error</button>
+  <button type="button" class="btn small" data-copy="{{ error }}">{{ icon("copy") }}{{ _("Copy error") }}</button>
 </details>{% endif %}
 {%- endmacro %}

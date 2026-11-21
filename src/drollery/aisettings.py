@@ -13,19 +13,20 @@ import shutil
 import httpx
 
 from . import accounts
+from .i18n import N_, t
 from .config import Provider, get_settings
 
 CAPS = ("transcribe", "describe")
-CAP_LABEL = {"transcribe": "Transcription", "describe": "Naming and tagging"}
+CAP_LABEL = {"transcribe": N_("Transcription"), "describe": N_("Naming and tagging")}
 CAP_HELP = {
-    "transcribe": "Speech-to-text for audio and video clips",
-    "describe": "Writes title, description and tags from the preview image and transcript",
+    "transcribe": N_("Speech-to-text for audio and video clips"),
+    "describe": N_("Writes title, description and tags from the preview image and transcript"),
 }
-MODEL_TYPES = {"openai": "OpenAI-compatible API", "command": "Local command"}
+MODEL_TYPES = {"openai": N_("OpenAI-compatible API"), "command": N_("Local command")}
 COMPAT = {"transcribe": ("openai", "command"), "describe": ("openai",)}
 
 PRESETS = [
-    {"label": "Ollama (local vision)", "type": "openai", "base_url": "http://host.docker.internal:11434/v1", "model": "moondream", "name": "Ollama vision"},
+    {"label": N_("Ollama (local vision)"), "type": "openai", "base_url": "http://host.docker.internal:11434/v1", "model": "moondream", "name": "Ollama vision"},
     {"label": "OpenAI", "type": "openai", "base_url": "https://api.openai.com/v1", "model": "gpt-4o-mini", "name": "OpenAI"},
     {"label": "Whisper server", "type": "openai", "base_url": "http://whisper:8000/v1", "model": "Systran/faster-whisper-small", "name": "Whisper small"},
     {"label": "Whisper (OpenAI)", "type": "openai", "base_url": "https://api.openai.com/v1", "model": "whisper-1", "name": "OpenAI Whisper"},
@@ -62,12 +63,12 @@ def describe_state(cap: str, models: list[dict]) -> dict:
     value = assignment(cap)
     cfg = getattr(get_settings(), cap)
     if value is None:
-        text = f"config.toml: {cfg.type}" + (f" · {cfg.model}" if cfg.model else "") if cfg.enabled else "Off (config.toml)"
+        text = f"config.toml: {cfg.type}" + (f" · {cfg.model}" if cfg.model else "") if cfg.enabled else t("Off (config.toml)")
     elif value == "off":
-        text = "Off"
+        text = t("Off")
     else:
         row = next((m for m in models if str(m["id"]) == value), None)
-        text = row["name"] if row else "Off (model was deleted)"
+        text = row["name"] if row else t("Off (model was deleted)")
     return {"value": value if value is not None else "default", "text": text}
 
 
@@ -79,16 +80,16 @@ def test_model(data: dict) -> tuple[bool, str, list[str]]:
     if kind == "openai":
         base = (data.get("base_url") or "").rstrip("/")
         if not base.startswith(("http://", "https://")):
-            return False, "Enter a base URL starting with http:// or https://", []
+            return False, t("Enter a base URL starting with http:// or https://"), []
         headers = {"Authorization": f"Bearer {data['api_key']}"} if data.get("api_key") else {}
         try:
             r = httpx.get(base + "/models", headers=headers, timeout=10, follow_redirects=True)
         except httpx.HTTPError as e:
-            return False, f"Could not reach {base}: {type(e).__name__}: {e}", []
+            return False, t("Could not reach {base}: {error}", base=base, error=f"{type(e).__name__}: {e}"), []
         if r.status_code in (401, 403):
-            return False, f"The server answered {r.status_code}: check the API key", []
+            return False, t("The server answered {status}: check the API key", status=r.status_code), []
         if r.status_code != 200:
-            return True, f"Reached the server (GET /models answered {r.status_code}); model listing isn't supported but chat and audio calls may still work", []
+            return True, t("Reached the server (GET /models answered {status}); model listing isn't supported but chat and audio calls may still work", status=r.status_code), []
         try:
             ids = sorted({m["id"] for m in r.json().get("data", []) if "id" in m})
         except (ValueError, TypeError, AttributeError):
@@ -96,14 +97,14 @@ def test_model(data: dict) -> tuple[bool, str, list[str]]:
         wanted = data.get("model") or ""
         note = ""
         if wanted and ids and wanted not in ids:
-            note = f" The model “{wanted}” is not in that list."
-        return True, f"Connected. {len(ids)} model(s) available.{note}", ids[:200]
+            note = " " + t("The model “{model}” is not in that list.", model=wanted)
+        return True, t("Connected. {n} model(s) available.", n=len(ids)) + note, ids[:200]
     if kind == "command":
         try:
             program = shlex.split(data.get("command") or "")[0]
         except (ValueError, IndexError):
-            return False, "Enter a command, with {input} where the file path goes", []
+            return False, t("Enter a command, with {input} where the file path goes"), []
         if "{input}" not in (data.get("command") or ""):
-            return False, "The command must contain {input}, which is replaced by the file path", []
-        return (True, f"Found {program}.", []) if shutil.which(program) else (False, f"The program “{program}” was not found in the container.", [])
-    return False, "Choose a model type", []
+            return False, t("The command must contain {input}, which is replaced by the file path"), []
+        return (True, t("Found {program}.", program=program), []) if shutil.which(program) else (False, t("The program “{program}” was not found in the container.", program=program), [])
+    return False, t("Choose a model type"), []

@@ -2,59 +2,59 @@
 {% from "icons.html" import icon %}
 {% block settings %}
 <section class="panel stack">
-  <h2>What each model does</h2>
-  <p class="muted">Pick a model for each job. Anything left on “Off” is simply skipped, so Drollery still works as a fast searchable library without AI. Changes apply to new items right away</p>
+  <h2>{{ _("What each model does") }}</h2>
+  <p class="muted">{{ _("Pick a model for each job. Anything left on “Off” is simply skipped, so Drollery still works as a fast searchable library without AI. Changes apply to new items right away") }}</p>
   <form class="form" method="post" action="/settings/ai/assign">
     {% for r in rows %}
     <label class="assign">
-      <span><b>{{ r.label }}</b><span class="hint">{{ r.help }}</span></span>
+      <span><b>{{ _(r.label) }}</b><span class="hint">{{ _(r.help) }}</span></span>
       <select name="{{ r.cap }}">
-        <option value="default" {{ "selected" if r.state.value == "default" }}>Use config.toml</option>
-        <option value="off" {{ "selected" if r.state.value == "off" }}>Off</option>
+        <option value="default" {{ "selected" if r.state.value == "default" }}>{{ _("Use config.toml") }}</option>
+        <option value="off" {{ "selected" if r.state.value == "off" }}>{{ _("Off") }}</option>
         {% for m in r.options %}<option value="{{ m.id }}" {{ "selected" if r.state.value == m.id|string }}>{{ m.name }}</option>{% endfor %}
       </select>
     </label>
     {% endfor %}
-    <div class="actions"><button class="btn primary" type="submit">Save assignments</button></div>
+    <div class="actions"><button class="btn primary" type="submit">{{ _("Save assignments") }}</button></div>
   </form>
 </section>
 
 <div class="page-head sub">
-  <h2>Models</h2>
-  <a class="btn primary" href="/settings/ai/models/new">{{ icon("plus") }}Add model</a>
+  <h2>{{ _("Models") }}</h2>
+  <a class="btn primary" href="/settings/ai/models/new">{{ icon("plus") }}{{ _("Add model") }}</a>
 </div>
 <div class="panel flush">
 <table>
-  <thead><tr><th>Name</th><th>Type</th><th>Endpoint / command</th><th>Used for</th><th></th></tr></thead>
+  <thead><tr><th>{{ _("Name") }}</th><th>{{ _("Type") }}</th><th>{{ _("Endpoint / command") }}</th><th>{{ _("Used for") }}</th><th></th></tr></thead>
   <tbody>
   {% for m in models %}
   <tr>
     <td>{{ m.name }}</td>
-    <td>{{ types[m.type] }}</td>
-    <td class="clip muted">{% if m.type == "openai" %}{{ m.base_url }} · {{ m.model }}{% elif m.type == "command" %}{{ m.command }}{% endif %}{% if m.api_key %} · key set{% endif %}</td>
-    <td>{% for r in rows if r.state.value == m.id|string %}<span class="badge">{{ r.label }}</span> {% endfor %}</td>
+    <td>{{ _(types[m.type]) }}</td>
+    <td class="clip muted">{% if m.type == "openai" %}{{ m.base_url }} · {{ m.model }}{% elif m.type == "command" %}{{ m.command }}{% endif %}{% if m.api_key %} · {{ _("key set") }}{% endif %}</td>
+    <td>{% for r in rows if r.state.value == m.id|string %}<span class="badge">{{ _(r.label) }}</span> {% endfor %}</td>
     <td class="actions"><div class="acts">
       <button class="btn small" type="button" hx-post="/settings/ai/test" hx-target="#test-{{ m.id }}" hx-swap="innerHTML"
-              hx-vals='{{ {"id": m.id|string, "type": m.type, "base_url": m.base_url, "model": m.model, "command": m.command}|tojson }}'>{{ icon("zap") }}Test</button>
-      <a class="btn small" href="/settings/ai/models/{{ m.id }}">{{ icon("edit") }}Edit</a>
-      <form method="post" action="/settings/ai/models/{{ m.id }}/delete" onsubmit="return confirm('Delete “{{ m.name }}”?')"><button class="btn small danger" type="submit" aria-label="Delete">{{ icon("trash") }}</button></form>
+              hx-vals='{{ {"id": m.id|string, "type": m.type, "base_url": m.base_url, "model": m.model, "command": m.command}|tojson }}'>{{ icon("zap") }}{{ _("Test") }}</button>
+      <a class="btn small" href="/settings/ai/models/{{ m.id }}">{{ icon("edit") }}{{ _("Edit") }}</a>
+      <form method="post" action="/settings/ai/models/{{ m.id }}/delete" onsubmit="return confirm({{ _('Delete “{name}”?', name=m.name)|tojson|forceescape }})"><button class="btn small danger" type="submit" aria-label="{{ _('Delete') }}">{{ icon("trash") }}</button></form>
     </div></td>
   </tr>
   <tr class="subrow"><td colspan="5"><span id="test-{{ m.id }}"></span></td></tr>
-  {% else %}<tr><td colspan="5" class="muted">No models yet. Add one to start naming, tagging and transcribing automatically</td></tr>{% endfor %}
+  {% else %}<tr><td colspan="5" class="muted">{{ _("No models yet. Add one to start naming, tagging and transcribing automatically") }}</td></tr>{% endfor %}
   </tbody>
 </table>
 </div>
 
 <section class="panel stack">
-  <h2>Existing items</h2>
-  <p class="muted">Models only process items added after you assign them. Run them over your whole library with one click; this queues background jobs, one at a time</p>
-  <form method="post" action="/settings/ai/reprocess"><button class="btn" type="submit">{{ icon("retry") }}Process all existing items</button></form>
+  <h2>{{ _("Existing items") }}</h2>
+  <p class="muted">{{ _("Models only process items added after you assign them. Run them over your whole library with one click; this queues background jobs, one at a time") }}</p>
+  <form method="post" action="/settings/ai/reprocess"><button class="btn" type="submit">{{ icon("retry") }}{{ _("Process all existing items") }}</button></form>
 </section>
 
 <section class="panel stack">
-  <h2>AI tags</h2>
-  <p class="muted">AI tags are stored apart from the tags you set yourself. Re-running a model replaces an item's AI tags and never touches yours. Tags you remove from an item are not suggested again for it. {{ ai_tag_count }} AI tag{{ "s" if ai_tag_count != 1 }} in the library right now</p>
-  <form method="post" action="/settings/ai/clear-tags" onsubmit="return confirm('Remove every AI tag in the library? Your own tags stay.')"><button class="btn danger" type="submit" {{ "disabled" if not ai_tag_count }}>{{ icon("trash") }}Remove all AI tags</button></form>
+  <h2>{{ _("AI tags") }}</h2>
+  <p class="muted">{{ _("AI tags are stored apart from the tags you set yourself. Re-running a model replaces an item's AI tags and never touches yours. Tags you remove from an item are not suggested again for it.") }} {{ _n("{n} AI tag in the library right now", "{n} AI tags in the library right now", ai_tag_count) }}</p>
+  <form method="post" action="/settings/ai/clear-tags" onsubmit="return confirm({{ _('Remove every AI tag in the library? Your own tags stay.')|tojson|forceescape }})"><button class="btn danger" type="submit" {{ "disabled" if not ai_tag_count }}>{{ icon("trash") }}{{ _("Remove all AI tags") }}</button></form>
 </section>
 {% endblock %}

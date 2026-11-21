@@ -20,7 +20,7 @@
   </div>
   <h1>{{ item.title }}</h1>
   {% if item.description %}<p class="muted">{{ item.description }}</p>{% endif %}
-  <p class="actions"><a class="btn primary" href="/s/{{ share.token }}/raw/{{ slug }}?download=1">{{ icon("download") }}Download</a></p>
-  <p class="hint">{% if share.expires_at %}This link works until {{ share.expires_at|int|timestamp }}. {% endif %}Shared with Drollery</p>
+  <p class="actions"><a class="btn primary" href="/s/{{ share.token }}/raw/{{ slug }}?download=1">{{ icon("download") }}{{ _("Download") }}</a></p>
+  <p class="hint">{% if share.expires_at %}{{ _("This link works until {when}.", when=share.expires_at|int|timestamp) }} {% endif %}{{ _("Shared with Drollery") }}</p>
 </article>
 {% endblock %}

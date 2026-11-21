@@ -1,44 +1,44 @@
 {% extends "settings_base.html" %}
 {% from "icons.html" import icon %}
-{% block title %}{{ "Edit model" if model.id else "Add model" }} · Drollery{% endblock %}
+{% block title %}{{ _("Edit model") if model.id else _("Add model") }} · Drollery{% endblock %}
 {% block settings %}
-<a class="back" href="/settings/ai">{{ icon("arrow-left") }}AI models</a>
+<a class="back" href="/settings/ai">{{ icon("arrow-left") }}{{ _("AI models") }}</a>
 <form class="panel form narrow-form" id="model-form" method="post" action="{{ '/settings/ai/models/' ~ model.id if model.id else '/settings/ai/models' }}">
-  <h2>{{ "Edit model" if model.id else "Add a model" }}</h2>
+  <h2>{{ _("Edit model") if model.id else _("Add a model") }}</h2>
   <input type="hidden" name="id" value="{{ model.id or '' }}">
 
-  <div class="presets" aria-label="Presets">
-    <span class="muted small">Start from</span>
-    {% for p in presets %}<button class="btn small" type="button" data-preset='{{ p|tojson }}'>{{ p.label }}</button>{% endfor %}
+  <div class="presets" aria-label="{{ _('Presets') }}">
+    <span class="muted small">{{ _("Start from") }}</span>
+    {% for p in presets %}<button class="btn small" type="button" data-preset='{{ p|tojson }}'>{{ _(p.label) }}</button>{% endfor %}
   </div>
 
-  <label>Name <input name="name" value="{{ model.name }}" maxlength="60" required placeholder="Home vision model"></label>
-  <label>Type
+  <label>{{ _("Name") }} <input name="name" value="{{ model.name }}" maxlength="60" required placeholder="{{ _('Home vision model') }}"></label>
+  <label>{{ _("Type") }}
     <select name="type" id="f-type">
-      {% for k, label in types.items() %}<option value="{{ k }}" {{ "selected" if model.type == k }}>{{ label }}</option>{% endfor %}
+      {% for k, label in types.items() %}<option value="{{ k }}" {{ "selected" if model.type == k }}>{{ _(label) }}</option>{% endfor %}
     </select>
   </label>
 
   <div class="form grp" data-types="openai">
-    <label>Base URL <input name="base_url" value="{{ model.base_url }}" placeholder="http://host.docker.internal:11434/v1"><span class="hint">Any OpenAI-compatible server: Ollama, llama.cpp, LocalAI, a Whisper server, OpenAI…</span></label>
-    <label>Model <input name="model" value="{{ model.model }}" list="model-list" placeholder="moondream"><span class="hint">Use “Test connection” to list the models the server offers</span></label>
-    <label>API key <input type="password" name="api_key" value="" autocomplete="off" placeholder="{{ 'Stored. Leave empty to keep it' if model.has_key else 'Only if the server needs one' }}">
-      {% if model.has_key %}<span class="check"><input type="checkbox" name="clear_key" value="1"> Remove the stored key</span>{% endif %}
-      <span class="hint">Kept in this server's database and never shown again</span></label>
-    <label>Language <input name="language" value="{{ model.language }}" maxlength="8" placeholder="auto-detect"><span class="hint">For transcription, an ISO code such as en or de. Empty detects it</span></label>
-    <label class="check"><input type="checkbox" name="send_image" value="1" {{ "checked" if model.send_image }}> Send the preview image <span class="hint">Turn off for text-only models; naming then uses the transcript only</span></label>
-    <label>Instructions <textarea name="prompt" rows="4" placeholder="Leave empty to use the built-in prompt. {tags} is replaced by your existing tags">{{ model.prompt }}</textarea></label>
+    <label>Base URL <input name="base_url" value="{{ model.base_url }}" placeholder="http://host.docker.internal:11434/v1"><span class="hint">{{ _("Any OpenAI-compatible server: Ollama, llama.cpp, LocalAI, a Whisper server, OpenAI…") }}</span></label>
+    <label>Model <input name="model" value="{{ model.model }}" list="model-list" placeholder="moondream"><span class="hint">{{ _("Use “Test connection” to list the models the server offers") }}</span></label>
+    <label>{{ _("API key") }} <input type="password" name="api_key" value="" autocomplete="off" placeholder="{{ _('Stored. Leave empty to keep it') if model.has_key else _('Only if the server needs one') }}">
+      {% if model.has_key %}<span class="check"><input type="checkbox" name="clear_key" value="1"> {{ _("Remove the stored key") }}</span>{% endif %}
+      <span class="hint">{{ _("Kept in this server's database and never shown again") }}</span></label>
+    <label>{{ _("Language") }} <input name="language" value="{{ model.language }}" maxlength="8" placeholder="{{ _('auto-detect') }}"><span class="hint">{{ _("For transcription, an ISO code such as en or de. Empty detects it") }}</span></label>
+    <label class="check"><input type="checkbox" name="send_image" value="1" {{ "checked" if model.send_image }}> {{ _("Send the preview image") }} <span class="hint">{{ _("Turn off for text-only models; naming then uses the transcript only") }}</span></label>
+    <label>{{ _("Instructions") }} <textarea name="prompt" rows="4" placeholder="{{ _('Leave empty to use the built-in prompt. {tags} is replaced by your existing tags') }}">{{ model.prompt }}</textarea></label>
   </div>
 
   <div class="form grp" data-types="command">
-    <label>Command <input name="command" value="{{ model.command }}" placeholder="whisper-cli -m /models/ggml-tiny.bin -f {input} -nt"><span class="hint"><code>{input}</code> becomes the file path. The program must print the result</span></label>
+    <label>{{ _("Command") }} <input name="command" value="{{ model.command }}" placeholder="whisper-cli -m /models/ggml-tiny.bin -f {input} -nt"><span class="hint">{{ _("{input} becomes the file path. The program must print the result", input="<code>{input}</code>")|safe }}</span></label>
   </div>
 
-  <label>Timeout in seconds <input type="number" name="timeout" value="{{ model.timeout }}" min="5" max="3600"></label>
+  <label>{{ _("Timeout in seconds") }} <input type="number" name="timeout" value="{{ model.timeout }}" min="5" max="3600"></label>
 
   <div class="actions">
-    <button class="btn primary" type="submit">Save model</button>
-    <button class="btn" type="button" hx-post="/settings/ai/test" hx-include="#model-form" hx-target="#test-form" hx-swap="innerHTML">{{ icon("zap") }}Test connection</button>
+    <button class="btn primary" type="submit">{{ _("Save model") }}</button>
+    <button class="btn" type="button" hx-post="/settings/ai/test" hx-include="#model-form" hx-target="#test-form" hx-swap="innerHTML">{{ icon("zap") }}{{ _("Test connection") }}</button>
     <span id="test-form"></span>
   </div>
 </form>

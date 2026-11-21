@@ -1,5 +1,5 @@
 {% from "icons.html" import icon %}<!doctype html>
-<html lang="en">
+<html lang="{{ lang() }}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -25,22 +25,22 @@
     <div class="orn" aria-hidden="true"></div>
     <nav>
       {% if user %}
-      <a class="nav-link" href="/jobs">{{ icon("list") }}<span>Jobs</span></a>
-      <a class="nav-link" href="/settings">{{ icon("settings") }}<span>Settings</span></a>
-      <form method="post" action="/logout"><button class="nav-link" type="submit">{{ icon("logout") }}<span>Log out</span></button></form>
+      <a class="nav-link" href="/jobs">{{ icon("list") }}<span>{{ _("Jobs") }}</span></a>
+      <a class="nav-link" href="/settings">{{ icon("settings") }}<span>{{ _("Settings") }}</span></a>
+      <form method="post" action="/logout"><button class="nav-link" type="submit">{{ icon("logout") }}<span>{{ _("Log out") }}</span></button></form>
       {% endif %}
       <details class="menu" id="theme-menu">
-        <summary class="icon-btn" aria-label="Appearance" title="Appearance">{{ icon("palette") }}</summary>
-        <div class="pop" role="dialog" aria-label="Appearance">
-          <p class="pop-h">Mode</p>
-          <div class="modes" role="group" aria-label="Mode">
-            <button type="button" data-theme-set="light">{{ icon("sun") }}Light</button>
-            <button type="button" data-theme-set="dark">{{ icon("moon") }}Dark</button>
-            <button type="button" data-theme-set="system">{{ icon("monitor") }}Auto</button>
+        <summary class="icon-btn" aria-label="{{ _('Appearance') }}" title="{{ _('Appearance') }}">{{ icon("palette") }}</summary>
+        <div class="pop" role="dialog" aria-label="{{ _('Appearance') }}">
+          <p class="pop-h">{{ _("Mode") }}</p>
+          <div class="modes" role="group" aria-label="{{ _('Mode') }}">
+            <button type="button" data-theme-set="light">{{ icon("sun") }}{{ _("Light") }}</button>
+            <button type="button" data-theme-set="dark">{{ icon("moon") }}{{ _("Dark") }}</button>
+            <button type="button" data-theme-set="system">{{ icon("monitor") }}{{ _("Auto") }}</button>
           </div>
-          <p class="pop-h">Highlight</p>
-          <div class="swatches" role="group" aria-label="Highlight color">
-            {% for key, label in (("gold","Gold"),("tomato","Tomato"),("pink","Bubblegum"),("grape","Grape"),("indigo","Indigo"),("sky","Sky"),("teal","Teal"),("mint","Mint"),("lime","Lime"),("orange","Tangerine")) %}
+          <p class="pop-h">{{ _("Highlight") }}</p>
+          <div class="swatches" role="group" aria-label="{{ _('Highlight color') }}">
+            {% for key, label in (("gold",_("Gold")),("tomato",_("Tomato")),("pink",_("Bubblegum")),("grape",_("Grape")),("indigo",_("Indigo")),("sky",_("Sky")),("teal",_("Teal")),("mint",_("Mint")),("lime",_("Lime")),("orange",_("Tangerine"))) %}
             <button type="button" class="sw sw-{{ key }}" data-accent-set="{{ key }}" aria-label="{{ label }}" title="{{ label }}">{{ icon("check") }}</button>
             {% endfor %}
           </div>
@@ -57,7 +57,7 @@
 <footer class="foot" id="foot">
   <div class="foot-bar">
     <div class="orn" aria-hidden="true"></div>
-    <a href="/impressum"><b>Impressum</b><span>Hier steht, wer diese Burg bewohnt</span></a>
+    <a href="/impressum"><b>Impressum</b><span>{{ _("Here is written who lives in this castle") }}</span></a>
     <div class="orn" aria-hidden="true"></div>
   </div>
 </footer>
@@ -108,7 +108,7 @@
   // copy buttons (works on plain http too, where navigator.clipboard is unavailable)
   document.addEventListener("click", function (e) {
     var b = e.target.closest("[data-copy]"); if (!b) return;
-    var text = b.dataset.copy, done = function () { var old = b.innerHTML; b.textContent = "Copied"; setTimeout(function () { b.innerHTML = old; }, 1500); };
+    var text = b.dataset.copy, done = function () { var old = b.innerHTML; b.textContent = {{ _("Copied")|tojson }}; setTimeout(function () { b.innerHTML = old; }, 1500); };
     if (navigator.clipboard && window.isSecureContext) { navigator.clipboard.writeText(text).then(done); return; }
     var t = document.createElement("textarea"); t.value = text; t.style.position = "fixed"; t.style.opacity = "0"; document.body.appendChild(t); t.select();
     try { document.execCommand("copy"); done(); } catch (err) {} document.body.removeChild(t);

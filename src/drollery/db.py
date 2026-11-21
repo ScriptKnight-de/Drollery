@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS users (
   username TEXT NOT NULL UNIQUE COLLATE NOCASE,
   display_name TEXT NOT NULL DEFAULT '',
   email TEXT NOT NULL DEFAULT '',
+  language TEXT NOT NULL DEFAULT '',                 -- UI language code; empty = follow the browser
   password_hash TEXT NOT NULL,
   role TEXT NOT NULL DEFAULT 'admin',
   totp_secret TEXT NOT NULL DEFAULT '',
@@ -171,9 +172,16 @@ def _migrate_items(c: sqlite3.Connection) -> None:
                 c.execute(f"ALTER TABLE items ADD COLUMN {col} {decl}")
 
 
+def _migrate_users(c: sqlite3.Connection) -> None:
+    have = {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('users')")}
+    if have and "language" not in have:
+        c.execute("ALTER TABLE users ADD COLUMN language TEXT NOT NULL DEFAULT ''")
+
+
 def init() -> None:
     with tx() as c:
         _migrate_items(c)
+        _migrate_users(c)
         if "ai_tags" not in _fts_columns(c) and _fts_columns(c):       # index from before the user/AI tag split
             c.execute("DROP TABLE items_fts")
             rebuild = True

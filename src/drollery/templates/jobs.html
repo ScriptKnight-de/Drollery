@@ -1,31 +1,31 @@
 {% extends "base.html" %}
 {% from "icons.html" import icon %}
 {% from "macros.html" import errbox %}
-{% block title %}Jobs · Drollery{% endblock %}
+{% block title %}{{ _('Jobs') }} · Drollery{% endblock %}
 {% block content %}
-<a class="back" href="/">{{ icon("arrow-left") }}Back to library</a>
+<a class="back" href="/">{{ icon("arrow-left") }}{{ _("Back to library") }}</a>
 <div class="page-head">
-  <h1>Background jobs</h1>
-  <form method="post" action="/jobs/retry-failed"><button class="btn" type="submit">{{ icon("retry") }}Retry failed</button></form>
+  <h1>{{ _("Background jobs") }}</h1>
+  <form method="post" action="/jobs/retry-failed"><button class="btn" type="submit">{{ icon("retry") }}{{ _("Retry failed") }}</button></form>
 </div>
 {% if jobs %}
 <div class="panel flush">
 <table>
-  <thead><tr><th>#</th><th>Type</th><th>Status</th><th>For</th><th>Error</th><th></th></tr></thead>
+  <thead><tr><th>#</th><th>{{ _("Type") }}</th><th>{{ _("Status") }}</th><th>{{ _("For") }}</th><th>{{ _("Error") }}</th><th></th></tr></thead>
   <tbody>
   {% for j in jobs %}
-  <tr><td class="mono">{{ j.id }}</td><td>{{ j.type }}</td>
-      <td><span class="dot {{ j.status }}"></span>{{ j.status }}{% if j.attempts > 1 %} <span class="mono muted">×{{ j.attempts }}</span>{% endif %}</td>
+  <tr><td class="mono">{{ j.id }}</td><td>{{ _(j.type) }}</td>
+      <td><span class="dot {{ j.status }}"></span>{{ _(j.status) }}{% if j.attempts > 1 %} <span class="mono muted">×{{ j.attempts }}</span>{% endif %}</td>
       <td class="clip">{% if j.item_id %}<a href="/items/{{ j.item_id }}">{{ j.label or j.item_id }}</a>{% else %}{{ j.label }}{% endif %}</td>
       <td class="errcell">{{ errbox(j.error) }}</td>
       <td class="actions">{% if j.status == "failed" %}<div class="acts">
-        <form method="post" action="/jobs/{{ j.id }}/retry"><input type="hidden" name="next" value="/jobs"><button class="btn small" type="submit" aria-label="Retry job {{ j.id }}">{{ icon("retry") }}Retry</button></form>
+        <form method="post" action="/jobs/{{ j.id }}/retry"><input type="hidden" name="next" value="/jobs"><button class="btn small" type="submit" aria-label="{{ _('Retry job {id}', id=j.id) }}">{{ icon("retry") }}{{ _("Retry") }}</button></form>
       </div>{% endif %}</td></tr>
   {% endfor %}
   </tbody>
 </table>
 </div>
 {% else %}
-<div class="empty">{% include "doodles/wizard.svg" %}<h2>The scribes are idle</h2><p>Background jobs appear here when you add links or enable AI</p></div>
+<div class="empty">{% include "doodles/wizard.svg" %}<h2>{{ _("The scribes are idle") }}</h2><p>{{ _("Background jobs appear here when you add links or enable AI") }}</p></div>
 {% endif %}
 {% endblock %}

@@ -2,78 +2,78 @@
 {% from "icons.html" import icon %}
 {% block settings %}
 <form class="panel form narrow-form" id="password" method="post" action="/settings/security/password#password">
-  <h2>Password</h2>
-  <label>Current password <input type="password" name="current" autocomplete="current-password" required></label>
-  <label>New password <input type="password" name="new" autocomplete="new-password" minlength="10" required><span class="hint">At least 10 characters</span></label>
-  <label>Repeat new password <input type="password" name="new2" autocomplete="new-password" required></label>
-  <button class="btn primary" type="submit">Change password</button>
-  <p class="hint">Changing it signs out every other device</p>
+  <h2>{{ _("Password") }}</h2>
+  <label>{{ _("Current password") }} <input type="password" name="current" autocomplete="current-password" required></label>
+  <label>{{ _("New password") }} <input type="password" name="new" autocomplete="new-password" minlength="10" required><span class="hint">{{ _("At least 10 characters") }}</span></label>
+  <label>{{ _("Repeat new password") }} <input type="password" name="new2" autocomplete="new-password" required></label>
+  <button class="btn primary" type="submit">{{ _("Change password") }}</button>
+  <p class="hint">{{ _("Changing it signs out every other device") }}</p>
 </form>
 
 <section class="panel narrow-form stack" id="two-factor">
-  <h2>Two-factor authentication</h2>
+  <h2>{{ _("Two-factor authentication") }}</h2>
 
   {% if me.totp_enabled %}
-    <p><span class="dot done"></span>On. Signing in needs a code from your authenticator app. <span class="muted">{{ backup_left }} backup code{{ "s" if backup_left != 1 }} left</span></p>
+    <p><span class="dot done"></span>{{ _("On. Signing in needs a code from your authenticator app.") }} <span class="muted">{{ _n("{n} backup code left", "{n} backup codes left", backup_left) }}</span></p>
     {% if new_backup_codes %}
     <div class="reveal" role="alert">
-      <h3>Your backup codes</h3>
-      <p>Each works once if you lose your phone. Store them somewhere safe; they are not shown again</p>
+      <h3>{{ _("Your backup codes") }}</h3>
+      <p>{{ _("Each works once if you lose your phone. Store them somewhere safe; they are not shown again") }}</p>
       <ul class="codes">{% for c in new_backup_codes %}<li>{{ c }}</li>{% endfor %}</ul>
-      <button class="btn" type="button" data-copy="{{ new_backup_codes|join('\n') }}">{{ icon("copy") }}Copy codes</button>
+      <button class="btn" type="button" data-copy="{{ new_backup_codes|join('\n') }}">{{ icon("copy") }}{{ _("Copy codes") }}</button>
     </div>
     {% endif %}
-    <details><summary>Create new backup codes</summary>
+    <details><summary>{{ _("Create new backup codes") }}</summary>
       <form class="form" method="post" action="/settings/security/2fa/backup#two-factor">
-        <label>Password <input type="password" name="password" autocomplete="current-password" required></label>
-        <button class="btn" type="submit">Create new codes</button>
+        <label>{{ _("Password") }} <input type="password" name="password" autocomplete="current-password" required></label>
+        <button class="btn" type="submit">{{ _("Create new codes") }}</button>
       </form>
     </details>
-    <details><summary>Turn off two-factor authentication</summary>
+    <details><summary>{{ _("Turn off two-factor authentication") }}</summary>
       <form class="form" method="post" action="/settings/security/2fa/disable#two-factor">
-        <label>Password <input type="password" name="password" autocomplete="current-password" required></label>
-        <button class="btn danger" type="submit">Turn off</button>
+        <label>{{ _("Password") }} <input type="password" name="password" autocomplete="current-password" required></label>
+        <button class="btn danger" type="submit">{{ _("Turn off") }}</button>
       </form>
     </details>
 
   {% elif pending_secret %}
     <ol class="steps">
-      <li>Scan this code with an authenticator app (Aegis, Google Authenticator, 1Password, Bitwarden…)
+      <li>{{ _("Scan this code with an authenticator app (Aegis, Google Authenticator, 1Password, Bitwarden…)") }}
         <div class="qr">{{ qr_svg|safe }}</div>
-        <p class="hint">Can't scan? Enter this key instead:</p>
+        <p class="hint">{{ _("Can't scan? Enter this key instead:") }}</p>
         <p class="keyline">{{ pending_secret }}</p>
       </li>
-      <li>Type the 6-digit code the app shows to finish
+      <li>{{ _("Type the 6-digit code the app shows to finish") }}
         <form class="form inline" method="post" action="/settings/security/2fa/enable#two-factor">
           <input name="code" inputmode="numeric" autocomplete="one-time-code" placeholder="123456" maxlength="8" required>
-          <button class="btn primary" type="submit">Turn on</button>
+          <button class="btn primary" type="submit">{{ _("Turn on") }}</button>
         </form>
       </li>
     </ol>
-    <form method="post" action="/settings/security/2fa/cancel#two-factor"><button class="btn" type="submit">Cancel</button></form>
+    <form method="post" action="/settings/security/2fa/cancel#two-factor"><button class="btn" type="submit">{{ _("Cancel") }}</button></form>
 
   {% else %}
-    <p>Add a second step at sign-in: a 6-digit code from an app on your phone. It protects your library even if the password leaks</p>
-    <form method="post" action="/settings/security/2fa/start#two-factor"><button class="btn primary" type="submit">{{ icon("shield") }}Set up two-factor</button></form>
+    <p>{{ _("Add a second step at sign-in: a 6-digit code from an app on your phone. It protects your library even if the password leaks") }}</p>
+    <form method="post" action="/settings/security/2fa/start#two-factor"><button class="btn primary" type="submit">{{ icon("shield") }}{{ _("Set up two-factor") }}</button></form>
   {% endif %}
 </section>
 
 <section class="panel narrow-form stack" id="devices">
-  <h2>Signed-in devices</h2>
+  <h2>{{ _("Signed-in devices") }}</h2>
   <div class="panel flush">
   <table>
-    <thead><tr><th>Device</th><th>Last active</th><th></th></tr></thead>
+    <thead><tr><th>{{ _("Device") }}</th><th>{{ _("Last active") }}</th><th></th></tr></thead>
     <tbody>
     {% for s in sessions %}
-    <tr><td class="clip" title="{{ s.user_agent }}">{{ s.user_agent[:48] or "Unknown device" }} <span class="muted">{{ s.ip }}</span></td>
+    <tr><td class="clip" title="{{ s.user_agent }}">{{ s.user_agent[:48] or _("Unknown device") }} <span class="muted">{{ s.ip }}</span></td>
         <td class="muted nw">{{ s.last_used|int|timestamp }}</td>
-        <td class="nw">{% if s.token_hash == me._session_hash %}<span class="muted">this device</span>{% endif %}</td></tr>
+        <td class="nw">{% if s.token_hash == me._session_hash %}<span class="muted">{{ _("this device") }}</span>{% endif %}</td></tr>
     {% endfor %}
     </tbody>
   </table>
   </div>
   {% if sessions|length > 1 %}
-  <form method="post" action="/settings/security/sessions/revoke-others#devices"><button class="btn" type="submit">Sign out all other devices</button></form>
+  <form method="post" action="/settings/security/sessions/revoke-others#devices"><button class="btn" type="submit">{{ _("Sign out all other devices") }}</button></form>
   {% endif %}
 </section>
 {% endblock %}

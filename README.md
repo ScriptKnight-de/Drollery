@@ -10,7 +10,7 @@ instantly with full-text search.
 
 ## Features
 
-- **Fast full-text search** (SQLite FTS5, prefix matching, ranked): titles, descriptions, tags, transcripts, text found in images, source URL.
+- **Fast full-text search** (SQLite FTS5, prefix matching, ranked): titles, descriptions, tags, transcripts, source URL.
 - **Images, video and audio.** Thumbnails and metadata via ffmpeg. Duplicates (same content) are detected and not stored twice.
 - **Add by upload or by link.** Direct media URLs, anything `yt-dlp` supports, and gallery pages via `gallery-dl` — downloaded by a background job.
 - **Optional, pluggable AI** — nothing is required, nothing is bundled, everything is configurable (see below). Jobs are queued, retried, and run one at a time so a Raspberry Pi stays responsive.
@@ -21,6 +21,7 @@ instantly with full-text search.
 - **Share a picture or clip** with a public link, permanent or temporary (1 hour to 1 year), with an optional label, a view counter and instant revoke. The page needs no login, shows only the title and description (never your tags), and has link-preview tags for chat apps.
 - **Your tags and the AI's tags stay apart.** Editing yours never touches the AI's, a re-run replaces only the AI's, and a tag you remove is not suggested again.
 - **Accounts and security.** First-run admin setup, scrypt-hashed password, optional two-factor authentication (TOTP with backup codes), login throttling, and per-device API keys for the browser extension and the Android app.
+- **Multilingual.** English and German today; each person picks a language under Settings › Profile, or lets it follow the browser. Adding a language is one file (see Translating).
 - **One container**, one data volume, no external services.
 
 ## Quick start
@@ -127,6 +128,14 @@ uv venv && uv pip install -e '.[dev]'
 DROLLERY_DATA=./data .venv/bin/uvicorn drollery.main:app --reload
 ```
 Requires `ffmpeg` on the PATH.
+
+### Translating
+
+The English text in the code is the key; a language is a single file, `src/drollery/locales/<code>.py`, with `NAME` and a `MESSAGES` dict (copy `de.py`). List the code in `LOCALES` in `src/drollery/i18n.py` and it appears in Settings › Profile.
+
+- `t("Text")` in Python and `_("Text")` in templates mark a string; `{name}` placeholders keep their names in every language, and plurals are `(one, other)` pairs (`tn` / `_n`).
+- `python scripts/i18n_scan.py` lists what a catalog still lacks. The tests fail when a string is missing or a placeholder differs.
+- Titles, tags and the Impressum text are your own content and are never translated. The JSON API always answers in English.
 
 ## Roadmap
 

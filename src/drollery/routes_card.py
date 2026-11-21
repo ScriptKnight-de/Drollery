@@ -9,6 +9,7 @@ from fastapi.responses import FileResponse, Response
 
 from . import db, media, pipeline
 from .deps import api_auth, web_auth
+from . import i18n
 from .web import flash_redirect, render
 
 router = APIRouter(dependencies=[Depends(web_auth)])
@@ -77,11 +78,11 @@ def save_card(request: Request, item_id: int, t: float = Form(0.0), x: float = F
     try:
         media.make_card(pipeline.media_path(item), pipeline.card_path(item), item["kind"], t, x, y, s)
     except media.MediaError as e:
-        return flash_redirect(f"/items/{item_id}/card", f"Could not make the card image: {e}", "error")
+        return flash_redirect(f"/items/{item_id}/card", i18n.t("Could not make the card image: {error}", error=e), "error")
     with db.tx() as c:
         c.execute("UPDATE items SET has_card=1, card_t=?, card_x=?, card_y=?, card_s=?, updated_at=? WHERE id=?",
                   (t if item["kind"] == "video" else None, x, y, s, time.time(), item_id))
-    return flash_redirect(f"/items/{item_id}", "Card image saved. It now shows on the library page")
+    return flash_redirect(f"/items/{item_id}", i18n.t("Card image saved. It now shows on the library page"))
 
 
 @router.post("/items/{item_id}/card/reset")
@@ -90,7 +91,7 @@ def reset_card(item_id: int):
     pipeline.card_path(item).unlink(missing_ok=True)
     with db.tx() as c:
         c.execute("UPDATE items SET has_card=0, card_t=NULL, card_x=NULL, card_y=NULL, card_s=NULL, updated_at=? WHERE id=?", (time.time(), item_id))
-    return flash_redirect(f"/items/{item_id}", "Card image reset to automatic")
+    return flash_redirect(f"/items/{item_id}", i18n.t("Card image reset to automatic"))
 
 
 @files.get("/card/{item_id}")

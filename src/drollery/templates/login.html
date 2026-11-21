@@ -1,14 +1,14 @@
 {% extends "base.html" %}
-{% block title %}Sign in · Drollery{% endblock %}
+{% block title %}{{ _('Sign in') }} · Drollery{% endblock %}
 {% block content %}
 <div class="login-wrap">
 <div class="doodle">{% include "doodles/castle.svg" %}</div>
 <form class="panel login" method="post" action="/login">
-  <h1>Halt! Who goes there?</h1>
+  <h1>{{ _("Halt! Who goes there?") }}</h1>
   {% if error %}<p class="note error" role="alert">{{ error }}</p>{% endif %}
-  <label>Username <input name="username" value="{{ form.username or '' }}" autocomplete="username" autofocus required></label>
-  <label>Password <input type="password" name="password" autocomplete="current-password" required></label>
-  <button class="btn primary" type="submit">Sign in</button>
+  <label>{{ _("Username") }} <input name="username" value="{{ form.username or '' }}" autocomplete="username" autofocus required></label>
+  <label>{{ _("Password") }} <input type="password" name="password" autocomplete="current-password" required></label>
+  <button class="btn primary" type="submit">{{ _("Sign in") }}</button>
 </form>
 </div>
 {% endblock %}

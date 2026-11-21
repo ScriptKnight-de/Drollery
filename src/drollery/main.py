@@ -16,13 +16,14 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import __version__, accounts, db, media, pipeline, shares
+from . import __version__, accounts, db, i18n, media, pipeline, shares
 from .config import get_settings
 from .deps import LoginRequired, SetupRequired, api_auth, web_auth
 from .routes_auth import router as auth_router
 from .routes_card import files as card_files_router, router as card_router
 from .routes_share import api as share_api_router, manage as share_manage_router, public as share_public_router, share_context, FILE_HEADERS
 from .routes_settings import router as settings_router
+from .i18n import t
 from .web import BASE, flash_redirect, render
 
 log = logging.getLogger("drollery")
@@ -83,6 +84,14 @@ def impressum(request: Request):
     return render(request, "impressum.html", text=text)
 app.include_router(share_manage_router)
 app.include_router(share_api_router)
+
+
+@app.middleware("http")
+async def pick_language(request: Request, call_next):
+    """The browser's cookie (set when a language is chosen in Settings), else its Accept-Language header."""
+    code = i18n.normalize(request.cookies.get(i18n.COOKIE)) or i18n.from_accept_language(request.headers.get("accept-language", ""))
+    i18n.set_language(code)
+    return await call_next(request)
 
 
 @app.middleware("http")
@@ -378,5 +387,5 @@ def job_retry(job_id: int, next: str = Form("/jobs")):
     """Run one failed job again, from the jobs list or from an item page."""
     back = shares.safe_next(next, "/jobs")
     if db.retry_job(job_id):
-        return flash_redirect(back, "Job queued again")
-    return flash_redirect(back, "That job can't be retried: it isn't in a failed state any more", "error")
+        return flash_redirect(back, t("Job queued again"))
+    return flash_redirect(back, t("That job can't be retried: it isn't in a failed state any more"), "error")

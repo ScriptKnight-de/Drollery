@@ -368,7 +368,7 @@ def test_reprocess_existing_items(client):
     mid = str(accounts.list_models()[0]["id"])
     client.post("/settings/ai/assign", data={"transcribe": "default", "describe": mid})
     r = client.post("/settings/ai/reprocess")
-    assert "Queued AI processing for 2 item(s)" in r.text
+    assert "Queued AI processing for 2 items" in r.text
     assert "Nothing to queue" in client.post("/settings/ai/reprocess").text    # already queued: no duplicates
 
 
