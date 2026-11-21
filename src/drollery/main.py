@@ -20,6 +20,7 @@ from . import __version__, accounts, db, media, pipeline
 from .config import get_settings
 from .deps import LoginRequired, SetupRequired, api_auth, web_auth
 from .routes_auth import router as auth_router
+from .routes_share import api as share_api_router, manage as share_manage_router, public as share_public_router, share_context, FILE_HEADERS
 from .routes_settings import router as settings_router
 from .web import BASE, render
 
@@ -67,6 +68,9 @@ app = FastAPI(title="Drollery", version=__version__, lifespan=lifespan)
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
 app.include_router(auth_router)
 app.include_router(settings_router)
+app.include_router(share_public_router)
+app.include_router(share_manage_router)
+app.include_router(share_api_router)
 
 
 @app.middleware("http")
@@ -163,7 +167,7 @@ def media_file(item_id: int):
     if not path.exists():
         raise HTTPException(404, "file missing on disk")
     return FileResponse(path, media_type=item["mime"], filename=item["original_name"] or None,
-                        content_disposition_type="inline")
+                        content_disposition_type="inline", headers={k: v for k, v in FILE_HEADERS.items() if k != "Cache-Control"})
 
 
 @app.get("/thumb/{item_id}", dependencies=[Depends(api_auth)])
@@ -280,7 +284,7 @@ def item_page(request: Request, item_id: int):
     item = _get_or_404(item_id)
     with db.tx() as c:
         jobs = [dict(r) for r in c.execute("SELECT * FROM jobs WHERE item_id=? ORDER BY id DESC", (item_id,))]
-    return render(request, "item.html", item=item, jobs=jobs)
+    return render(request, "item.html", item=item, jobs=jobs, **share_context(request, item))
 
 
 @app.post("/items/{item_id}/edit", dependencies=[Depends(web_auth)])

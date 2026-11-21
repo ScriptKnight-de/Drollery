@@ -84,6 +84,19 @@ CREATE TABLE IF NOT EXISTS sessions (
   failures INTEGER NOT NULL DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS sessions_user ON sessions(user_id);
+CREATE TABLE IF NOT EXISTS shares (
+  id INTEGER PRIMARY KEY,
+  token TEXT NOT NULL UNIQUE,                       -- unguessable capability in the public URL (stored so the link can be shown again)
+  item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+  label TEXT NOT NULL DEFAULT '',
+  created_by INTEGER,
+  created_at REAL NOT NULL,
+  expires_at REAL,                                  -- NULL = permanent
+  revoked_at REAL,
+  views INTEGER NOT NULL DEFAULT 0,
+  last_viewed_at REAL
+);
+CREATE INDEX IF NOT EXISTS shares_item ON shares(item_id);
 CREATE TABLE IF NOT EXISTS api_keys (
   id INTEGER PRIMARY KEY,
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,

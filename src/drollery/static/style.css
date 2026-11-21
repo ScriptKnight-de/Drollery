@@ -248,7 +248,25 @@ td.clip { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-spa
 .login { display: grid; gap: 16px; padding: 24px; }
 .login p { margin: 0; font-size: 14px; }
 
+/* sharing */
+.duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 600px) { .duo { grid-template-columns: 1fr; } }
+.links { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.links li { padding: 14px; border: 2px solid var(--ln); border-radius: 16px; background: var(--bg); display: grid; gap: 10px; }
+.links li.expired, .links li.revoked { opacity: .7; }
+.links .meta-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.links .keyline { margin: 0; padding: 8px 12px; font-size: 13px; }
+.status { display: inline-block; padding: 0 10px; height: 22px; line-height: 20px; border-radius: 11px; font-size: 12px; font-weight: 600; border: 2px solid var(--ln); color: var(--tx2); }
+.status.permanent { border-color: var(--ac); color: var(--ac-ink); }
+.status.active { border-color: var(--ok); color: var(--ok); }
+.status.expired, .status.revoked { color: var(--bad); border-color: var(--bad); }
+.share { max-width: 860px; margin: 0 auto; display: grid; gap: 16px; }
+.share h1 { margin-top: 4px; } .share p { margin: 0; }
+.share .frame img, .share .frame video { max-height: 78vh; }
+
 /* user tags vs AI tags */
+button.link { background: none; border: 0; padding: 0; color: var(--ac-ink); font: inherit; cursor: pointer; }
+button.link:hover { text-decoration: underline; text-underline-offset: 3px; }
 .tagsplit { display: grid; gap: 12px; }
 .tagset h3 { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; font-size: 13px; font-weight: 600; color: var(--tx2); }
 .tagset p { margin: 0; }

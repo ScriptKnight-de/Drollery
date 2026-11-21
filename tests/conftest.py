@@ -8,10 +8,11 @@ PASSWORD = "correct horse battery"
 def _boot(tmp_path, monkeypatch):
     monkeypatch.setenv("DROLLERY_DATA", str(tmp_path))
     monkeypatch.delenv("DROLLERY_SETUP_CODE", raising=False)
-    from drollery import config, security
+    from drollery import config, security, shares
     config.get_settings.cache_clear()
     security.login_throttle.reset()
     security.ip_throttle.reset()
+    shares.share_throttle.reset()
 
 
 @pytest.fixture()

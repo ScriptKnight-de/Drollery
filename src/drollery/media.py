@@ -13,6 +13,8 @@ mimetypes.add_type("video/webm", ".webm")
 mimetypes.add_type("video/quicktime", ".mov")
 
 KINDS = ("image", "video", "audio")
+# Formats that can carry scripts. Served from this origin they would run with the owner's session, so they are refused.
+UNSAFE_MIMES = {"image/svg+xml", "image/svg+xml-compressed"}
 
 
 class MediaError(Exception):
@@ -23,7 +25,7 @@ def guess(path_or_name: str) -> tuple[str, str]:
     """-> (kind, mime) from the file name, or raise MediaError."""
     mime = mimetypes.guess_type(path_or_name)[0] or ""
     kind = mime.split("/")[0]
-    if kind not in KINDS:
+    if kind not in KINDS or mime in UNSAFE_MIMES:
         raise MediaError(f"unsupported file type: {path_or_name!r}")
     return kind, mime
 

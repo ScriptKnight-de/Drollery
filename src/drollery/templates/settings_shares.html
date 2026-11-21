@@ -1,0 +1,44 @@
+{% extends "settings_base.html" %}
+{% from "icons.html" import icon %}
+{% block settings %}
+<section class="panel stack">
+  <h2>Public address</h2>
+  <p class="muted">Share links are built from this address. Leave it empty to use the address you are browsing with now (<code>{{ public_base }}</code>)</p>
+  {% if env_public %}<p class="hint">DROLLERY_PUBLIC_URL is set in the environment and takes priority over this field</p>{% endif %}
+  <form class="form row" method="post" action="/settings/shares/public-url">
+    <label>Address <input name="public_url" value="{{ public_url }}" placeholder="https://memes.example.org" inputmode="url"></label>
+    <span></span>
+    <button class="btn primary" type="submit">Save</button>
+  </form>
+  <p class="hint">A link only works where this server can be reached. On a home network that means your own devices, until you expose the server (reverse proxy, port forward or VPN) and enter the address you chose here</p>
+</section>
+
+<div class="page-head sub">
+  <h2>All share links</h2>
+  <form method="post" action="/settings/shares/purge"><button class="btn small" type="submit">{{ icon("trash") }}Remove expired and revoked</button></form>
+</div>
+<div class="panel flush">
+<table>
+  <thead><tr><th>Item</th><th>Label</th><th>Status</th><th>Views</th><th>Created</th><th></th></tr></thead>
+  <tbody>
+  {% for sh in rows %}
+  <tr>
+    <td class="clip"><a href="/items/{{ sh.item_id }}#share">{{ sh.item_title }}</a></td>
+    <td class="muted">{{ sh.label or "—" }}</td>
+    <td><span class="status {{ sh.state.kind }}">{{ sh.state.text }}</span></td>
+    <td class="muted">{{ sh.views }}</td>
+    <td class="muted nw">{{ sh.created_at|int|timestamp }}</td>
+    <td class="actions"><div class="acts">
+      {% if sh.state.kind in ("permanent", "active") %}
+      <button class="btn small" type="button" data-copy="{{ sh.urls.page }}">{{ icon("copy") }}Copy</button>
+      <form method="post" action="/shares/{{ sh.id }}/revoke"><input type="hidden" name="next" value="/settings/shares"><button class="btn small danger" type="submit">Revoke</button></form>
+      {% else %}
+      <form method="post" action="/shares/{{ sh.id }}/delete"><input type="hidden" name="next" value="/settings/shares"><button class="btn small" type="submit">Remove</button></form>
+      {% endif %}
+    </div></td>
+  </tr>
+  {% else %}<tr><td colspan="6" class="muted">Nothing is shared. Open an item and use its Share panel</td></tr>{% endfor %}
+  </tbody>
+</table>
+</div>
+{% endblock %}

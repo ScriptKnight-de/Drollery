@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}Link ended · Drollery{% endblock %}
+{% block content %}
+<div class="empty">
+  {% include "doodles/burglar.svg" %}
+  <h2>{{ "This link was revoked" if share.state.kind == "revoked" else "This link has expired" }}</h2>
+  <p>Ask whoever sent it for a new one</p>
+</div>
+{% endblock %}

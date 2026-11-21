@@ -56,6 +56,50 @@
 
     {% if item.transcript %}<details open><summary>Transcript</summary><p class="pre">{{ item.transcript }}</p></details>{% endif %}
     {% if item.ocr %}<details open><summary>Text in image</summary><p class="pre">{{ item.ocr }}</p></details>{% endif %}
+    <section class="panel stack" id="share">
+      <h2>{{ icon("share") }}Share</h2>
+      <p class="muted">Anyone with a link can see this {{ item.kind }}, no account needed. Make it temporary, or permanent until you revoke it</p>
+      <form class="form" method="post" action="/items/{{ item.id }}/shares#share" id="share-form">
+        <input type="hidden" name="next" value="/items/{{ item.id }}">
+        <div class="duo">
+          <label>Link works for
+            <select name="preset" id="sh-preset">{% for k, l in share_presets %}<option value="{{ k }}" {{ "selected" if k == "7d" }}>{{ l }}</option>{% endfor %}</select>
+          </label>
+          <label>Label <input name="label" maxlength="80" placeholder="Optional, e.g. For Alex"></label>
+        </div>
+        <div class="duo" id="sh-custom" hidden>
+          <label>For <input type="number" name="amount" min="1" max="525600" value="2"></label>
+          <label>Unit <select name="unit"><option value="minutes">minutes</option><option value="hours" selected>hours</option><option value="days">days</option></select></label>
+        </div>
+        <div class="actions"><button class="btn primary" type="submit">{{ icon("plus") }}Create link</button></div>
+      </form>
+      {% if shares %}
+      <ul class="links">
+        {% for sh in shares %}
+        <li class="{{ sh.state.kind }}">
+          <div class="meta-row">
+            <b>{{ sh.label or "Link" }}</b>
+            <span class="status {{ sh.state.kind }}">{{ sh.state.text }}</span>
+            <span class="muted small">{{ sh.views }} view{{ "s" if sh.views != 1 }}</span>
+          </div>
+          {% if sh.state.kind in ("permanent", "active") %}
+          <p class="keyline small">{{ sh.urls.page }}</p>
+          <div class="actions">
+            <button class="btn small" type="button" data-copy="{{ sh.urls.page }}">{{ icon("copy") }}Copy link</button>
+            <button class="btn small" type="button" data-copy="{{ sh.urls.raw }}">{{ icon("copy") }}Copy file link</button>
+            <a class="btn small" href="/s/{{ sh.token }}" target="_blank" rel="noopener">{{ icon("external") }}Open</a>
+            <form method="post" action="/shares/{{ sh.id }}/revoke"><input type="hidden" name="next" value="/items/{{ item.id }}"><button class="btn small danger" type="submit">Revoke</button></form>
+          </div>
+          {% else %}
+          <div class="actions"><form method="post" action="/shares/{{ sh.id }}/delete"><input type="hidden" name="next" value="/items/{{ item.id }}"><button class="btn small" type="submit">{{ icon("trash") }}Remove</button></form></div>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+      <p class="hint">Links use <code>{{ public_base }}</code>. {% if "localhost" in public_base or "192.168." in public_base or "10." in public_base[:12] %}That address only works on your network. To share beyond it, set a public address under <a href="/settings/shares">Settings › Shares</a>.{% endif %}</p>
+    </section>
+
     <details {{ "open" if jobs }}><summary>Background jobs <i>{{ jobs|length }}</i></summary>
       {% for j in jobs %}<p class="job"><span class="dot {{ j.status }}"></span>{{ j.type }} · {{ j.status }}{% if j.error %}<span class="bad"> — {{ j.error }}</span>{% endif %}</p>{% endfor %}
       {% if providers.transcribe or providers.describe or providers.ocr %}
@@ -68,4 +112,12 @@
     </form>
   </div>
 </div>
+<script>
+  (function () {
+    var sel = document.getElementById("sh-preset"), box = document.getElementById("sh-custom");
+    if (!sel || !box) return;
+    function sync() { box.hidden = sel.value !== "custom"; }
+    sel.addEventListener("change", sync); sync();
+  })();
+</script>
 {% endblock %}
