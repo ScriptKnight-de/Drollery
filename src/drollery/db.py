@@ -336,6 +336,13 @@ def enqueue(c: sqlite3.Connection, type_: str, item_id: int | None = None, paylo
     return cur.lastrowid
 
 
+def retry_job(job_id: int) -> bool:
+    """Put one failed job back in the queue with a fresh set of attempts. Returns False if it isn't a failed job."""
+    with tx() as c:
+        return c.execute("UPDATE jobs SET status='queued', attempts=0, error='', run_after=0, updated_at=? WHERE id=? AND status='failed'",
+                         (time.time(), job_id)).rowcount > 0
+
+
 def claim_job() -> dict | None:
     now = time.time()
     with tx() as c:

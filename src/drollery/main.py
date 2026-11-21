@@ -16,14 +16,14 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import __version__, accounts, db, media, pipeline
+from . import __version__, accounts, db, media, pipeline, shares
 from .config import get_settings
 from .deps import LoginRequired, SetupRequired, api_auth, web_auth
 from .routes_auth import router as auth_router
 from .routes_card import files as card_files_router, router as card_router
 from .routes_share import api as share_api_router, manage as share_manage_router, public as share_public_router, share_context, FILE_HEADERS
 from .routes_settings import router as settings_router
-from .web import BASE, render
+from .web import BASE, flash_redirect, render
 
 log = logging.getLogger("drollery")
 PAGE = 40
@@ -246,6 +246,17 @@ def api_delete(item_id: int):
     _delete_item(_get_or_404(item_id))
 
 
+@app.post("/api/v1/jobs/{job_id}/retry", dependencies=[Depends(api_auth)], status_code=202)
+def api_retry_job(job_id: int):
+    with db.tx() as c:
+        row = c.execute("SELECT status FROM jobs WHERE id=?", (job_id,)).fetchone()
+    if row is None:
+        raise HTTPException(404, "job not found")
+    if not db.retry_job(job_id):
+        raise HTTPException(409, f"only failed jobs can be retried (this one is {row['status']})")
+    return {"job_id": job_id, "status": "queued"}
+
+
 @app.get("/api/v1/jobs", dependencies=[Depends(api_auth)])
 def api_jobs(limit: int = 50):
     with db.tx() as c:
@@ -349,5 +360,14 @@ def jobs_page(request: Request):
 @app.post("/jobs/retry-failed", dependencies=[Depends(web_auth)])
 def jobs_retry():
     with db.tx() as c:
-        c.execute("UPDATE jobs SET status='queued', attempts=0, run_after=0 WHERE status='failed'")
+        c.execute("UPDATE jobs SET status='queued', attempts=0, error='', run_after=0 WHERE status='failed'")
     return RedirectResponse("/jobs", status_code=303)
+
+
+@app.post("/jobs/{job_id}/retry", dependencies=[Depends(web_auth)])
+def job_retry(job_id: int, next: str = Form("/jobs")):
+    """Run one failed job again, from the jobs list or from an item page."""
+    back = shares.safe_next(next, "/jobs")
+    if db.retry_job(job_id):
+        return flash_redirect(back, "Job queued again")
+    return flash_redirect(back, "That job can't be retried: it isn't in a failed state any more", "error")

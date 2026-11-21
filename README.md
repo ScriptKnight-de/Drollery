@@ -109,6 +109,7 @@ All endpoints take `Authorization: Bearer <api key>`. Create keys per device in 
 | `GET` `POST` | `/api/v1/items/{id}/shares` | list / create share links. Body: `{"expires_in": seconds or null, "label": ""}` |
 | `DELETE` | `/api/v1/shares/{id}` | remove a share link |
 | `GET` | `/api/v1/jobs` | queue state |
+| `POST` | `/api/v1/jobs/{id}/retry` | run one failed job again (`409` if it isn't failed) |
 | `GET` | `/media/{id}`, `/thumb/{id}` | files |
 
 ## Security notes
