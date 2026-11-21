@@ -2,7 +2,7 @@
 {% for it in items %}
 {% if it.kind == "audio" %}
 {% set pic = it.has_card or it.has_thumb %}
-<div class="tile sound">
+<div class="tile sound" style="--h: {{ ((it.id * 137.508) % 360)|round|int }}">
   <div class="thumb">
     {% if it.has_card %}<img loading="lazy" src="/card/{{ it.id }}?v={{ it.updated_at|int }}" alt="">
     {% elif it.has_thumb %}<img loading="lazy" src="/thumb/{{ it.id }}?v={{ (it.updated_at * 1000)|int }}" alt="">{% endif %}
