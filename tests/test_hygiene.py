@@ -175,6 +175,8 @@ def test_vendored_code_and_assets_are_credited():
     assert "lucide" in icons.lower() and "Lucide" in notices and "ISC" in notices
     for brand in ("Simple Icons", "Octicons"):
         assert brand in icons and brand in notices
+    assert (ROOT / "docs/kofi_logo.png").is_file() and "docs/kofi_logo.png" in notices          # the README's logo image is credited
+    assert 'src="docs/kofi_logo.png"' in (ROOT / "README.md").read_text()
     for dependency in re.findall(r'^\s*"([A-Za-z0-9_.-]+)', (ROOT / "pyproject.toml").read_text().split("dependencies = [")[1].split("]")[0], re.M):
         name = dependency.split(">")[0].split("=")[0]
         assert name.lower().replace("_", "-") in notices.lower().replace("_", "-") or name.lower() == "python-multipart", name

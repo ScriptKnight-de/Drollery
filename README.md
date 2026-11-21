@@ -271,5 +271,9 @@ users.
 [MIT](LICENSE). Third-party code, assets and online services are listed in
 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-Drollery is free and made by [ScriptKnight](https://ko-fi.com/scriptknight); if you find it useful you can support its
-development on Ko-fi.
+---
+
+<p align="center">
+  <sub>Free and open source. If it saves you time, you can say thanks on Ko-fi.</sub><br>
+  <a href="https://ko-fi.com/scriptknight"><img src="docs/kofi_logo.png" alt="Support me on Ko-fi" height="36"></a>
+</p>

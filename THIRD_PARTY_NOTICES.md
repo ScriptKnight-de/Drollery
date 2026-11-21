@@ -46,7 +46,9 @@ PERFORMANCE OF THIS SOFTWARE.
 
 ### Brand marks (About page) — `src/drollery/templates/icons.html`
 
-- The **Ko-fi** mark is from [Simple Icons](https://simpleicons.org) (CC0 1.0). "Ko-fi" is a trademark of its owner.
+- The **Ko-fi** mark in the app is from [Simple Icons](https://simpleicons.org) (CC0 1.0). The Ko-fi logo image
+  `docs/kofi_logo.png` at the end of the README is Ko-fi's own logo. "Ko-fi" is a trademark of its owner; both are used
+  only to link to the author's Ko-fi page.
 - The **GitHub** mark is from [Octicons](https://primer.style/foundations/icons) (MIT License, © GitHub Inc.).
   "GitHub" and the Octocat mark are trademarks of GitHub, Inc.; the mark is used only to link to the author's profile.
 
