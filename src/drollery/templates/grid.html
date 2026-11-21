@@ -4,7 +4,7 @@
   <div class="thumb">
     {% if it.has_thumb %}<img loading="lazy" src="/thumb/{{ it.id }}" alt="">
     {% else %}<span class="ph">{{ icon("music" if it.kind == "audio" else "image") }}</span>{% endif %}
-    <span class="chip" title="{{ it.kind }}">{{ icon({"image": "image", "video": "film", "audio": "music"}[it.kind]) }}</span>
+    <span class="chip k-{{ it.kind }}" title="{{ it.kind }}">{{ icon({"image": "image", "video": "film", "audio": "music"}[it.kind]) }}</span>
   </div>
   <div class="cap">
     <span class="t">{{ it.title }}</span>

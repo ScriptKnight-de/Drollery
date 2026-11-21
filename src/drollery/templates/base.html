@@ -5,6 +5,14 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark light">
   <title>{% block title %}Drollery{% endblock %}</title>
+  <script>
+    /* apply saved theme before first paint to avoid a flash */
+    try {
+      var r = document.documentElement, t = localStorage.getItem("drollery.theme"), a = localStorage.getItem("drollery.accent");
+      if (t === "light" || t === "dark") r.dataset.theme = t;
+      if (a) r.dataset.accent = a;
+    } catch (e) {}
+  </script>
   <link rel="stylesheet" href="/static/style.css">
   <script src="/static/htmx.min.js" defer></script>
 </head>
@@ -13,13 +21,50 @@
   <div class="top-in">
     <a class="brand" href="/">Drollery</a>
     <nav>
-      <a class="nav-link" href="/jobs">{{ icon("list") }}Jobs</a>
-      {% if auth_enabled %}<form method="post" action="/logout"><button class="nav-link" type="submit">{{ icon("logout") }}Log out</button></form>{% endif %}
+      <a class="nav-link" href="/jobs">{{ icon("list") }}<span>Jobs</span></a>
+      {% if auth_enabled %}<form method="post" action="/logout"><button class="nav-link" type="submit">{{ icon("logout") }}<span>Log out</span></button></form>{% endif %}
+      <details class="menu" id="theme-menu">
+        <summary class="icon-btn" aria-label="Appearance" title="Appearance">{{ icon("palette") }}</summary>
+        <div class="pop" role="dialog" aria-label="Appearance">
+          <p class="pop-h">Mode</p>
+          <div class="modes" role="group" aria-label="Mode">
+            <button type="button" data-theme-set="light">{{ icon("sun") }}Light</button>
+            <button type="button" data-theme-set="dark">{{ icon("moon") }}Dark</button>
+            <button type="button" data-theme-set="system">{{ icon("monitor") }}Auto</button>
+          </div>
+          <p class="pop-h">Highlight</p>
+          <div class="swatches" role="group" aria-label="Highlight color">
+            {% for key, label in (("gold","Gold"),("tomato","Tomato"),("pink","Bubblegum"),("grape","Grape"),("indigo","Indigo"),("sky","Sky"),("teal","Teal"),("mint","Mint"),("lime","Lime"),("orange","Tangerine")) %}
+            <button type="button" class="sw sw-{{ key }}" data-accent-set="{{ key }}" aria-label="{{ label }}" title="{{ label }}">{{ icon("check") }}</button>
+            {% endfor %}
+          </div>
+        </div>
+      </details>
     </nav>
   </div>
 </header>
 <main>{% block content %}{% endblock %}</main>
 <script>
+  (function () {
+    var root = document.documentElement, menu = document.getElementById("theme-menu");
+    function save(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+    function sync() {
+      var t = root.dataset.theme || "system", a = root.dataset.accent || "gold";
+      document.querySelectorAll("[data-theme-set]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.themeSet === t); });
+      document.querySelectorAll("[data-accent-set]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.accentSet === a); });
+    }
+    document.addEventListener("click", function (e) {
+      var th = e.target.closest("[data-theme-set]"), ac = e.target.closest("[data-accent-set]");
+      if (th) {
+        if (th.dataset.themeSet === "system") { delete root.dataset.theme; save("drollery.theme", "system"); }
+        else { root.dataset.theme = th.dataset.themeSet; save("drollery.theme", th.dataset.themeSet); }
+        sync();
+      } else if (ac) { root.dataset.accent = ac.dataset.accentSet; save("drollery.accent", ac.dataset.accentSet); sync(); }
+      else if (menu && menu.open && !menu.contains(e.target)) menu.open = false;
+    });
+    addEventListener("keydown", function (e) { if (e.key === "Escape" && menu) menu.open = false; });
+    sync();
+  })();
   // "/" focuses search, like most keyboard-driven tools
   addEventListener("keydown", function (e) {
     var q = document.getElementById("q");
