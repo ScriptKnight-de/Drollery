@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="480" height="56" viewBox="0 0 480 56" fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="56" viewBox="0 0 480 56" fill="none" stroke="#000" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
   <path d="M0 52H480"/>
   <!-- castle -->
   <path d="M24 52V30H36V52M20 30v-5h3v2h3v-2h3v2h3v-2h3v5ZM52 52V30H64V52M48 30v-5h3v2h3v-2h3v2h3v-2h3v5ZM36 52V36H52V52M38 36v-3h3v1h3v-1h3v1h3v-3M42 52v-6a2 2 0 0 1 4 0v6M30 25v-7l7 3-7 -3"/>
