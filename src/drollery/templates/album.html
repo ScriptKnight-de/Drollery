@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block title %}{{ item.title }} · Drollery{% endblock %}
+{% block content %}
+{% set isbook = album.subtype == "audiobook" %}
+<a class="back" href="/">{{ icon("arrow-left") }}{{ _("Library") }}</a>
+<div class="detail">
+  <div>
+    <div class="cover">
+      {% if item.has_thumb %}<img src="/albums/{{ item.id }}/cover" alt="{{ item.title }}">
+      {% else %}<div class="nocover">{{ icon("book" if isbook else "disc") }}</div>{% endif %}
+    </div>
+    <div class="player">
+      <p class="nowplaying" id="now" aria-live="polite"></p>
+      <audio id="player" controls preload="none"></audio>
+    </div>
+    <p class="meta-line">
+      <span>{{ _("Audiobook") if isbook else _("Album") }}</span>
+      <span>{{ _n("{n} chapter", "{n} chapters", tracks|length) if isbook else _n("{n} track", "{n} tracks", tracks|length) }}</span>
+      {% if item.duration %}<span>{{ item.duration|clock }}</span>{% endif %}
+      <span>{{ "%.1f"|format(item.size / 1048576) }} MB</span>
+      <a href="/albums/{{ item.id }}/download">{{ icon("download") }}{{ _("Download all") }}</a>
+      {% if item.has_thumb %}<a href="/items/{{ item.id }}/card">{{ icon("crop") }}{{ _("Card image") }}{% if item.has_card %} {{ _("(custom)") }}{% endif %}</a>{% endif %}
+    </p>
+  </div>
+
+  <div class="side">
+    <p class="folio">{{ _("fol.") }} {{ "%03d"|format(item.id) }}</p>
+    <h1>{{ item.title }}</h1>
+    {% if album.artist %}<p class="muted" style="margin:-8px 0 0">{{ album.artist }}</p>{% endif %}
+
+    <div class="tagset">
+      <h3>{{ _("Your tags") }}</h3>
+      {% if item.tags %}<p class="chips">{% for t in item.tags %}<a href="/?tag={{ t|urlencode }}&src=user">#{{ t }}</a>{% endfor %}</p>
+      {% else %}<p class="hint">{{ _("None yet. Add your own below") }}</p>{% endif %}
+    </div>
+
+    <form method="post" action="/items/{{ item.id }}/edit" class="panel form">
+      <label>{{ _("Title") }} <input name="title" value="{{ item.title }}" maxlength="120"></label>
+      <label>{{ _("Artist") }} <input name="artist" value="{{ album.artist }}" maxlength="120"></label>
+      <label>{{ _("Description") }} <textarea name="description" rows="4">{{ item.description }}</textarea></label>
+      <div class="fld" id="tag-fld" data-remove="{{ _('Remove {tag}') }}">
+        <label for="tags-in">{{ _("Your tags") }}</label>
+        <input id="tags-in" name="tags" value="{{ item.tags|join(' ') }}" placeholder="{{ _('Separate with spaces') }}" autocomplete="off">
+      </div>
+      <button class="btn primary" type="submit">{{ _("Save") }}</button>
+    </form>
+
+    <section class="panel stack" id="tracks">
+      <h2 class="with-icon">{{ icon("music") }}{{ _("Chapters") if isbook else _("Tracks") }}</h2>
+      <ol class="tracklist" id="tracklist">
+        {% for tr in tracks %}
+        <li data-track data-src="/albums/{{ item.id }}/track/{{ tr.id }}" data-title="{{ tr.title }}">
+          <button type="button" class="play" aria-pressed="false" aria-label="{{ _('Play') }}: {{ tr.title }}" title="{{ _('Play') }}">{{ icon("play") }}</button>
+          <span class="num">{{ tr.position }}</span>
+          <span class="name" title="{{ tr.title }}">{{ tr.title }}</span>
+          <span class="dur">{{ tr.duration|clock if tr.duration else "" }}</span>
+          <a class="muted" href="/albums/{{ item.id }}/track/{{ tr.id }}" download="{{ tr.original_name }}" aria-label="{{ _('Download') }}: {{ tr.title }}" title="{{ _('Download') }}">{{ icon("download") }}</a>
+        </li>
+        {% endfor %}
+      </ol>
+      <details>
+        <summary>{{ _("Rename and reorder") }}</summary>
+        <form class="trackedit" method="post" action="/albums/{{ item.id }}/tracks">
+          {% for tr in tracks %}
+          <div class="row">
+            <input type="number" name="pos_{{ tr.id }}" value="{{ tr.position }}" min="1" max="{{ tracks|length }}" aria-label="{{ _('Position') }}">
+            <input name="title_{{ tr.id }}" value="{{ tr.title }}" maxlength="120" aria-label="{{ _('Title') }}">
+          </div>
+          {% endfor %}
+          <p class="hint">{{ _("Give a track a new number to move it; the others follow") }}</p>
+          <button class="btn" type="submit">{{ _("Save tracks") }}</button>
+        </form>
+      </details>
+    </section>
+
+    <form method="post" action="/items/{{ item.id }}/delete" onsubmit="return confirm({{ _('Feed this item to the dragon? It cannot be undone.')|tojson|forceescape }})">
+      <button class="btn danger" type="submit">{{ icon("trash") }}{{ _("Delete") }}</button>
+    </form>
+  </div>
+</div>
+<script src="/static/tagfield.js" defer></script>
+<script>
+  (function () {
+    var audio = document.getElementById("player"), now = document.getElementById("now"), label = {{ _("Now playing")|tojson }};
+    var rows = Array.prototype.slice.call(document.querySelectorAll("#tracklist [data-track]")), cur = -1;
+    function mark() {
+      rows.forEach(function (r, k) {
+        r.classList.toggle("playing", k === cur);
+        r.querySelector(".play").setAttribute("aria-pressed", String(k === cur && !audio.paused));
+      });
+      now.innerHTML = "";
+      if (cur >= 0) { var b = document.createElement("b"); b.textContent = rows[cur].dataset.title; now.append(label + ": ", b); }
+    }
+    function start(i) { if (i < 0 || i >= rows.length) return; cur = i; audio.src = rows[i].dataset.src; audio.play(); mark(); }
+    rows.forEach(function (r, i) {
+      r.querySelector(".play").addEventListener("click", function () {
+        if (i !== cur) start(i); else if (audio.paused) audio.play(); else audio.pause();
+      });
+    });
+    audio.addEventListener("play", mark); audio.addEventListener("pause", mark);
+    audio.addEventListener("ended", function () { if (cur + 1 < rows.length) start(cur + 1); else mark(); });
+  })();
+</script>
+{% endblock %}

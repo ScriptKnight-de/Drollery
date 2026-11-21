@@ -30,6 +30,8 @@ class Provider(BaseModel):
 
 class Settings(BaseModel):
     max_upload_mb: int = 500
+    max_album_mb: int = 2048          # all the tracks of one album together (also the unpacked size of a ZIP)
+    max_album_tracks: int = 500
     worker_concurrency: int = 1
     job_max_attempts: int = 3
     fetch_timeout: int = 900

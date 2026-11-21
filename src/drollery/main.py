@@ -16,10 +16,11 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import __version__, accounts, db, i18n, media, pipeline, shares
+from . import __version__, accounts, albums, db, i18n, media, pipeline, shares
 from .config import get_settings
 from .deps import LoginRequired, SetupRequired, api_auth, web_auth
 from .routes_auth import router as auth_router
+from .routes_album import router as album_router, files as album_files_router, api as album_api_router
 from .routes_card import files as card_files_router, router as card_router
 from .routes_share import api as share_api_router, manage as share_manage_router, public as share_public_router, share_context, FILE_HEADERS
 from .routes_settings import router as settings_router
@@ -72,6 +73,9 @@ app.include_router(auth_router)
 app.include_router(settings_router)
 app.include_router(card_router)
 app.include_router(card_files_router)
+app.include_router(album_router)
+app.include_router(album_files_router)
+app.include_router(album_api_router)
 app.include_router(share_public_router)
 
 
@@ -154,7 +158,7 @@ async def _save_upload(up: UploadFile) -> tuple[int, bool]:
 
 def _public(item: dict) -> dict:
     out = {k: v for k, v in item.items() if k not in ("sha256", "title_locked", "has_thumb", "has_card", "card_t", "card_x", "card_y", "card_s")}
-    out["url"] = f"/media/{item['id']}"
+    out["url"] = f"/media/{item['id']}" if item["kind"] != "album" else None          # an album has tracks, not one file
     out["thumb_url"] = f"/thumb/{item['id']}" if item["has_thumb"] else None
     out["card_url"] = f"/card/{item['id']}" if item["has_card"] else out["thumb_url"]
     return out
@@ -177,6 +181,8 @@ def _delete_item(item: dict) -> None:
         c.execute("DELETE FROM items_fts WHERE rowid=?", (item["id"],))
         c.execute("DELETE FROM items WHERE id=?", (item["id"],))
     pipeline.media_path(item).unlink(missing_ok=True)
+    if item["kind"] == "album":
+        albums.remove_files(item)
     pipeline.thumb_path(item).unlink(missing_ok=True)
     pipeline.card_path(item).unlink(missing_ok=True)
 
@@ -292,8 +298,9 @@ def home(request: Request, q: str = "", kind: str = "", tag: str = "", src: str 
         items = db.search(c, q, kind, tag, PAGE, page * PAGE, src)
         counts = {r["kind"]: r["n"] for r in c.execute("SELECT kind, COUNT(*) n FROM items GROUP BY kind")}
         pending = c.execute("SELECT COUNT(*) FROM jobs WHERE status IN ('queued','running')").fetchone()[0]
+        album_info = albums.summaries(c, [i["id"] for i in items if i["kind"] == "album"])
     tpl = "grid.html" if request.headers.get("hx-request") and not request.headers.get("hx-boosted") else "index.html"
-    return render(request, tpl, items=items, q=q, kind=kind, tag=tag, src=src, page=page, more=len(items) == PAGE, counts=counts, pending=pending)
+    return render(request, tpl, items=items, q=q, kind=kind, tag=tag, src=src, page=page, more=len(items) == PAGE, counts=counts, pending=pending, album_info=album_info)
 
 
 @app.post("/add", dependencies=[Depends(web_auth)])
@@ -318,17 +325,22 @@ def item_page(request: Request, item_id: int):
     item = _get_or_404(item_id)
     with db.tx() as c:
         jobs = [dict(r) for r in c.execute("SELECT * FROM jobs WHERE item_id=? ORDER BY id DESC", (item_id,))]
+        if item["kind"] == "album":
+            return render(request, "album.html", item=item, album=albums.get(c, item_id), tracks=albums.tracks_of(c, item_id))
     return render(request, "item.html", item=item, jobs=jobs, **share_context(request, item))
 
 
 @app.post("/items/{item_id}/edit", dependencies=[Depends(web_auth)])
-def item_edit(item_id: int, title: str = Form(""), description: str = Form(""), tags: str = Form("")):
+def item_edit(item_id: int, title: str = Form(""), description: str = Form(""), tags: str = Form(""), artist: str | None = Form(None)):
     item = _get_or_404(item_id)
     with db.tx() as c:
         if title.strip() != item["title"]:
             c.execute("UPDATE items SET title=?, title_locked=1 WHERE id=?", (title.strip()[:120], item_id))
         c.execute("UPDATE items SET description=?, updated_at=? WHERE id=?", (description.strip()[:2000], time.time(), item_id))
         db.set_user_tags(c, item_id, _parse_tags(tags))
+        if item["kind"] == "album" and artist is not None:
+            c.execute("UPDATE albums SET artist=? WHERE item_id=?", (artist.strip()[:120], item_id))
+            db.reindex(c, item_id)
     return RedirectResponse(f"/items/{item_id}", status_code=303)
 
 

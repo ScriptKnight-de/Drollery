@@ -12,6 +12,7 @@
     <button class="btn primary" type="submit">{{ _("Add") }}</button>
   </div>
 </form>
+<p class="add-more"><a class="btn small" href="/albums/new">{{ icon("disc") }}{{ _("Add an album") }}</a></p>
 
 <form class="toolbar" method="get" action="/" hx-get="/" hx-target="#grid" hx-swap="innerHTML"
       hx-trigger="input changed delay:250ms from:#q, change from:.seg" hx-push-url="false">
@@ -22,7 +23,7 @@
   </div>
   <div class="seg" role="radiogroup" aria-label="{{ _('Type') }}">
     <label><input type="radio" name="kind" value="" {{ "checked" if not kind }}><span>{{ _("All") }} <i>{{ counts.values()|sum }}</i></span></label>
-    {% for k, label in (("image",_("Images")),("video",_("Video")),("audio",_("Audio"))) %}
+    {% for k, label in (("image",_("Images")),("video",_("Video")),("audio",_("Audio")),("album",_("Albums"))) %}
     <label><input type="radio" name="kind" value="{{ k }}" {{ "checked" if kind == k }}><span>{{ label }} <i>{{ counts.get(k, 0) }}</i></span></label>
     {% endfor %}
   </div>

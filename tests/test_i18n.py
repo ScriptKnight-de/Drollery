@@ -135,7 +135,7 @@ def test_every_page_renders_in_german_without_stray_placeholders(client):
         r = client.get(url)
         assert r.status_code == 200, url
         assert 'lang="de"' in r.text, url
-        text = re.sub(r"<script.*?</script>|<style.*?</style>|<pre.*?</pre>|<code.*?</code>|data-remove=\"[^\"]*\"", "", r.text, flags=re.S)
+        text = re.sub(r"<script.*?</script>|<style.*?</style>|<pre.*?</pre>|<code.*?</code>|data-[\w-]+=\"[^\"]*\"", "", r.text, flags=re.S)
         assert not re.search(r"\{(n|name|base|url|id|tag|title|when|path|file|link|target|browse|t)\}", text), f"raw placeholder on {url}"
     shared = client.get(f"/s/{token}")
     assert shared.status_code == 200 and "Herunterladen" in shared.text and "Geteilt mit Drollery" in shared.text
@@ -234,10 +234,17 @@ def test_plural_rules_of_the_languages_that_need_more_than_one_or_other():
 def test_every_page_renders_in_every_language(client, code):
     client.post("/settings/profile", data={"email": "", "language": code})
     item = make_item(client)
-    for url in ("/", f"/items/{item}", "/jobs", "/settings/profile", "/settings/security", "/settings/keys", "/settings/ai", "/settings/shares", "/settings/about"):
+    from test_album import make_mp3, upload
+    import tempfile
+    with tempfile.TemporaryDirectory() as td:
+        upload(client, [make_mp3(Path(td) / "a.mp3", "Song", 1, cover=None)], title="Album A")
+    from drollery import db as _db
+    with _db.tx() as c:
+        album = c.execute("SELECT id FROM items WHERE kind='album'").fetchone()["id"]
+    for url in ("/", f"/items/{item}", f"/items/{album}", "/albums/new", "/jobs", "/settings/profile", "/settings/security", "/settings/keys", "/settings/ai", "/settings/shares", "/settings/about"):
         r = client.get(url)
         assert r.status_code == 200 and f'lang="{code}"' in r.text, (code, url)
-        text = re.sub(r"<script.*?</script>|<style.*?</style>|<pre.*?</pre>|<code.*?</code>|data-remove=\"[^\"]*\"", "", r.text, flags=re.S)
+        text = re.sub(r"<script.*?</script>|<style.*?</style>|<pre.*?</pre>|<code.*?</code>|data-[\w-]+=\"[^\"]*\"", "", r.text, flags=re.S)
         assert not re.search(r"\{(n|name|base|url|id|tag|title|when|path|file|link|target|browse|t)\}", text), (code, url)
     menu = client.get("/").text.split('id="lang-menu"')[1].split("</details>")[0]
     assert menu.count('class="flag"') == len(i18n.languages())                 # every language is offered, each with its flag

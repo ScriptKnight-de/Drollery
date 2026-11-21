@@ -96,8 +96,11 @@ def create_share(request: Request, item_id: int, preset: str = Form("7d"), amoun
                  label: str = Form(""), next: str = Form("")):
     back = shares.safe_next(next, f"/items/{item_id}")
     with db.tx() as c:
-        if db.get_item(c, item_id) is None:
+        found = db.get_item(c, item_id)
+        if found is None:
             raise HTTPException(404, "item not found")
+    if found["kind"] == "album":
+        return flash_redirect(back, t("Albums cannot be shared yet"), "error")
     seconds, err = shares.expiry_seconds(preset, amount, unit)
     if err:
         return flash_redirect(back + "#share", err, "error")
@@ -172,6 +175,8 @@ def api_list_shares(request: Request, item_id: int):
 async def api_create_share(request: Request, item_id: int):
     """Body: {"expires_in": seconds or null for a permanent link, "label": "optional"}."""
     item = _item_or_404(item_id)
+    if item["kind"] == "album":
+        raise HTTPException(422, "albums cannot be shared yet")
     body = await request.json() if request.headers.get("content-length", "0") != "0" else {}
     expires_in = body.get("expires_in")
     if expires_in is not None:

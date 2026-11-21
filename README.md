@@ -12,6 +12,7 @@ instantly with full-text search.
 
 - **Fast full-text search** (SQLite FTS5, prefix matching, ranked): titles, descriptions, tags, transcripts, source URL.
 - **Images, video and audio.** Thumbnails and metadata via ffmpeg. Duplicates (same content) are detected and not stored twice.
+- **Albums and audiobooks.** A whole album (or audiobook) sits behind one library card with its cover as the card image. Upload the audio files or one ZIP; the tracks are ordered by their track numbers, and the cover comes from your upload, from the ZIP, or from the picture inside the first track. The album page plays the tracks one after another and can download everything as a ZIP.
 - **Add by upload or by link.** Direct media URLs, anything `yt-dlp` supports, and gallery pages via `gallery-dl` — downloaded by a background job.
 - **Optional, pluggable AI** — nothing is required, nothing is bundled, everything is configurable (see below). Jobs are queued, retried, and run one at a time so a Raspberry Pi stays responsive.
 - **Your edits win.** A title you set by hand is never overwritten by AI.
@@ -102,6 +103,7 @@ All endpoints take `Authorization: Bearer <api key>`. Create keys per device in 
 | `GET` | `/api/v1/items?q=&kind=&tag=&tag_source=&limit=&offset=` | search / list. Items carry `tags` (yours) and `ai_tags`; `tag_source` is `user` or `ai` |
 | `GET` | `/api/v1/items/{id}` | one item |
 | `POST` | `/api/v1/items` | upload (`multipart`, field `file`) |
+| `POST` | `/api/v1/albums` | create an album (`multipart`: `files` = audio files and/or ZIPs, optional `cover`, `title`, `artist`, `subtype` = `album`\|`audiobook`, `description`, `tags`) |
 | `POST` | `/api/v1/ingest` | `{"url": "https://…"}` — queue a download |
 | `PATCH` | `/api/v1/items/{id}` | `{"title","description","tags"}` |
 | `DELETE` | `/api/v1/items/{id}` | |
@@ -109,7 +111,7 @@ All endpoints take `Authorization: Bearer <api key>`. Create keys per device in 
 | `DELETE` | `/api/v1/shares/{id}` | remove a share link |
 | `GET` | `/api/v1/jobs` | queue state |
 | `POST` | `/api/v1/jobs/{id}/retry` | run one failed job again (`409` if it isn't failed) |
-| `GET` | `/media/{id}`, `/thumb/{id}` | files |
+| `GET` | `/media/{id}`, `/thumb/{id}` | files. An album has `url: null`; use `/albums/{id}/track/{track}`, `/albums/{id}/cover` and `/albums/{id}/download` |
 
 ## Security notes
 

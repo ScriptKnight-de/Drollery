@@ -10,7 +10,7 @@ from .config import get_settings
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS items (
   id INTEGER PRIMARY KEY,
-  kind TEXT NOT NULL,              -- image | video | audio
+  kind TEXT NOT NULL,              -- image | video | audio | album
   title TEXT NOT NULL DEFAULT '',
   title_locked INTEGER NOT NULL DEFAULT 0,
   description TEXT NOT NULL DEFAULT '',
@@ -35,6 +35,23 @@ CREATE TABLE IF NOT EXISTS items (
   updated_at REAL NOT NULL
 );
 CREATE INDEX IF NOT EXISTS items_created ON items(created_at DESC);
+CREATE TABLE IF NOT EXISTS albums (                   -- extra facts of an item whose kind is 'album' (a music album or an audiobook)
+  item_id INTEGER PRIMARY KEY REFERENCES items(id) ON DELETE CASCADE,
+  artist TEXT NOT NULL DEFAULT '',
+  subtype TEXT NOT NULL DEFAULT 'album'               -- album | audiobook
+);
+CREATE TABLE IF NOT EXISTS tracks (
+  id INTEGER PRIMARY KEY,
+  item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+  position INTEGER NOT NULL,
+  title TEXT NOT NULL DEFAULT '',
+  filename TEXT NOT NULL,                             -- file inside the album's folder
+  original_name TEXT NOT NULL DEFAULT '',
+  mime TEXT NOT NULL,
+  size INTEGER NOT NULL DEFAULT 0,
+  duration REAL
+);
+CREATE INDEX IF NOT EXISTS tracks_item ON tracks(item_id, position);
 CREATE TABLE IF NOT EXISTS tags (
   item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
   tag TEXT NOT NULL,
@@ -210,9 +227,14 @@ def reindex(c: sqlite3.Connection, item_id: int) -> None:
     user_tags = " ".join(r["tag"] for r in c.execute("SELECT tag FROM tags WHERE item_id=? AND source='user'", (item_id,)))
     ai_tags = " ".join(r["tag"] for r in c.execute("SELECT tag FROM tags WHERE item_id=? AND source='ai'", (item_id,)))
     source = f"{row['source_url']} {row['source_meta']} {row['original_name']}"
+    transcript = row["transcript"]
+    if row["kind"] == "album":                                      # an album is found by its artist and by its track titles
+        artist = c.execute("SELECT artist FROM albums WHERE item_id=?", (item_id,)).fetchone()
+        source += f" {artist['artist'] if artist else ''}"
+        transcript += " " + " ".join(r["title"] for r in c.execute("SELECT title FROM tracks WHERE item_id=? ORDER BY position", (item_id,)))
     c.execute(
         "INSERT INTO items_fts(rowid,title,description,tags,ai_tags,transcript,ocr,source) VALUES (?,?,?,?,?,?,?,?)",
-        (item_id, row["title"], row["description"], user_tags, ai_tags, row["transcript"], row["ocr"], source),
+        (item_id, row["title"], row["description"], user_tags, ai_tags, transcript, row["ocr"], source),
     )
 
 

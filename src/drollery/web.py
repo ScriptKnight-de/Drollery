@@ -24,6 +24,19 @@ def _timestamp(value) -> str:
 
 
 templates.env.filters["timestamp"] = _timestamp
+
+
+def _clock(seconds) -> str:
+    """72 -> '1:12', 3725 -> '1:02:05'."""
+    try:
+        total = int(seconds or 0)
+    except (TypeError, ValueError):
+        return "-"
+    h, rest = divmod(total, 3600)
+    return f"{h}:{rest // 60:02d}:{rest % 60:02d}" if h else f"{rest // 60}:{rest % 60:02d}"
+
+
+templates.env.filters["clock"] = _clock
 templates.env.globals.update({"_": i18n.t, "_n": i18n.tn, "lang": i18n.current, "available_languages": i18n.languages, "flag_of": i18n.flag})
 
 

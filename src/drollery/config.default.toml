@@ -2,6 +2,8 @@
 # Restart the container after changes.
 
 max_upload_mb = 500       # per-file upload limit
+max_album_mb = 2048       # all tracks of one album together, and the unpacked size of a ZIP
+max_album_tracks = 500
 worker_concurrency = 1    # background jobs at once; keep at 1 on a Raspberry Pi
 job_max_attempts = 3      # retries before a job is marked failed
 fetch_timeout = 900       # seconds allowed for one URL download

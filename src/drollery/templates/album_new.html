@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% from "icons.html" import icon %}
+{% block title %}{{ _("New album") }} · Drollery{% endblock %}
+{% block content %}
+<a class="back" href="/">{{ icon("arrow-left") }}{{ _("Back to library") }}</a>
+<div class="page-head"><h1>{{ _("Add an album") }}</h1></div>
+<p class="muted lead">{{ _("Put a whole music album or audiobook behind one card. Add the audio files, or one ZIP that holds them. The tracks are put in order by their track numbers, then by file name.") }}</p>
+{% if error %}<p class="note error" role="alert">{{ error }}</p>{% endif %}
+
+<form class="panel form narrow-form" method="post" action="/albums" enctype="multipart/form-data" id="album-form">
+  <label class="drop">
+    {{ icon("upload") }}<span id="picked-text" data-one="{{ _('1 file chosen') }}" data-many="{{ _('{n} files chosen') }}">{{ _("Choose the tracks or a ZIP") }}</span>
+    <input type="file" name="files" multiple required accept="audio/*,.mp3,.m4a,.m4b,.aac,.flac,.ogg,.oga,.opus,.wav,.zip,application/zip">
+  </label>
+
+  <div class="kindpick" role="radiogroup" aria-label="{{ _('Type') }}">
+    <label><input type="radio" name="subtype" value="album" {{ "checked" if form.subtype != "audiobook" }}> {{ icon("disc") }}{{ _("Music album") }}</label>
+    <label><input type="radio" name="subtype" value="audiobook" {{ "checked" if form.subtype == "audiobook" }}> {{ icon("book") }}{{ _("Audiobook") }}</label>
+  </div>
+
+  <div class="duo">
+    <label>{{ _("Title") }} <input name="title" value="{{ form.title or '' }}" maxlength="120"><span class="hint">{{ _("Optional. Taken from the files when left empty") }}</span></label>
+    <label>{{ _("Artist") }} <input name="artist" value="{{ form.artist or '' }}" maxlength="120"><span class="hint">{{ _("Optional. Taken from the files when left empty") }}</span></label>
+  </div>
+
+  <label>{{ _("Cover picture") }} <input type="file" name="cover" accept="image/*"><span class="hint">{{ _("Optional. Without one, Drollery uses a picture from the ZIP or from the first track that carries one") }}</span></label>
+  <label>{{ _("Description") }} <textarea name="description" rows="3">{{ form.description or '' }}</textarea></label>
+
+  <div class="fld" id="tag-fld" data-remove="{{ _('Remove {tag}') }}">
+    <label for="tags-in">{{ _("Your tags") }}</label>
+    <input id="tags-in" name="tags" value="{{ form.tags or '' }}" placeholder="{{ _('Separate with spaces') }}" autocomplete="off">
+  </div>
+
+  <button class="btn primary" type="submit">{{ icon("plus") }}{{ _("Create album") }}</button>
+</form>
+<script src="/static/tagfield.js" defer></script>
+<script>
+  (function () {
+    var input = document.querySelector("#album-form input[name=files]"), text = document.getElementById("picked-text");
+    if (!input || !text) return;
+    input.addEventListener("change", function () {
+      var n = input.files.length;
+      if (n) text.textContent = n === 1 ? text.dataset.one : text.dataset.many.replace("{n}", n);
+    });
+  })();
+</script>
+{% endblock %}

@@ -50,11 +50,14 @@ def probe(path: Path) -> dict:
     streams = data.get("streams", [])
     video = next((s for s in streams if s.get("codec_type") == "video"), {})
     duration = data.get("format", {}).get("duration")
+    tags = {str(k).lower(): str(v).strip() for k, v in (data.get("format", {}).get("tags") or {}).items()}   # ID3 / Vorbis / MP4 tags
     return {
         "width": video.get("width"),
         "height": video.get("height"),
         "duration": float(duration) if duration not in (None, "N/A") else None,
         "has_audio": any(s.get("codec_type") == "audio" for s in streams),
+        "tags": tags,
+        "has_cover": any(s.get("codec_type") == "video" and s.get("disposition", {}).get("attached_pic") for s in streams),
     }
 
 
@@ -126,3 +129,17 @@ def make_card(src: Path, dst: Path, kind: str, t: float, x: float, y: float, s: 
         err = r.stderr.strip()[:2000]
     tmp.unlink(missing_ok=True)
     raise MediaError(f"could not render the card image: {err}")
+
+
+def make_cover(src: Path, dst: Path) -> bool:
+    """Album cover: an image file, or the picture embedded in an audio file, as a JPEG of at most 1200 px.
+    Returns False when there is no picture to take."""
+    tmp = dst.with_suffix(".tmp.jpg")
+    tmp.unlink(missing_ok=True)
+    r = _run(["ffmpeg", "-y", "-v", "error", "-i", str(src), "-an", "-frames:v", "1",
+              "-vf", "scale='min(1200,iw)':-2", "-q:v", "3", str(tmp)])
+    if r.returncode == 0 and tmp.exists() and tmp.stat().st_size > 0:
+        tmp.replace(dst)
+        return True
+    tmp.unlink(missing_ok=True)
+    return False

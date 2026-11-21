@@ -84,6 +84,8 @@ def plan_jobs(c, item_id: int) -> list[str]:
     """Queue the background jobs that the enabled providers can do for this item."""
     item = db.get_item(c, item_id)
     queued = []
+    if item["kind"] == "album":
+        return queued                        # an album is many tracks; there is nothing to transcribe or describe as a whole
     has_speech = item["kind"] != "image" and item["has_audio"] and aisettings.enabled("transcribe")
     if has_speech:
         queued.append("transcribe")          # transcribe chains into describe when it finishes
