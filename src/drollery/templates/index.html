@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<form class="add card" method="post" action="/add" enctype="multipart/form-data">
+  <input type="file" name="files" multiple accept="image/*,video/*,audio/*">
+  <input type="url" name="url" placeholder="…or paste a link (video, image, gallery page)">
+  <button>Add</button>
+</form>
+{% if pending %}<p class="muted">{{ pending }} background job{{ "s" if pending != 1 }} running — <a href="/jobs">view</a></p>{% endif %}
+
+<form class="search" method="get" action="/" hx-get="/" hx-target="#grid" hx-trigger="input changed delay:250ms from:#q, change from:#kind" hx-push-url="false" hx-include="#kind,#tag">
+  <input id="q" type="search" name="q" value="{{ q }}" placeholder="Search titles, descriptions, tags, transcripts, text in images…" autofocus>
+  <select id="kind" name="kind">
+    <option value="">All ({{ counts.values()|sum }})</option>
+    {% for k in ("image","video","audio") %}<option value="{{ k }}" {{ "selected" if kind == k }}>{{ k }} ({{ counts.get(k, 0) }})</option>{% endfor %}
+  </select>
+  <input type="hidden" id="tag" name="tag" value="{{ tag }}">
+</form>
+{% if tag %}<p>Tag: <b>{{ tag }}</b> · <a href="/?q={{ q|urlencode }}&kind={{ kind|urlencode }}">clear</a></p>{% endif %}
+<section id="grid" class="grid">{% include "grid.html" %}</section>
+{% endblock %}

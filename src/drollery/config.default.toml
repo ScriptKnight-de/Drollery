@@ -1,0 +1,49 @@
+# Drollery configuration. Copied to <data>/config.toml on first start; edit that copy.
+# Restart the container after changes.
+
+max_upload_mb = 500       # per-file upload limit
+worker_concurrency = 1    # background jobs at once; keep at 1 on a Raspberry Pi
+job_max_attempts = 3      # retries before a job is marked failed
+fetch_timeout = 900       # seconds allowed for one URL download
+fetch_max_files = 4       # max files kept from a single page/gallery URL
+
+# --- AI providers ---------------------------------------------------------
+# Every provider is optional. type = "none" disables it (the default), so a
+# fresh install is just a fast, searchable library. Jobs run in the background.
+#
+# Provider types:
+#   "openai"  any OpenAI-compatible HTTP API: Ollama (http://host.docker.internal:11434/v1),
+#             llama.cpp server, LocalAI, faster-whisper-server, OpenAI, OpenRouter, ...
+#   "command" run a local program; "{input}" is replaced by the file path and the
+#             program must print the result to stdout (e.g. whisper.cpp, tesseract)
+#   "tesseract" OCR shortcut (needs the image built with WITH_TESSERACT=1)
+
+# Speech-to-text for audio and video clips.
+[transcribe]
+type = "none"
+# type = "openai"
+# base_url = "http://whisper:8000/v1"
+# model = "Systran/faster-whisper-tiny"
+# api_key_env = "TRANSCRIBE_API_KEY"   # name of an env var, not the key itself
+# language = ""                        # empty = auto-detect
+# timeout = 600
+#
+# type = "command"
+# command = "whisper-cli -m /models/ggml-tiny.bin -f {input} -nt"
+
+# Names, describes and tags items. Gets the preview image and/or the transcript.
+[describe]
+type = "none"
+# type = "openai"
+# base_url = "http://host.docker.internal:11434/v1"
+# model = "moondream"                  # any vision model for images; any chat model for audio
+# api_key_env = ""
+# send_image = true                    # set false for text-only models (uses transcript only)
+# timeout = 300
+# prompt = ""                          # empty = built-in prompt; "{tags}" is replaced by existing tags
+
+# Text found inside images (memes are mostly text).
+[ocr]
+type = "none"
+# type = "tesseract"
+# langs = "eng"                        # e.g. "eng+deu"

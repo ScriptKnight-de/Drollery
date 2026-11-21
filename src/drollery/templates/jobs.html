@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Jobs · Drollery{% endblock %}
+{% block content %}
+<h1>Background jobs</h1>
+<form method="post" action="/jobs/retry-failed"><button class="sec">Retry all failed</button></form>
+<table>
+  <tr><th>#</th><th>Type</th><th>Status</th><th>For</th><th>Error</th></tr>
+  {% for j in jobs %}
+  <tr class="{{ j.status }}"><td>{{ j.id }}</td><td>{{ j.type }}</td><td>{{ j.status }}{% if j.attempts %} ({{ j.attempts }}){% endif %}</td>
+      <td>{% if j.item_id %}<a href="/items/{{ j.item_id }}">{{ j.label or j.item_id }}</a>{% else %}{{ j.label }}{% endif %}</td>
+      <td class="err">{{ j.error }}</td></tr>
+  {% else %}<tr><td colspan="5" class="muted">No jobs yet.</td></tr>{% endfor %}
+</table>
+{% endblock %}

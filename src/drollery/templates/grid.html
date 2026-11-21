@@ -1,0 +1,14 @@
+{% for it in items %}
+<a class="card tile" href="/items/{{ it.id }}">
+  {% if it.has_thumb %}<img loading="lazy" src="/thumb/{{ it.id }}" alt="">
+  {% else %}<div class="ph">{{ "♪" if it.kind == "audio" else "?" }}</div>{% endif %}
+  <span class="kind">{{ it.kind }}{% if it.duration and it.kind != "image" %} · {{ "%d:%02d"|format(it.duration // 60, it.duration % 60) }}{% endif %}</span>
+  <span class="t">{{ it.title }}</span>
+</a>
+{% else %}
+<p class="muted">{% if q or tag or kind %}Nothing matches.{% else %}Nothing here yet. Add a file or paste a link above.{% endif %}</p>
+{% endfor %}
+{% if more %}
+<div class="more" hx-get="/?q={{ q|urlencode }}&kind={{ kind|urlencode }}&tag={{ tag|urlencode }}&page={{ page + 1 }}"
+     hx-trigger="revealed" hx-swap="outerHTML"></div>
+{% endif %}
