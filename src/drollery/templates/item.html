@@ -11,20 +11,24 @@
       {% elif item.kind == "video" %}<video src="/media/{{ item.id }}" controls preload="metadata" {% if item.has_thumb %}poster="/thumb/{{ item.id }}"{% endif %}></video>
       {% else %}<audio src="/media/{{ item.id }}" controls preload="metadata"></audio>{% endif %}
     </div>
-    <p class="meta-line">
-      <a href="/media/{{ item.id }}" download="{{ item.original_name }}">{{ icon("download") }}{{ _("Download") }}</a>
-      {% if item.kind != "audio" %}<a href="/items/{{ item.id }}/card" data-popup="{{ _('Card image') }}">{{ icon("crop") }}{{ _("Card image") }}</a>{% endif %}
-    </p>
-    <details class="below" {{ "open" if jobs }}><summary>{{ _("Background jobs") }} <i>{{ jobs|length }}</i></summary>
-      {% for j in jobs %}<div class="job"><span class="dot {{ j.status }}"></span>{{ job_type(j.type) }} · {{ _(j.status) }}{{ errbox(j.error) }}{% if j.status == "failed" %}<form method="post" action="/jobs/{{ j.id }}/retry" class="inline"><input type="hidden" name="next" value="/items/{{ item.id }}"><button class="link" type="submit">{{ _("Retry") }}</button></form>{% endif %}</div>{% endfor %}
+    {% set states = jobs|map(attribute="status")|list %}
+    {% set state = "failed" if "failed" in states else "running" if "running" in states else "queued" if "queued" in states else "done" if states else "idle" %}
+    <div class="toolbar" role="group" aria-label="{{ _('Actions') }}">
+      <a class="btn small" href="/media/{{ item.id }}" download="{{ item.original_name }}">{{ icon("download") }}{{ _("Download") }}</a>
+      {% if item.kind != "audio" %}<a class="btn small" href="/items/{{ item.id }}/card" data-popup="{{ _('Card image') }}">{{ icon("crop") }}{{ _("Card image") }}</a>{% endif %}
+      <button class="btn small" type="button" id="jobs-toggle" aria-controls="jobs-panel" aria-expanded="true" title="{{ _('Background jobs') }}: {{ _(state) if states else _('None yet') }}"><span class="dot {{ state }}" aria-hidden="true"></span>{{ _("Background jobs") }}</button>
+      <form method="post" action="/items/{{ item.id }}/delete" data-reload onsubmit="return confirm({{ _('Feed this item to the dragon? It cannot be undone.')|tojson|forceescape }})">
+        <button class="btn small danger" type="submit">{{ icon("trash") }}{{ _("Delete") }}</button>
+      </form>
+    </div>
+    <section class="panel stack jobs" id="jobs-panel" data-open="{{ 1 if state in ('failed', 'running', 'queued') else 0 }}">
+      <h2>{{ _("Background jobs") }}</h2>
+      {% for j in jobs %}<div class="job"><span class="dot {{ j.status }}"></span>{{ job_type(j.type) }} · {{ _(j.status) }}{{ errbox(j.error) }}{% if j.status == "failed" %}<form method="post" action="/jobs/{{ j.id }}/retry" class="inline"><input type="hidden" name="next" value="/items/{{ item.id }}"><button class="link" type="submit">{{ _("Retry") }}</button></form>{% endif %}</div>
+      {% else %}<p class="hint">{{ _("None yet") }}</p>{% endfor %}
       {% if providers.transcribe or providers.describe %}
-      <form method="post" action="/items/{{ item.id }}/reprocess"><button class="btn" type="submit">{{ icon("retry") }}{{ _("Run again") }}</button></form>
+      <form method="post" action="/items/{{ item.id }}/reprocess"><button class="btn small" type="submit">{{ icon("retry") }}{{ _("Run again") }}</button></form>
       {% else %}<p class="muted">{{ _("No AI providers are enabled. See {file} in the data volume.", file="<code>config.toml</code>")|safe }}</p>{% endif %}
-    </details>
-
-    <form class="below" method="post" action="/items/{{ item.id }}/delete" data-reload onsubmit="return confirm({{ _('Feed this item to the dragon? It cannot be undone.')|tojson|forceescape }})">
-      <button class="btn danger" type="submit">{{ icon("trash") }}{{ _("Delete") }}</button>
-    </form>
+    </section>
   </div>
 
   <div class="side" id="side">
@@ -87,6 +91,16 @@
 </div>
 {% include "popup_dialog.html" %}
 <script src="/static/popup.js" defer></script>
+<script>
+// the jobs panel folds away behind its button; it stays open while something is queued, running or failed
+(function () {
+  var b = document.getElementById("jobs-toggle"), p = document.getElementById("jobs-panel");
+  if (!b || !p) return;
+  function set(open) { p.hidden = !open; b.setAttribute("aria-expanded", open); }
+  b.addEventListener("click", function () { set(p.hidden); });
+  set(p.dataset.open === "1");
+})();
+</script>
 <script src="/static/tagfield.js" defer></script>
 <script src="/static/sharepanel.js" defer></script>
 <script src="/static/keepplaying.js" defer></script>

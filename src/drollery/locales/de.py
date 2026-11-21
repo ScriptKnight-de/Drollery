@@ -595,4 +595,5 @@ MESSAGES = {
     "Your picture is the card image now. Crop it below if you like": "Dein Bild ist jetzt das Kartenbild. Schneide es unten bei Bedarf zu",
     "Your original file is never changed. You can crop it afterwards": "Deine Originaldatei bleibt unverändert. Du kannst das Bild danach zuschneiden",
     "Choose a video frame again": "Videobild neu wählen",
+    "Actions": "Aktionen",
 }

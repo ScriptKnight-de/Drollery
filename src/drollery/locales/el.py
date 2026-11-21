@@ -594,4 +594,5 @@ MESSAGES = {
     "Your picture is the card image now. Crop it below if you like": "Η εικόνα σου είναι τώρα η εικόνα της κάρτας. Περίκοψέ την παρακάτω αν θέλεις",
     "Your original file is never changed. You can crop it afterwards": "Το αρχικό σου αρχείο δεν αλλάζει ποτέ. Μπορείς να περικόψεις την εικόνα μετά",
     "Choose a video frame again": "Επιλογή καρέ ξανά",
+    "Actions": "Ενέργειες",
 }

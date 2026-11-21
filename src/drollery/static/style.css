@@ -338,6 +338,10 @@ audio::-webkit-media-controls-panel { background-color: var(--s1); }
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--tx3); margin-right: 8px; }
 .job .dot { margin-right: 0; }
 .dot.done { background: var(--ok); } .dot.failed { background: var(--bad); } .dot.running, .dot.run { background: var(--ac); }
+.dot.queued { background: var(--tx2); } .dot.idle { background: transparent; box-shadow: inset 0 0 0 2px var(--tx3); }
+.dot.running { animation: dot-breathe 1.6s ease-in-out infinite; }
+@keyframes dot-breathe { 50% { opacity: .35; } }
+@media (prefers-reduced-motion: reduce) { .dot.running { animation: none; } }
 @media (max-width: 800px) { .detail { grid-template-columns: 1fr; } .add { grid-template-columns: 1fr; } }
 
 /* jobs + login */
@@ -506,4 +510,9 @@ body.embed { background: var(--s1); background-image: none; }
 .own-picture label { flex: 1 1 260px; }
 .own-picture .hint { flex: 1 0 100%; margin: 0; order: 3; }
 .own-picture .btn { order: 2; }
-.below { margin-top: 20px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.toolbar form { margin: 0; }
+.toolbar .btn .dot { margin-right: 0; }
+.jobs { margin-top: 12px; }
+.jobs h2 { margin: 0; font-size: 16px; }
+.jobs[hidden] { display: none; }

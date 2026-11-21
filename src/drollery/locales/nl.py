@@ -594,4 +594,5 @@ MESSAGES = {
     "Your picture is the card image now. Crop it below if you like": "Je afbeelding is nu de kaartafbeelding. Snijd haar hieronder bij als je wilt",
     "Your original file is never changed. You can crop it afterwards": "Je originele bestand blijft ongewijzigd. Daarna kun je de afbeelding bijsnijden",
     "Choose a video frame again": "Opnieuw een beeld uit de video kiezen",
+    "Actions": "Acties",
 }

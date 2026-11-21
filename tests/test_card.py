@@ -192,7 +192,7 @@ def test_item_facts_sit_in_a_details_box_not_under_the_picture(client, image_id)
     box = page.split('id="details"')[1].split("</section>")[0]
     for want in ("<dt>Type</dt><dd>Image</dd>", "<dt>Format</dt><dd>image/png</dd>", "<dt>Size</dt>", "<dt>Dimensions</dt><dd>200×100</dd>", "<dt>Source</dt>", "example.org/halves.png"):
         assert want in box, want
-    line = page.split('class="meta-line"')[1].split("</p>")[0]
+    line = page.split('class="toolbar"')[1].split("</div>")[0]
     assert "image/png" not in line and "Source" not in line and "Download" in line
 
 
@@ -243,3 +243,19 @@ def test_jobs_and_delete_sit_under_the_picture(client, image_id):
     left, right = page.split('<div class="side" id="side">')
     assert "Background jobs" in left and f'/items/{image_id}/delete' in left and 'Download' in left
     assert "Background jobs" not in right and "/delete" not in right
+
+
+def test_the_actions_share_one_toolbar_and_the_jobs_dot_shows_the_state(client, image_id):
+    page = client.get(f"/items/{image_id}").text
+    bar = page.split('class="toolbar"')[1].split("</div>")[0]
+    assert bar.count('class="btn small') == 4 and "Download" in bar and "Card image" in bar and "Background jobs" in bar and "Delete" in bar
+    states = lambda text: re.findall(r'id="jobs-toggle".*?<span class="dot (\w+)"', text, re.S)
+    with db.tx() as c:
+        have = [dict(r)["status"] for r in c.execute("SELECT * FROM jobs WHERE item_id=?", (image_id,))]
+        c.execute("DELETE FROM jobs WHERE item_id=?", (image_id,))
+    assert states(client.get(f"/items/{image_id}").text) == ["idle"]
+    for status, want in (("queued", "queued"), ("running", "running"), ("done", "done"), ("failed", "failed")):
+        with db.tx() as c:
+            c.execute("DELETE FROM jobs WHERE item_id=?", (image_id,))
+            c.execute("INSERT INTO jobs(item_id, type, status, created_at, updated_at) VALUES (?,?,?,0,0)", (image_id, "describe", status))
+        assert states(client.get(f"/items/{image_id}").text) == [want], status
