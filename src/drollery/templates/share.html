@@ -14,7 +14,7 @@
 {% block content %}
 <article class="share">
   <div class="frame">
-    {% if item.kind == "image" %}<img src="/s/{{ share.token }}/raw/{{ slug }}" alt="{{ item.title }}">
+    {% if item.kind in ("image", "gif") %}<img src="/s/{{ share.token }}/raw/{{ slug }}" alt="{{ item.title }}">
     {% elif item.kind == "video" %}<video src="/s/{{ share.token }}/raw/{{ slug }}" controls playsinline preload="metadata" {% if item.has_thumb %}poster="/s/{{ share.token }}/thumb"{% endif %}></video>
     {% else %}<audio src="/s/{{ share.token }}/raw/{{ slug }}" controls preload="metadata"></audio>{% endif %}
   </div>

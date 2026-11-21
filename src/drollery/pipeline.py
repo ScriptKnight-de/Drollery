@@ -107,7 +107,7 @@ def plan_jobs(c, item_id: int) -> list[str]:
         if aisettings.enabled("transcribe"):
             queued += ["transcribe_track"] * plan_track_jobs(c, item_id)
         return queued
-    has_speech = item["kind"] != "image" and item["has_audio"] and aisettings.enabled("transcribe")
+    has_speech = item["kind"] not in ("image", "gif") and item["has_audio"] and aisettings.enabled("transcribe")
     if has_speech:
         queued.append("transcribe")          # transcribe chains into describe when it finishes
     elif aisettings.enabled("describe") and (item["kind"] != "audio"):

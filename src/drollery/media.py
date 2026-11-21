@@ -20,7 +20,7 @@ for _ext, _mime in {
 }.items():
     mimetypes.add_type(_mime, _ext)
 
-KINDS = ("image", "video", "audio")
+KINDS = ("image", "gif", "video", "audio")      # a GIF is told apart from other pictures: it is stored as kind "gif"
 # Formats that can carry scripts. Served from this origin they would run with the owner's session, so they are refused.
 UNSAFE_MIMES = {"image/svg+xml", "image/svg+xml-compressed"}
 
@@ -32,7 +32,7 @@ class MediaError(Exception):
 def guess(path_or_name: str) -> tuple[str, str]:
     """-> (kind, mime) from the file name, or raise MediaError."""
     mime = mimetypes.guess_type(path_or_name)[0] or ""
-    kind = mime.split("/")[0]
+    kind = "gif" if mime == "image/gif" else mime.split("/")[0]
     if kind not in KINDS or mime in UNSAFE_MIMES:
         raise MediaError(f"unsupported file type: {path_or_name!r}")
     return kind, mime

@@ -11,7 +11,7 @@ from .config import get_settings
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS items (
   id INTEGER PRIMARY KEY,
-  kind TEXT NOT NULL,              -- image | video | audio | album
+  kind TEXT NOT NULL,              -- image | gif | video | audio | album
   title TEXT NOT NULL DEFAULT '',
   title_locked INTEGER NOT NULL DEFAULT 0,
   description TEXT NOT NULL DEFAULT '',
@@ -244,6 +244,8 @@ def init() -> None:
         if rebuild:
             for (item_id,) in c.execute("SELECT id FROM items").fetchall():
                 reindex(c, item_id)
+        # GIFs used to be stored as plain images
+        c.execute("UPDATE items SET kind='gif' WHERE kind='image' AND mime='image/gif'")
         # tracks of albums made before the track index existed
         c.execute("INSERT INTO tracks_fts(rowid,title,transcript) SELECT id,title,transcript FROM tracks WHERE id NOT IN (SELECT rowid FROM tracks_fts)")
         # jobs left 'running' by a crash/restart go back to the queue

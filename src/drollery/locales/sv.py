@@ -577,4 +577,8 @@ MESSAGES = {
     "Sounds": "Ljud",
     "Clip": "Klipp",
     "Sound": "Ljud",
+
+    # ---- gifs
+    "GIFs": "GIF-filer",
+    "GIF": "GIF",
 }

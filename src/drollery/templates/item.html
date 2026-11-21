@@ -7,7 +7,7 @@
 <div class="detail">
   <div>
     <div class="frame">
-      {% if item.kind == "image" %}<img src="/media/{{ item.id }}" alt="{{ item.title }}">
+      {% if item.kind in ("image", "gif") %}<img src="/media/{{ item.id }}" alt="{{ item.title }}">
       {% elif item.kind == "video" %}<video src="/media/{{ item.id }}" controls preload="metadata" {% if item.has_thumb %}poster="/thumb/{{ item.id }}"{% endif %}></video>
       {% else %}<audio src="/media/{{ item.id }}" controls preload="metadata"></audio>{% endif %}
     </div>

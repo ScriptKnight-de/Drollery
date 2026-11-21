@@ -11,7 +11,7 @@ from drollery import db, media, pipeline, providers
     ("a.mkv", "video"), ("a.mp4", "video"), ("a.webm", "video"), ("a.flv", "video"), ("a.ts", "video"), ("a.3gp", "video"),
     ("a.wmv", "video"), ("a.mpg", "video"), ("a.m4v", "video"), ("a.mov", "video"),
     ("a.m4a", "audio"), ("a.ogg", "audio"), ("a.mp3", "audio"), ("a.flac", "audio"), ("a.opus", "audio"), ("a.wav", "audio"),
-    ("a.png", "image"), ("a.jpg", "image"), ("a.gif", "image"), ("a.webp", "image"), ("a.avif", "image"),
+    ("a.png", "image"), ("a.jpg", "image"), ("a.gif", "gif"), ("a.webp", "image"), ("a.avif", "image"),
 ])
 def test_common_containers_are_recognised(name, kind):
     """Python's mimetypes in a slim container knows few of these; a YouTube merge to .mkv was being rejected."""

@@ -44,7 +44,7 @@ def _job_type(name: str) -> str:
     return shown if shown != name else name.replace("_", " ")
 
 
-KIND_NAMES = {"image": i18n.N_("Image"), "video": i18n.N_("Clip"), "audio": i18n.N_("Sound"), "album": i18n.N_("Album")}
+KIND_NAMES = {"image": i18n.N_("Image"), "gif": i18n.N_("GIF"), "video": i18n.N_("Clip"), "audio": i18n.N_("Sound"), "album": i18n.N_("Album")}
 
 
 def _kind_label(kind: str) -> str:

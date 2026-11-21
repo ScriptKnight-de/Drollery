@@ -577,4 +577,8 @@ MESSAGES = {
     "Sounds": "Sonidos",
     "Clip": "Clip",
     "Sound": "Sonido",
+
+    # ---- gifs
+    "GIFs": "GIFs",
+    "GIF": "GIF",
 }
