@@ -37,9 +37,12 @@ PAGE = 40
 
 # ----------------------------------------------------------------- worker
 
-async def _worker_loop(stop: asyncio.Event) -> None:
+async def _worker_loop(stop: asyncio.Event, slot: int = 0) -> None:
+    """One of MAX_WORKERS loops. Slot n only takes jobs while the limit set in Settings is above n, so changing it applies at once."""
     while not stop.is_set():
-        job = await asyncio.to_thread(db.claim_job)
+        job = None
+        if slot < await asyncio.to_thread(accounts.worker_limit):
+            job = await asyncio.to_thread(db.claim_job)
         if job is None:
             try:
                 await asyncio.wait_for(stop.wait(), timeout=2)
@@ -65,7 +68,7 @@ async def lifespan(app: FastAPI):
     if accounts.user_count() == 0:
         _announce_setup()
     stop = asyncio.Event()
-    tasks = [asyncio.create_task(_worker_loop(stop)) for _ in range(max(1, s.worker_concurrency))]
+    tasks = [asyncio.create_task(_worker_loop(stop, n)) for n in range(accounts.MAX_WORKERS)]
     yield
     stop.set()
     await asyncio.gather(*tasks, return_exceptions=True)

@@ -34,7 +34,7 @@ docker compose restart drollery
 | `max_album_tracks` | 500 | most tracks in one album |
 | `metadata_lookup` | `true` | offer the online lookups (MusicBrainz, IMDb); nothing is sent unless you press the button |
 | `metadata_user_agent` | empty | sent to the lookup services; empty means just `Drollery/<version>`. MusicBrainz likes a contact URL here if you query a lot |
-| `worker_concurrency` | 1 | background jobs at once; keep it at 1 on a Raspberry Pi |
+| `worker_concurrency` | 1 | background jobs at once (1 to 8); keep it at 1 on a Raspberry Pi. Settings › AI models › Background jobs overrides it |
 | `job_max_attempts` | 3 | retries before a job is marked failed |
 | `fetch_timeout` | 900 | seconds allowed for one link download |
 | `fetch_max_files` | 4 | files kept from one page or gallery link |

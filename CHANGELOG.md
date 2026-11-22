@@ -3,6 +3,12 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Added
+- **Settings › AI models › Background jobs**: choose how many background jobs run at the same time (1 to 8). It applies
+  at once, without a restart, and overrides `worker_concurrency` from `config.toml`.
+
 ## [0.1.3] - 2026-11-22
 
 ### Added

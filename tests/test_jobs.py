@@ -205,3 +205,54 @@ def test_the_jobs_page_offers_delete_only_where_it_applies(client):
     html = client.get("/jobs").text
     assert f'action="/jobs/{failed}/delete"' in html and f'action="/jobs/{other}/delete"' not in html
     assert re.search(r'<form[^>]*action="/jobs/delete-failed"[^>]*data-confirm=', html)                  # asks before clearing the list
+
+
+# ------------------------------------------------------------ how many jobs run at once
+
+def test_the_number_of_parallel_jobs_is_set_in_the_ai_settings(client):
+    from drollery import accounts
+    assert accounts.worker_limit() == 1                                                  # the config.toml default
+    page = client.get("/settings/ai").text
+    assert "Jobs at the same time" in page and '<option value="1" selected>' in page
+    r = client.post("/settings/ai/concurrency", data={"concurrency": "3"})
+    assert "Up to 3 background jobs at a time" in r.text
+    assert accounts.worker_limit() == 3 and '<option value="3" selected>' in client.get("/settings/ai").text
+    client.post("/settings/ai/concurrency", data={"concurrency": "99"})                  # out of range is clamped, never trusted
+    assert accounts.worker_limit() == accounts.MAX_WORKERS
+    client.post("/settings/ai/concurrency", data={"concurrency": "0"})
+    assert accounts.worker_limit() == 1
+
+
+def test_the_setting_beats_the_config_and_junk_falls_back_to_one(client):
+    from drollery import accounts
+    accounts.set_setting("jobs.concurrency", "oops")
+    assert accounts.worker_limit() == 1
+    accounts.set_setting("jobs.concurrency", None)
+    assert accounts.worker_limit() == 1
+
+
+def test_only_as_many_workers_claim_jobs_as_the_limit_allows(tmp_path, monkeypatch):
+    """Eight loops exist; slot n takes jobs only while the limit is above n, so raising or lowering it needs no restart.
+    No app is started here (its own workers would take part): just the database and the loops."""
+    import asyncio, time
+    from conftest import _boot
+    from drollery import accounts, db, main, pipeline
+    _boot(tmp_path, monkeypatch)
+    db.init()
+
+    async def run(limit):
+        accounts.set_setting("jobs.concurrency", str(limit))
+        claimed, ran = [], []
+        monkeypatch.setattr(db, "claim_job", lambda: claimed.append(1) or ({"id": len(claimed)} if len(claimed) <= 8 else None))
+        monkeypatch.setattr(pipeline, "run_job", lambda job: (ran.append(job["id"]), time.sleep(0.4)))
+        stop = asyncio.Event()
+        tasks = [asyncio.create_task(main._worker_loop(stop, n)) for n in range(accounts.MAX_WORKERS)]
+        await asyncio.sleep(0.2)
+        running = len(ran)                                                               # these are all busy inside run_job now
+        stop.set()
+        await asyncio.gather(*tasks)
+        return running
+
+    assert asyncio.run(run(1)) == 1
+    assert asyncio.run(run(3)) == 3
+    assert asyncio.run(run(8)) == 8

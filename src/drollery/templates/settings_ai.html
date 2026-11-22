@@ -53,6 +53,20 @@
 </section>
 
 <section class="panel stack">
+  <h2>{{ _("Background jobs") }}</h2>
+  <p class="muted">{{ _("How many background jobs (transcribing, describing, thumbnails) may run at the same time. More is faster on a strong machine, but a local model or a small server such as a Raspberry Pi works best with 1. Applies right away, running jobs finish first") }}</p>
+  <form class="form" method="post" action="/settings/ai/concurrency">
+    <label class="assign">
+      <span><b>{{ _("Jobs at the same time") }}</b></span>
+      <select name="concurrency">
+        {% for n in range(1, max_workers + 1) %}<option value="{{ n }}" {{ "selected" if n == worker_limit }}>{{ n }}</option>{% endfor %}
+      </select>
+    </label>
+    <div class="actions"><button class="btn primary" type="submit">{{ _("Save") }}</button></div>
+  </form>
+</section>
+
+<section class="panel stack">
   <h2>{{ _("AI tags") }}</h2>
   <p class="muted">{{ _("AI tags are stored apart from the tags you set yourself. Re-running a model replaces an item's AI tags and never touches yours. Tags you remove from an item are not suggested again for it.") }} {{ _n("{n} AI tag in the library right now", "{n} AI tags in the library right now", ai_tag_count) }}</p>
   <form method="post" action="/settings/ai/clear-tags" data-confirm="{{ _('Remove every AI tag in the library? Your own tags stay.') }}"><button class="btn danger" type="submit" {{ "disabled" if not ai_tag_count }}>{{ icon("trash") }}{{ _("Remove all AI tags") }}</button></form>

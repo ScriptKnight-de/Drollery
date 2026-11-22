@@ -326,6 +326,19 @@ def get_setting(key: str) -> str | None:
     return row["value"] if row else None
 
 
+MAX_WORKERS = 8
+
+
+def worker_limit() -> int:
+    """How many background jobs may run at once: the choice made in Settings, else worker_concurrency from config.toml."""
+    raw = get_setting("jobs.concurrency")
+    try:
+        n = int(raw) if raw is not None else int(get_settings().worker_concurrency)
+    except (TypeError, ValueError):
+        n = 1
+    return max(1, min(MAX_WORKERS, n))
+
+
 def set_setting(key: str, value: str | None) -> None:
     with db.tx() as c:
         if value is None:

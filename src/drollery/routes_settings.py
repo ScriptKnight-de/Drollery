@@ -323,7 +323,7 @@ def _ai_page(request: Request, status_code: int = 200, **extra):
         rows.append({"cap": cap, "label": aisettings.CAP_LABEL[cap], "help": aisettings.CAP_HELP[cap], "state": state, "options": options})
     with db.tx() as c:
         ai_tag_count = c.execute("SELECT COUNT(*) FROM tags WHERE source='ai'").fetchone()[0]
-    return render(request, "settings_ai.html", status_code=status_code, tab="ai", models=models, rows=rows, ai_tag_count=ai_tag_count,
+    return render(request, "settings_ai.html", status_code=status_code, tab="ai", models=models, rows=rows, ai_tag_count=ai_tag_count, worker_limit=accounts.worker_limit(), max_workers=accounts.MAX_WORKERS,
                   types=aisettings.MODEL_TYPES, compat=aisettings.COMPAT, **extra)
 
 
@@ -344,6 +344,13 @@ def ai_assign(request: Request, transcribe: str = Form("default"), describe: str
         elif value in models and models[value]["type"] in aisettings.COMPAT[cap]:
             accounts.set_setting(f"ai.{cap}", value)
     return flash_redirect("/settings/ai", t("AI assignments saved. They apply to new items right away"))
+
+
+@router.post("/ai/concurrency")
+def ai_concurrency(request: Request, concurrency: int = Form(1)):
+    n = max(1, min(accounts.MAX_WORKERS, concurrency))
+    accounts.set_setting("jobs.concurrency", str(n))
+    return flash_redirect("/settings/ai", tn("Up to {n} background job at a time", "Up to {n} background jobs at a time", n))
 
 
 @router.post("/ai/reprocess")
