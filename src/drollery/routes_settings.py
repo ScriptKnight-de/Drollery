@@ -2,13 +2,15 @@
 from __future__ import annotations
 
 import re
+import time
+from datetime import datetime, timedelta
 
 import anyio.to_thread
 import segno
-from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import RedirectResponse, StreamingResponse
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
+from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
 
-from . import __version__, accounts, aisettings, backup, db, i18n, imdb, pipeline, security
+from . import autobackup, __version__, accounts, aisettings, backup, db, i18n, imdb, pipeline, security
 from .config import get_settings
 from .deps import web_auth
 from .i18n import t, tn
@@ -65,9 +67,49 @@ def about_page(request: Request):
 
 # ----------------------------------------------------------------- backup
 
+def _auto_context() -> dict:
+    cfg, st = autobackup.config(), autobackup.status()
+    return {"auto": cfg, "auto_status": st, "auto_list": autobackup.listing(), "auto_dir": str(autobackup.folder()),
+            "server_time": time.strftime("%H:%M"), "server_zone": time.strftime("%Z") or "UTC",
+            "auto_due": autobackup.is_due(),
+            "next_run": (autobackup.last_slot(datetime.now(), cfg["every"], cfg["hour"]) + timedelta(days=1 if cfg["every"] == "daily" else 7)).timestamp()}
+
+
 @router.get("/backup")
 def backup_page(request: Request):
-    return render(request, "settings_backup.html", tab="backup", sizes=backup.sizes())
+    return render(request, "settings_backup.html", tab="backup", sizes=backup.sizes(), **_auto_context())
+
+
+@router.post("/backup/auto")
+def backup_auto_save(enabled: str = Form(""), every: str = Form("daily"), hour: str = Form("3"), kind: str = Form("metadata"), keep: str = Form("7")):
+    try:
+        autobackup.save(bool(enabled), every, int(hour) if hour.strip().isdigit() else 3, kind, int(keep) if keep.strip().isdigit() else 7)
+    except autobackup.AutoBackupError as e:
+        return flash_redirect("/settings/backup", t(str(e)), "error")
+    return flash_redirect("/settings/backup", t("Automatic backup saved"))
+
+
+@router.post("/backup/auto/run")
+def backup_auto_run():
+    if not autobackup.run_in_background():
+        return flash_redirect("/settings/backup", t("A backup is already running"), "error")
+    return flash_redirect("/settings/backup", t("The backup has started. It shows up in the list below when it is done"))
+
+
+@router.get("/backup/auto/{name}")
+def backup_auto_download(name: str):
+    path = autobackup.path_of(name)
+    if path is None:
+        raise HTTPException(404, "no such backup")
+    return FileResponse(path, media_type="application/gzip", filename=name, content_disposition_type="attachment",
+                        headers={"Cache-Control": "no-store", "X-Content-Type-Options": "nosniff"})
+
+
+@router.post("/backup/auto/{name}/delete")
+def backup_auto_delete(name: str):
+    if not autobackup.delete(name):
+        return flash_redirect("/settings/backup", t("That backup does not exist any more"), "error")
+    return flash_redirect("/settings/backup", t("Backup deleted"))
 
 
 async def _backup_body(kind: str):

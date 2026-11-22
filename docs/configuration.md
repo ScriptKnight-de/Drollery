@@ -39,6 +39,7 @@ docker compose restart drollery
 | `fetch_timeout` | 900 | seconds allowed for one link download |
 | `fetch_max_files` | 4 | files kept from one page or gallery link |
 | `allow_private_fetch` | `false` | see below |
+| `backup_dir` | empty | where the automatic backups (Settings > Backup) are written; empty means the `backups` folder in the data volume. Use a folder on another disk or a mounted share to be safe from losing the volume |
 | `fetch_allow_hosts` | `[]` | see below |
 
 ### Fetching links

@@ -23,6 +23,54 @@
   </div>
   <p class="note">{{ _("Keep the file private. It contains your accounts (password hashes and two-factor secrets) and the API keys you saved for AI models and lookups.") }}</p>
 </section>
+<section class="panel stack" id="auto">
+  <h2>{{ _("Automatic backup") }}</h2>
+  <p class="muted">{{ _("Drollery can make a backup by itself and keep the latest ones. They go to a folder on this server:") }} <code>{{ auto_dir }}</code></p>
+  <p class="note">{{ _("If that folder is on the same disk as your library, it protects against deleting something by mistake, not against losing the disk. For that, set backup_dir in config.toml to a folder on another disk or a mounted share.") }}</p>
+  <form method="post" action="/settings/backup/auto" class="form">
+    <label class="check"><input type="checkbox" name="enabled" value="1" {{ "checked" if auto.enabled }}> {{ _("Make backups automatically") }}</label>
+    <div class="duo">
+      <label>{{ _("How often") }}
+        <select name="every"><option value="daily" {{ "selected" if auto.every == "daily" }}>{{ _("Every day") }}</option><option value="weekly" {{ "selected" if auto.every == "weekly" }}>{{ _("Every week, on Sunday") }}</option></select></label>
+      <label>{{ _("At") }}
+        <select name="hour">{% for h in range(24) %}<option value="{{ h }}" {{ "selected" if auto.hour == h }}>{{ "%02d"|format(h) }}:00</option>{% endfor %}</select>
+        <span class="hint">{{ _("Server time, now {time} ({zone})", time=server_time, zone=server_zone) }}</span></label>
+    </div>
+    <div class="duo">
+      <label>{{ _("What to back up") }}
+        <select name="kind"><option value="metadata" {{ "selected" if auto.kind == "metadata" }}>{{ _("Metadata only") }} ({{ sizes.database|bytes }})</option>
+          <option value="full" {{ "selected" if auto.kind == "full" }}>{{ _("Everything") }} ({{ (sizes.database + sizes.content)|bytes }})</option></select>
+        <span class="hint">{{ _("Everything can be very big. A big library is better protected by a copy of its folders with your own tools.") }}</span></label>
+      <label>{{ _("How many to keep") }} <input type="number" name="keep" min="1" max="60" value="{{ auto.keep }}">
+        <span class="hint">{{ _("The oldest ones are deleted. Only backups Drollery made itself are ever deleted.") }}</span></label>
+    </div>
+    <div class="actions"><button class="btn primary" type="submit">{{ icon("check") }}{{ _("Save") }}</button></div>
+  </form>
+  <p class="muted" id="auto-status">
+    {% if auto_status.running %}<span class="dot run"></span>{{ _("A backup is running now") }}
+    {% elif auto_status.error %}<span class="dot failed"></span>{{ _("The last backup failed:") }} {{ _(auto_status.error) }}
+    {% elif auto_status.last_ok %}<span class="dot done"></span>{{ _("Last backup: {when}", when=auto_status.last_ok|int|timestamp) }}
+    {% else %}{{ _("No automatic backup has been made yet") }}{% endif %}
+    {% if auto.enabled and not auto_status.running %} · {% if auto_due %}{{ _("The next one starts within a minute") }}{% else %}{{ _("Next: {when}", when=next_run|int|timestamp) }}{% endif %}{% endif %}
+  </p>
+  <form method="post" action="/settings/backup/auto/run"><button class="btn" type="submit" {{ "disabled" if auto_status.running }}>{{ icon("download") }}{{ _("Back up now") }}</button></form>
+  {% if auto_list %}
+  <div class="panel flush">
+    <table>
+      <thead><tr><th>{{ _("Made") }}</th><th>{{ _("What") }}</th><th>{{ _("Size") }}</th><th></th></tr></thead>
+      <tbody>
+      {% for b in auto_list %}
+      <tr><td class="nw">{{ b.made|int|timestamp }}</td><td>{{ _("Everything") if b.kind == "full" else _("Metadata only") }}</td><td class="nw">{{ b.size|bytes }}</td>
+        <td class="actions"><div class="acts">
+          <a class="btn small" href="/settings/backup/auto/{{ b.name }}" download>{{ icon("download") }}{{ _("Download") }}</a>
+          <form method="post" action="/settings/backup/auto/{{ b.name }}/delete" data-confirm="{{ _('Delete this backup?') }}"><button class="btn small danger" type="submit" aria-label="{{ _('Delete') }}">{{ icon("trash") }}</button></form>
+        </div></td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</section>
 <section class="panel stack">
   <h2>{{ _("Restore") }}</h2>
   <p class="muted">{{ _("The easy way: on a new Drollery that has no account yet, the first page offers “Or restore a backup”. Choose the file there, enter the setup code, and everything comes back.") }}</p>

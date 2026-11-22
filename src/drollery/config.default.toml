@@ -12,6 +12,7 @@ job_max_attempts = 3      # retries before a job is marked failed
 fetch_timeout = 900       # seconds allowed for one URL download
 fetch_max_files = 4       # max files kept from a single page/gallery URL
 allow_private_fetch = false   # false = "add a link" refuses addresses on private/local networks (localhost, 192.168.x.x, 10.x.x.x, 169.254.169.254 ...)
+backup_dir = ""             # where the automatic backups go; empty = the "backups" folder in the data volume. A folder on another disk (or a mounted share) protects against losing the volume
 fetch_allow_hosts = []        # let just these through although they are private, e.g. ["nas.lan", "10.0.0.0/24"]
 
 # --- AI providers ---------------------------------------------------------

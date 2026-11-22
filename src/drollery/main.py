@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import __version__, accounts, albums, db, i18n, media, movies, netguard, people, pipeline, shares
+from . import __version__, accounts, albums, autobackup, db, i18n, media, movies, netguard, people, pipeline, shares
 from .config import get_settings
 from .deps import LoginRequired, SetupRequired, api_auth, item_or_404, web_auth
 from .upload_redirect import UploadRedirects
@@ -65,6 +65,24 @@ async def _supervise(stop: asyncio.Event) -> None:
     await asyncio.gather(*workers.values(), return_exceptions=True)
 
 
+async def _backup_scheduler(stop: asyncio.Event) -> None:
+    """Once a minute: is an automatic backup due? (They are off until switched on under Settings > Backup.)"""
+    try:
+        await asyncio.wait_for(stop.wait(), timeout=60)            # not while the app is still starting up
+        return
+    except asyncio.TimeoutError:
+        pass
+    while not stop.is_set():
+        try:
+            await asyncio.to_thread(autobackup.tick)
+        except Exception:  # noqa: BLE001 - the scheduler must not die
+            log.exception("the backup scheduler failed")
+        try:
+            await asyncio.wait_for(stop.wait(), timeout=60)
+        except asyncio.TimeoutError:
+            pass
+
+
 def _announce_setup() -> None:
     code = accounts.get_setup_code()
     bar = "=" * 64
@@ -84,9 +102,10 @@ async def lifespan(app: FastAPI):
         pipeline.plan_upkeep(c)
     stop = asyncio.Event()
     supervisor = asyncio.create_task(_supervise(stop))
+    scheduler = asyncio.create_task(_backup_scheduler(stop))
     yield
     stop.set()
-    await asyncio.gather(supervisor, return_exceptions=True)
+    await asyncio.gather(supervisor, scheduler, return_exceptions=True)
 
 
 # the interactive API docs are off: they would list every endpoint to anyone who can reach the port (the API is documented in the README)

@@ -214,6 +214,16 @@ docker run --rm -v drollery_drollery-data:/data -v "$PWD":/backup alpine \
 Drollery keeps running while it is made, and the download starts at once. The file is laid out like the data folder, so
 the restore below works for it. Keep it private: it contains your accounts and saved API keys.
 
+**Automatic backups:** under **Settings › Backup** Drollery can make backups by itself and keep the latest ones. Choose how
+often (every day or every week on Sunday) and at what hour of the server's clock, whether to back up only the metadata (small,
+the default) or everything, and how many to keep (7 by default; only backups Drollery made itself are ever deleted). It is
+off until you switch it on. The files go to the `backups` folder in the data volume; set `backup_dir` in `config.toml` to a
+folder on another disk or a mounted share to be safe from losing the volume, because a folder on the same disk only protects
+against deleting something by mistake. A backup missed while the server was off is made when it starts again, a failed one is
+shown on the page with its reason and tried again after an hour, and the page lists the backups with *Download*, *Delete* and
+*Back up now*. The files can be owner-read only (they hold password hashes and saved API keys) and restore like any other
+backup.
+
 **Restore** a backup: on a new Drollery that has no account yet, the first page offers **Or restore a backup**. Choose the
 file, enter the setup code from the container log, and your library, accounts and settings come back; then you sign in
 with an account from the backup. Drollery checks the file first (only the parts a backup has, nothing that could leave

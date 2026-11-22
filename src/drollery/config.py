@@ -40,6 +40,7 @@ class Settings(BaseModel):
     fetch_timeout: int = 900
     fetch_max_files: int = 4
     allow_private_fetch: bool = False  # False: a link is only fetched when it points at a public address (see netguard.py); True: fetch from anywhere
+    backup_dir: str = ""               # where the automatic backups go; empty = the folder "backups" in the data folder. Point it at another disk or a mounted share for real protection
     fetch_allow_hosts: list[str] = []  # hosts, addresses or networks that may be fetched although they are private, e.g. ["nas.lan", "10.0.0.0/24"]
     transcribe: Provider = Provider()
     describe: Provider = Provider()
@@ -62,6 +63,10 @@ class Settings(BaseModel):
     @property
     def tmp_dir(self) -> Path:
         return self.data_dir / "tmp"
+
+    @property
+    def backups_dir(self) -> Path:
+        return Path(self.backup_dir).expanduser() if self.backup_dir.strip() else self.data_dir / "backups"
 
     @property
     def db_path(self) -> Path:

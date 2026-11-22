@@ -3,6 +3,17 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Added
+- **Automatic backups** (Settings > Backup). Every day or every week (Sunday) at an hour you choose, Drollery makes a backup by
+  itself: metadata only (the default, small) or everything, and keeps the newest N (7 by default). Off until switched on. The
+  files go to the `backups` folder in the data volume, or to `backup_dir` from `config.toml`; they are owner-only and written
+  to a `.part` file first, so a half-made one never looks finished. A backup missed while the server was off is made on the
+  next start, a failed one shows its reason on the page and is tried again after an hour, and it is skipped with a message when
+  the disk has no room. Only files Drollery made itself are ever listed, downloaded, deleted or pruned. The page lists them with
+  *Download*, *Delete* and *Back up now*, and they restore like any other backup.
+
 ## [0.5.0] - 2026-11-22
 
 ### Added
