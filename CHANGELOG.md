@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.1.3] - 2026-11-22
 
 ### Added
 - **Settings › Backup**: download the library as one `.tgz`, either everything or metadata only. It is streamed (no extra
