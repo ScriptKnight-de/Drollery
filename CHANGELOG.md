@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.2.7] - 2026-11-22
 
 ### Fixed
 - Videos added before 0.2.6 get the size people see too: once, in the background, Drollery reads every stored video again
