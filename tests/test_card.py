@@ -251,3 +251,23 @@ def test_deleting_asks_in_the_app_not_in_the_browser(client, image_id):
     form = page.split(f'action="/items/{image_id}/delete"')[1].split(">")[0]
     assert "data-confirm=" in form and "onsubmit" not in form
     assert 'id="confirm-dialog"' in page
+
+
+# ----------------------------------------------- the card image is the preview of a clip
+
+def test_the_card_image_is_the_preview_of_a_video_on_its_page_and_on_a_shared_link(client, video_id):
+    import re
+    poster = lambda: re.search(r'<video[^>]*poster="([^"]+)"', client.get(f"/items/{video_id}").text).group(1)
+    assert poster().startswith(f"/thumb/{video_id}?v=")                                    # no card image of its own yet: the video frame
+    r = client.post(f"/items/{video_id}/shares", data={"preset": "never", "label": "", "next": f"/items/{video_id}"})
+    with db.tx() as c:
+        token = c.execute("SELECT token FROM shares").fetchone()["token"]
+    frame = client.get(f"/s/{token}/thumb").content
+    client.post(f"/items/{video_id}/card/picture", files={"image": ("mine.png", two_color_png(120, 60), "image/png")})
+    assert poster().startswith(f"/card/{video_id}?v=")                                     # the picture the owner chose
+    assert client.get(poster()).content == client.get(f"/card/{video_id}").content
+    shared = client.get(f"/s/{token}/thumb").content
+    assert shared == client.get(f"/card/{video_id}").content and shared != frame           # a link preview shows the same picture
+    assert f'poster="/s/{token}/thumb"' in client.get(f"/s/{token}").text
+    client.post(f"/items/{video_id}/card/reset")
+    assert poster().startswith(f"/thumb/{video_id}?v=") and client.get(f"/s/{token}/thumb").content == frame      # reset: back to the frame
