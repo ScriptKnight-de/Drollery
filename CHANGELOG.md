@@ -3,6 +3,14 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [0.2.10] - 2026-11-22
+
+### Fixed
+- **0.2.6 to 0.2.9 were never published.** Their tests failed in the CI build: a test made its rotated video with an ffmpeg
+  option that only exists from ffmpeg 6, and the build machine has an older one. So no image and no release were built for those
+  versions. The tests now write the rotation into the MP4 file themselves and work with any ffmpeg. Nothing in the program
+  changed. Everything that is listed under 0.2.6, 0.2.7, 0.2.8 and 0.2.9 below is part of this release.
+
 ## [0.2.9] - 2026-11-22
 
 ### Fixed
