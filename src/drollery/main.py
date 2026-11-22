@@ -402,10 +402,11 @@ def item_remove_ai_tags(item_id: int, tag: str = Form("")):
 
 
 @app.post("/items/{item_id}/reprocess", dependencies=[Depends(web_auth)])
-def item_reprocess(item_id: int):
+def item_reprocess(item_id: int, step: str = Form("")):
+    """Run the AI steps again: both (the default), or only "transcribe" or only "describe"."""
     _get_or_404(item_id)
     with db.tx() as c:
-        pipeline.plan_jobs(c, item_id)
+        pipeline.plan_jobs(c, item_id, step if step in ("transcribe", "describe") else "")
     return RedirectResponse(f"/items/{item_id}", status_code=303)
 
 

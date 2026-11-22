@@ -23,7 +23,11 @@
   </div>
   {% if not album %}
   {% if providers.transcribe or providers.describe %}
-  <form method="post" action="/items/{{ item.id }}/reprocess"><button class="btn small" type="submit">{{ icon("retry") }}{{ _("Run again") }}</button></form>
+  <form method="post" action="/items/{{ item.id }}/reprocess" class="btnrow">
+    <button class="btn small" type="submit">{{ icon("retry") }}{{ _("Run again") }}</button>
+    {% if providers.transcribe %}<button class="btn small" type="submit" name="step" value="transcribe">{{ icon("retry") }}{{ _("Transcribe only") }}</button>{% endif %}
+    {% if providers.describe %}<button class="btn small" type="submit" name="step" value="describe">{{ icon("retry") }}{{ _("Describe only") }}</button>{% endif %}
+  </form>
   {% else %}<p class="muted">{{ _("No AI providers are enabled. See {file} in the data volume.", file="<code>config.toml</code>")|safe }}</p>{% endif %}
   {% endif %}
 </section>

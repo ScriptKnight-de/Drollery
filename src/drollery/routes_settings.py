@@ -354,12 +354,13 @@ def ai_concurrency(request: Request, concurrency: int = Form(1)):
 
 
 @router.post("/ai/reprocess")
-def ai_reprocess(request: Request):
+def ai_reprocess(request: Request, step: str = Form("")):
+    only = step if step in ("transcribe", "describe") else ""
     count = 0
     with db.tx() as c:
         busy = {r[0] for r in c.execute("SELECT DISTINCT item_id FROM jobs WHERE status IN ('queued','running') AND item_id IS NOT NULL")}
         for (item_id,) in c.execute("SELECT id FROM items ORDER BY id").fetchall():
-            if item_id not in busy and pipeline.plan_jobs(c, item_id):
+            if item_id not in busy and pipeline.plan_jobs(c, item_id, only):
                 count += 1
     return flash_redirect("/settings/ai", tn("Queued AI processing for {n} item", "Queued AI processing for {n} items", count) if count else t("Nothing to queue: no AI model is assigned, or every item is already queued"))
 

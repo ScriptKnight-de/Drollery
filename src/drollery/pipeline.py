@@ -106,18 +106,31 @@ def plan_track_jobs(c, item_id: int, redo: bool = False) -> int:
     return n
 
 
-def plan_jobs(c, item_id: int) -> list[str]:
-    """Queue the background jobs that the enabled providers can do for this item."""
+def plan_jobs(c, item_id: int, only: str = "") -> list[str]:
+    """Queue the background jobs that the enabled providers can do for this item.
+
+    only="transcribe" or only="describe" starts just that one step: a transcription then does not go on to describe, and
+    describing works from what is there (the picture, and the transcript if the item has one)."""
     item = db.get_item(c, item_id)
     queued = []
     if item["kind"] == "album":
         # an album is many tracks: nothing to describe as a whole, but every track can be transcribed so its words are searchable
-        if aisettings.enabled("transcribe"):
+        if only != "describe" and aisettings.enabled("transcribe"):
             queued += ["transcribe_track"] * plan_track_jobs(c, item_id)
         return queued
     if item["kind"] == "movie":
         return queued                        # a movie runs for hours: nothing is transcribed or named behind the person's back
     has_speech = item["kind"] not in ("image", "gif") and item["has_audio"] and aisettings.enabled("transcribe")
+    if only == "transcribe":
+        if has_speech:
+            db.enqueue(c, "transcribe", item_id, json.dumps({"describe_after": False}))
+            queued.append("transcribe")
+        return queued
+    if only == "describe":
+        if aisettings.enabled("describe"):
+            db.enqueue(c, "describe", item_id)
+            queued.append("describe")
+        return queued
     if has_speech:
         queued.append("transcribe")          # transcribe chains into describe when it finishes
     elif aisettings.enabled("describe") and (item["kind"] != "audio"):
@@ -147,8 +160,16 @@ def job_transcribe(job: dict) -> None:
     with db.tx() as c:
         c.execute("UPDATE items SET transcript=?, updated_at=? WHERE id=?", (text, time.time(), item["id"]))
         db.reindex(c, item["id"])
-        if aisettings.enabled("describe"):
+        if aisettings.enabled("describe") and _payload(job).get("describe_after", True):
             db.enqueue(c, "describe", item["id"])
+
+
+def _payload(job: dict) -> dict:
+    try:
+        data = json.loads(job.get("payload") or "{}")
+    except ValueError:
+        return {}
+    return data if isinstance(data, dict) else {}
 
 
 def _chunk_seconds(cfg) -> int:

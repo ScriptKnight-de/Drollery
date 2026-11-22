@@ -666,3 +666,4 @@ form.uploading { opacity: .55; pointer-events: none; }
 .uz-types label > span { display: grid; gap: 2px; min-width: 0; }
 .uz-types label b { flex-wrap: wrap; }
 .uz-panel.uploading { opacity: 1; pointer-events: auto; }
+.btnrow { display: flex; gap: 8px; flex-wrap: wrap; margin: 0; }

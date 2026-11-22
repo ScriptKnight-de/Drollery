@@ -8,6 +8,9 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 ### Added
 - **Settings › AI models › Background jobs**: choose how many background jobs run at the same time (1 to 8). It applies
   at once, without a restart, and overrides `worker_concurrency` from `config.toml`.
+- **Transcribe only** and **Describe only**: start one AI step on its own, for a single item (next to *Run again*) or for
+  the whole library (Settings › AI models › Existing items). A transcription started this way does not go on to describe.
+  Handy when the describing service is overloaded or you want the words first.
 
 ## [0.1.3] - 2026-11-22
 

@@ -49,7 +49,11 @@
 <section class="panel stack">
   <h2>{{ _("Existing items") }}</h2>
   <p class="muted">{{ _("Models only process items added after you assign them. Run them over your whole library with one click; this queues background jobs, one at a time") }}</p>
-  <form method="post" action="/settings/ai/reprocess"><button class="btn" type="submit">{{ icon("retry") }}{{ _("Process all existing items") }}</button></form>
+  <form method="post" action="/settings/ai/reprocess" class="btnrow">
+    <button class="btn" type="submit">{{ icon("retry") }}{{ _("Process all existing items") }}</button>
+    <button class="btn" type="submit" name="step" value="transcribe">{{ icon("retry") }}{{ _("Only transcribe") }}</button>
+    <button class="btn" type="submit" name="step" value="describe">{{ icon("retry") }}{{ _("Only describe") }}</button>
+  </form>
 </section>
 
 <section class="panel stack">

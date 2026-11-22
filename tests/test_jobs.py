@@ -256,3 +256,82 @@ def test_only_as_many_workers_claim_jobs_as_the_limit_allows(tmp_path, monkeypat
     assert asyncio.run(run(1)) == 1
     assert asyncio.run(run(3)) == 3
     assert asyncio.run(run(8)) == 8
+
+
+# ------------------------------------------------ transcribe and describe on their own
+
+def _talking_clip(client, tmp_path):
+    from test_fetch import make_video
+    r = client.post("/api/v1/items", files={"file": ("clip.mp4", make_video(tmp_path, "clip.mp4"), "video/mp4")})
+    return r.json()["id"]
+
+
+def _both_models(client):
+    from test_accounts import MODEL
+    from drollery import accounts
+    client.post("/settings/ai/models", data={**MODEL, "name": "stt", "model": "whisper-1"})
+    client.post("/settings/ai/models", data={**MODEL, "name": "llm", "model": "chat-1"})
+    ids = {m["name"]: str(m["id"]) for m in accounts.list_models()}
+    client.post("/settings/ai/assign", data={"transcribe": ids["stt"], "describe": ids["llm"]})
+
+
+def _queued():
+    with db.tx() as c:
+        rows = c.execute("SELECT type, payload FROM jobs WHERE status='queued' ORDER BY id").fetchall()
+        c.execute("DELETE FROM jobs")
+    return [(r["type"], r["payload"]) for r in rows]
+
+
+def _pause_workers(monkeypatch):
+    """The app's own workers would claim the queued rows under the test: tell them the limit is zero."""
+    from drollery import accounts
+    monkeypatch.setattr(accounts, "worker_limit", lambda: 0)
+
+
+def test_transcribing_and_describing_can_be_started_separately(client, tmp_path, monkeypatch):
+    _pause_workers(monkeypatch)
+    item = _talking_clip(client, tmp_path)
+    _both_models(client)
+    with db.tx() as c:
+        c.execute("DELETE FROM jobs")
+    page = client.get(f"/items/{item}").text
+    assert "Transcribe only" in page and "Describe only" in page
+
+    client.post(f"/items/{item}/reprocess", data={"step": "describe"})
+    assert [t for t, _ in _queued()] == ["describe"]
+    client.post(f"/items/{item}/reprocess", data={"step": "transcribe"})
+    queued = _queued()
+    assert [t for t, _ in queued] == ["transcribe"]                                      # and nothing else
+    client.post(f"/items/{item}/reprocess")                                              # the old button: transcribe, which goes on to describe
+    assert [t for t, _ in _queued()] == ["transcribe"]
+    client.post(f"/items/{item}/reprocess", data={"step": "nonsense"})                   # unknown value = the old behaviour
+    assert [t for t, _ in _queued()] == ["transcribe"]
+
+
+def test_a_transcription_started_on_its_own_does_not_describe_afterwards(client, tmp_path, monkeypatch):
+    from drollery import pipeline, providers
+    _pause_workers(monkeypatch)
+    item = _talking_clip(client, tmp_path)
+    _both_models(client)
+    monkeypatch.setattr(providers, "transcribe", lambda cfg, audio: "some spoken words")
+    with db.tx() as c:
+        c.execute("DELETE FROM jobs")
+    client.post(f"/items/{item}/reprocess", data={"step": "transcribe"})
+    pipeline.run_job(db.claim_job())
+    assert _queued() == []                                                               # no describe job followed
+    client.post(f"/items/{item}/reprocess")
+    pipeline.run_job(db.claim_job())
+    assert [t for t, _ in _queued()] == ["describe"]                                     # the normal run still chains
+
+
+def test_the_bulk_buttons_do_one_step_for_every_item(client, tmp_path, monkeypatch):
+    _pause_workers(monkeypatch)
+    _talking_clip(client, tmp_path)
+    _both_models(client)
+    with db.tx() as c:
+        c.execute("DELETE FROM jobs")
+    client.post("/settings/ai/reprocess", data={"step": "describe"})
+    assert "Only describe" in client.get("/settings/ai").text and "Only transcribe" in client.get("/settings/ai").text
+    assert {t for t, _ in _queued()} == {"describe"}
+    client.post("/settings/ai/reprocess", data={"step": "transcribe"})
+    assert {t for t, _ in _queued()} == {"transcribe"}
