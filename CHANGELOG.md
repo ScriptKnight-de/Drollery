@@ -3,6 +3,21 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Added
+- **Sort menu** next to the type filters: automatic (relevance for a search, otherwise newest), newest, oldest, title A-Z and
+  Z-A (Ä sorts with A), largest, longest, best match. The choice is kept while you load more.
+- **German spellings in the search:** *Strasse* finds *Straße*, *Muenchen* finds *München*, *Ueber* finds *Über* and the other
+  way round, in titles, descriptions, tags, transcripts, album tracks and names. Items you already have are indexed again once,
+  in the background (a job called *Rebuild search* on the jobs page).
+- The search, the filters and the sort order stay in the **address bar**, so a reload, a bookmark or the back button brings the
+  same view back.
+
+### Fixed
+- A library with exactly 40 items (or any multiple of 40) no longer shows "The treasury is empty" under its tiles: the page that
+  loads next and comes back empty adds nothing.
+
 ## [0.2.10] - 2026-11-22
 
 ### Fixed

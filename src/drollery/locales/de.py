@@ -592,6 +592,16 @@ MESSAGES = {
     "Runs one track at a time in the background and takes about as long as the audio itself. Everything said becomes searchable.": "Läuft Titel für Titel im Hintergrund und dauert etwa so lang wie das Audio selbst. Alles Gesprochene wird durchsuchbar.",
     "transcribe_track": "Titel transkribieren",
     "check_video_sizes": "Videogrößen prüfen",
+    "Sort by": "Sortieren nach",
+    "Sort: automatic": "Sortierung: automatisch",
+    "Newest first": "Neueste zuerst",
+    "Oldest first": "Älteste zuerst",
+    "Title A–Z": "Titel A–Z",
+    "Title Z–A": "Titel Z–A",
+    "Largest first": "Größte zuerst",
+    "Longest first": "Längste zuerst",
+    "Best match": "Beste Treffer",
+    "rebuild_search": "Suche neu aufbauen",
 
     # ---- transcript popup
     "Show transcript": "Transkript anzeigen",

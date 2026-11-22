@@ -4,7 +4,7 @@
 {% include "uploader.html" %}
 
 <form class="toolbar" method="get" action="/" hx-get="/" hx-target="#grid" hx-swap="innerHTML"
-      hx-trigger="input changed delay:250ms from:#q, change from:.seg" hx-push-url="false">
+      hx-trigger="input changed delay:250ms from:#q, change from:.seg, change from:#sort" hx-push-url="false">
   <div class="field grow">
     {{ icon("search") }}
     <input id="q" type="search" name="q" value="{{ q }}" placeholder="{{ _('Search') }}" aria-label="{{ _('Search') }}" autocomplete="off"
@@ -17,6 +17,18 @@
     <label><input type="radio" name="kind" value="{{ k }}" {{ "checked" if kind == k }}><span>{{ label }} <i>{{ counts.get(k, 0) }}</i></span></label>
     {% endfor %}
   </div>
+  <label class="sortpick"><span class="sr-only">{{ _("Sort by") }}</span>
+    <select id="sort" name="sort" aria-label="{{ _('Sort by') }}">
+      <option value="" {{ "selected" if not sort }}>{{ _("Sort: automatic") }}</option>
+      <option value="new" {{ "selected" if sort == "new" }}>{{ _("Newest first") }}</option>
+      <option value="old" {{ "selected" if sort == "old" }}>{{ _("Oldest first") }}</option>
+      <option value="title" {{ "selected" if sort == "title" }}>{{ _("Title A–Z") }}</option>
+      <option value="title_desc" {{ "selected" if sort == "title_desc" }}>{{ _("Title Z–A") }}</option>
+      <option value="size" {{ "selected" if sort == "size" }}>{{ _("Largest first") }}</option>
+      <option value="long" {{ "selected" if sort == "long" }}>{{ _("Longest first") }}</option>
+      <option value="best" {{ "selected" if sort == "best" }}>{{ _("Best match") }}</option>
+    </select>
+  </label>
   <input type="hidden" name="tag" value="{{ tag }}">
   <input type="hidden" name="src" value="{{ src }}">
   <input type="hidden" name="person" value="{{ person_id or '' }}">
@@ -24,14 +36,15 @@
 
 {% if tag or person_row or pending %}
 <p class="status">
-  {% if tag %}<span class="pill {{ 'ai' if src == 'ai' }}">{% if src == 'ai' %}{{ icon("cpu") }}{% endif %}#{{ tag }}{% if src == 'ai' %} <small>{{ _("AI tag") }}</small>{% elif src == 'user' %} <small>{{ _("my tag") }}</small>{% endif %} <a href="/?q={{ q|urlencode }}&kind={{ kind|urlencode }}&person={{ person_id or '' }}" aria-label="{{ _('Clear tag filter') }}">×</a></span>{% endif %}
-  {% if person_row %}<span class="pill">{{ icon("user") }}{{ person_row.name }} <a href="/?q={{ q|urlencode }}&kind={{ kind|urlencode }}&tag={{ tag|urlencode }}&src={{ src|urlencode }}" aria-label="{{ _('Clear person filter') }}">×</a></span>{% endif %}
+  {% if tag %}<span class="pill {{ 'ai' if src == 'ai' }}">{% if src == 'ai' %}{{ icon("cpu") }}{% endif %}#{{ tag }}{% if src == 'ai' %} <small>{{ _("AI tag") }}</small>{% elif src == 'user' %} <small>{{ _("my tag") }}</small>{% endif %} <a href="/?q={{ q|urlencode }}&kind={{ kind|urlencode }}&person={{ person_id or '' }}&sort={{ sort|urlencode }}" aria-label="{{ _('Clear tag filter') }}">×</a></span>{% endif %}
+  {% if person_row %}<span class="pill">{{ icon("user") }}{{ person_row.name }} <a href="/?q={{ q|urlencode }}&kind={{ kind|urlencode }}&tag={{ tag|urlencode }}&src={{ src|urlencode }}&sort={{ sort|urlencode }}" aria-label="{{ _('Clear person filter') }}">×</a></span>{% endif %}
   {% if pending %}<a href="/jobs"><span class="dot run"></span>{{ _n("{n} background job running", "{n} background jobs running", pending) }}</a>{% endif %}
 </p>
 {% endif %}
 
 <section id="grid" class="grid">{% include "grid.html" %}</section>
 <script src="/static/searchsuggest.js" defer></script>
+<script src="/static/searchstate.js" defer></script>
 <script src="/static/gifhover.js" defer></script>
 <script>
   var drop = document.querySelector(".drop");

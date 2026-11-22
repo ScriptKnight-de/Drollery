@@ -318,14 +318,15 @@ def api_jobs(limit: int = 50):
 # --------------------------------------------------------------------- web
 
 @app.get("/", dependencies=[Depends(web_auth)])
-def home(request: Request, q: str = "", kind: str = "", tag: str = "", src: str = "", page: int = 0, person: str = ""):
+def home(request: Request, q: str = "", kind: str = "", tag: str = "", src: str = "", page: int = 0, person: str = "", sort: str = ""):
     page = max(page, 0)
+    sort = sort if sort in db.SORTS or sort == "best" else ""
     src = src if src in ("user", "ai") else ""
     with db.tx() as c:
         person = int(person) if person.strip().isdigit() else 0          # the form sends person= (empty) when nobody is selected
         person_row = people.get(c, person) if person > 0 else None
         person = person_row["id"] if person_row else 0                 # an unknown person is simply not a filter
-        items = db.search(c, q, kind, tag, PAGE, page * PAGE, src, person)
+        items = db.search(c, q, kind, tag, PAGE, page * PAGE, src, person, sort)
         counts = {r["kind"]: r["n"] for r in c.execute("SELECT kind, COUNT(*) n FROM items GROUP BY kind")}
         pending = c.execute("SELECT COUNT(*) FROM jobs WHERE status IN ('queued','running')").fetchone()[0]
         album_ids = [i["id"] for i in items if i["kind"] == "album"]
@@ -333,7 +334,7 @@ def home(request: Request, q: str = "", kind: str = "", tag: str = "", src: str 
         movie_info = movies.summaries(c, [i["id"] for i in items if i["kind"] == "movie"])
         track_hits = albums.track_hits(c, q, album_ids) if q.strip() else {}
     tpl = "grid.html" if request.headers.get("hx-request") and not request.headers.get("hx-boosted") else "index.html"
-    return render(request, tpl, items=items, q=q, kind=kind, tag=tag, src=src, person_id=person, person_row=person_row, page=page, more=len(items) == PAGE, counts=counts, pending=pending, album_info=album_info, movie_info=movie_info, track_hits=track_hits)
+    return render(request, tpl, items=items, q=q, kind=kind, tag=tag, src=src, sort=sort, person_id=person, person_row=person_row, page=page, more=len(items) == PAGE, counts=counts, pending=pending, album_info=album_info, movie_info=movie_info, track_hits=track_hits)
 
 
 @app.post("/add", dependencies=[Depends(web_auth)])

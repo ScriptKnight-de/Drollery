@@ -4,6 +4,7 @@ import json
 import re
 import sqlite3
 import time
+import unicodedata
 from contextlib import contextmanager
 
 from .config import get_settings
@@ -195,7 +196,13 @@ def connect() -> sqlite3.Connection:
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA synchronous=NORMAL")
     conn.execute("PRAGMA foreign_keys=ON")
+    conn.create_function("fold", 1, _fold, deterministic=True)        # for sorting by title: Ä sorts with A, ß like ss
     return conn
+
+
+def _fold(text) -> str:
+    plain = unicodedata.normalize("NFKD", str(text or "")).casefold()
+    return "".join(ch for ch in plain if not unicodedata.combining(ch))
 
 
 @contextmanager
@@ -298,14 +305,15 @@ def reindex(c: sqlite3.Connection, item_id: int) -> None:
         transcript += " " + " ".join(f"{r['title']} {r['transcript']}" for r in parts)       # track titles and everything said in the tracks
     c.execute(
         "INSERT INTO items_fts(rowid,title,description,tags,ai_tags,transcript,source) VALUES (?,?,?,?,?,?,?)",
-        (item_id, row["title"], row["description"], user_tags, ai_tags, transcript, source),
+        (item_id, spread(row["title"]), spread(row["description"]), spread(user_tags), spread(ai_tags), spread(transcript), spread(source)),
     )
 
 
 def reindex_tracks(c: sqlite3.Connection, item_id: int) -> None:
     """Refresh the track-level search index of one album (titles and transcripts)."""
     c.execute("DELETE FROM tracks_fts WHERE rowid IN (SELECT id FROM tracks WHERE item_id=?)", (item_id,))
-    c.execute("INSERT INTO tracks_fts(rowid,title,transcript) SELECT id,title,transcript FROM tracks WHERE item_id=?", (item_id,))
+    for r in c.execute("SELECT id, title, transcript FROM tracks WHERE item_id=?", (item_id,)).fetchall():
+        c.execute("INSERT INTO tracks_fts(rowid,title,transcript) VALUES (?,?,?)", (r["id"], spread(r["title"]), spread(r["transcript"])))
 
 
 def normalize_tag(tag: str) -> str:
@@ -393,10 +401,30 @@ def popular_tags(c: sqlite3.Connection, limit: int = 100) -> list[str]:
         "SELECT tag, COUNT(*) n FROM tags WHERE source='user' GROUP BY tag ORDER BY n DESC LIMIT ?", (limit,))]
 
 
+_DIGRAPHS = str.maketrans({"ä": "ae", "ö": "oe", "ü": "ue", "ß": "ss", "Ä": "Ae", "Ö": "Oe", "Ü": "Ue", "ẞ": "Ss"})
+_UMLAUT_WORD = re.compile(r"\w*[äöüßÄÖÜẞ]\w*")
+
+
+def german_forms(text: str) -> str:
+    """The words of `text` that have an ä, ö, ü or ß, spelled the other way (ae, oe, ue, ss). They are added to the search
+    index next to the text, so "Strasse" finds "Straße" and "Muenchen" finds "München"."""
+    return " ".join(sorted({w.translate(_DIGRAPHS).lower() for w in _UMLAUT_WORD.findall(text or "")}))
+
+
+def spread(text: str) -> str:
+    """The text as it goes into the search index: itself plus the other spelling of its umlaut words."""
+    extra = german_forms(text)
+    return f"{text} {extra}" if extra else (text or "")
+
+
 def fts_query(q: str) -> str:
-    """Turn free user text into a safe FTS5 query: every word is a quoted prefix term (AND)."""
-    words = re.findall(r"\w+", q, flags=re.UNICODE)
-    return " ".join(f'"{w}"*' for w in words)
+    """Turn free user text into a safe FTS5 query: every word is a quoted prefix term (AND). A word with an umlaut or ß
+    also matches the spelling without it, for text that was written that way."""
+    terms = []
+    for w in re.findall(r"\w+", q, flags=re.UNICODE):
+        alt = w.translate(_DIGRAPHS)
+        terms.append(f'("{w}"* OR "{alt}"*)' if alt != w else f'"{w}"*')
+    return " ".join(terms)
 
 
 def suggest_tags(c: sqlite3.Connection, q: str, limit: int = 5) -> list[dict]:
@@ -410,8 +438,20 @@ def suggest_tags(c: sqlite3.Connection, q: str, limit: int = 5) -> list[dict]:
     return [{"tag": r["tag"], "n": r["n"]} for r in rows]
 
 
+SORTS = {      # what the sort menu offers (besides "best": by relevance, only for a search); the empty choice is automatic
+    "new": "items.created_at DESC",
+    "old": "items.created_at ASC",
+    "title": "fold(items.title) ASC",
+    "title_desc": "fold(items.title) DESC",
+    "size": "items.size DESC",
+    "long": "items.duration IS NULL, items.duration DESC",
+}
+
+
 def search(c: sqlite3.Connection, q: str = "", kind: str = "", tag: str = "",
-           limit: int = 40, offset: int = 0, tag_source: str = "", person: int = 0) -> list[dict]:
+           limit: int = 40, offset: int = 0, tag_source: str = "", person: int = 0, sort: str = "") -> list[dict]:
+    """sort: one of SORTS, or "best" (relevance, needs a search); empty or unknown means automatic: relevance for a search,
+    newest first otherwise."""
     where, args = [], []
     if person:
         where.append("EXISTS (SELECT 1 FROM item_people ip WHERE ip.item_id = items.id AND ip.person_id = ?)")
@@ -427,13 +467,14 @@ def search(c: sqlite3.Connection, q: str = "", kind: str = "", tag: str = "",
             args.append(tag_source)
     match = fts_query(q)
     if match:
+        order = SORTS.get(sort) or "bm25(items_fts, 10, 4, 6, 3, 2, 1)"
         sql = ("SELECT items.* FROM items_fts JOIN items ON items.id = items_fts.rowid "
                "WHERE items_fts MATCH ?" + "".join(f" AND {w}" for w in where) +
-               " ORDER BY bm25(items_fts, 10, 4, 6, 3, 2, 1), items.created_at DESC LIMIT ? OFFSET ?")
+               f" ORDER BY {order}, items.created_at DESC, items.id DESC LIMIT ? OFFSET ?")
         args = [match, *args]
     else:
         sql = ("SELECT items.* FROM items" + (" WHERE " + " AND ".join(where) if where else "") +
-               " ORDER BY items.created_at DESC LIMIT ? OFFSET ?")
+               f" ORDER BY {SORTS.get(sort) or SORTS['new']}, items.created_at DESC, items.id DESC LIMIT ? OFFSET ?")
     rows = c.execute(sql, [*args, limit, offset]).fetchall()
     items = []
     for r in rows:

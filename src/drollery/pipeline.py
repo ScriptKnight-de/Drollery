@@ -335,15 +335,20 @@ def job_fetch(job: dict) -> None:
 # ------------------------------------------------------------- upkeep
 
 VIDEO_SIZES_DONE = "maintenance.video_sizes"        # set once every stored video has been looked at again
+SEARCH_SPELLINGS_DONE = "maintenance.search_spellings"   # set once the search index has the other spelling of umlaut words
 
 
 def plan_upkeep(c) -> None:
     """Queue the one-time jobs a library may still need (called when the app starts)."""
-    if accounts.get_setting(VIDEO_SIZES_DONE) is not None:
-        return
-    pending = c.execute("SELECT 1 FROM jobs WHERE type='check_video_sizes' AND status IN ('queued','running')").fetchone()
-    if not pending and c.execute("SELECT 1 FROM items WHERE kind IN ('video','movie') LIMIT 1").fetchone():
-        db.enqueue(c, "check_video_sizes")
+    if accounts.get_setting(VIDEO_SIZES_DONE) is None:
+        pending = c.execute("SELECT 1 FROM jobs WHERE type='check_video_sizes' AND status IN ('queued','running')").fetchone()
+        if not pending and c.execute("SELECT 1 FROM items WHERE kind IN ('video','movie') LIMIT 1").fetchone():
+            db.enqueue(c, "check_video_sizes")
+    if accounts.get_setting(SEARCH_SPELLINGS_DONE) is None:
+        if not c.execute("SELECT 1 FROM items LIMIT 1").fetchone():
+            c.execute("INSERT INTO settings(key,value) VALUES (?,'1') ON CONFLICT(key) DO UPDATE SET value=excluded.value", (SEARCH_SPELLINGS_DONE,))   # an empty library is indexed the new way from the start (written on this connection: a second one would wait for it)
+        elif not c.execute("SELECT 1 FROM jobs WHERE type='rebuild_search' AND status IN ('queued','running')").fetchone():
+            db.enqueue(c, "rebuild_search")
 
 
 def job_check_video_sizes(job: dict) -> None:
@@ -365,8 +370,21 @@ def job_check_video_sizes(job: dict) -> None:
     log.info("video sizes checked: %d of %d corrected", fixed, len(items))
 
 
+def job_rebuild_search(job: dict) -> None:
+    """Index every item and album track again, so that the words with ä, ö, ü or ß are also found under their other spelling
+    (Strasse for Straße). One item at a time, so the library stays usable while it runs."""
+    with db.tx() as c:
+        ids = [r["id"] for r in c.execute("SELECT id FROM items ORDER BY id")]
+    for item_id in ids:
+        with db.tx() as c:
+            db.reindex(c, item_id)
+            db.reindex_tracks(c, item_id)
+    accounts.set_setting(SEARCH_SPELLINGS_DONE, "1")
+    log.info("search index rebuilt for %d items", len(ids))
+
+
 HANDLERS = {"fetch": job_fetch, "transcribe": job_transcribe, "describe": job_describe, "transcribe_track": job_transcribe_track,
-            "check_video_sizes": job_check_video_sizes}
+            "check_video_sizes": job_check_video_sizes, "rebuild_search": job_rebuild_search}
 
 
 def run_job(job: dict) -> None:
