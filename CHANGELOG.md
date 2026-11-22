@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.7.0] - 2026-11-22
 
 ### Added
 - **Settings > Tags:** every tag with its count as yours and as the AI's, searchable and sortable. **Rename** a tag for the whole
