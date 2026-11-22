@@ -21,7 +21,7 @@ import zlib
 from dataclasses import dataclass
 from pathlib import Path
 
-from . import accounts, albums, db, pipeline
+from . import accounts, db, pipeline
 from .config import get_settings
 from .i18n import N_
 
@@ -123,34 +123,45 @@ def _check_database(path: Path) -> None:
         con.close()
 
 
-def _count_missing_files() -> int:
-    """Items of the restored library whose file is not there: what a metadata-only backup leaves to your own copy."""
-    missing = 0
-    with db.tx() as c:
-        for item in (dict(r) for r in c.execute("SELECT * FROM items")):
-            if item["kind"] == "album":
-                tracks = [dict(r) for r in c.execute("SELECT filename FROM tracks WHERE item_id=?", (item["id"],))]
-                missing += any(not albums.track_path(item, t).exists() for t in tracks)
-            else:
-                missing += not pipeline.media_path(item).exists()
-    return missing
+def _summary(con: sqlite3.Connection, media_root: Path) -> Summary:
+    """What a library holds, and how many of its items have no file below `media_root` (what a metadata-only backup leaves
+    to your own copy). The file layout is the one of pipeline.media_path and albums.track_path."""
+    summary = Summary(items=con.execute("SELECT COUNT(*) FROM items").fetchone()[0],
+                      people=con.execute("SELECT COUNT(*) FROM people").fetchone()[0],
+                      users=con.execute("SELECT COUNT(*) FROM users").fetchone()[0])
+    for item in con.execute("SELECT id, kind, sha256, ext FROM items").fetchall():
+        if item["kind"] == "album":
+            names = [r["filename"] for r in con.execute("SELECT filename FROM tracks WHERE item_id=?", (item["id"],))]
+            summary.no_file += any(not (media_root / "albums" / item["sha256"] / name).exists() for name in names)
+        else:
+            summary.no_file += not (media_root / item["sha256"][:2] / f"{item['sha256']}{item['ext']}").exists()
+    return summary
 
 
-def restore(fileobj) -> Summary:
-    """Restore the backup in `fileobj` (a .tgz) into this library. Only for a library without an account."""
+def restore(fileobj, apply: bool = True) -> Summary:
+    """Restore the backup in `fileobj` (a .tgz) into this library. Only for a library without an account.
+    With apply=False it only checks the backup, the same way, and says what is in it; the library is not touched."""
     s = get_settings()
     with _lock:
-        if accounts.user_count():
-            raise RestoreError(N_("This library already has an account, so nothing is restored over it"))
-        for name in CONTENT_DIRS:
-            folder = s.data_dir / name
-            if folder.exists() and any(folder.iterdir()):
-                raise RestoreError(N_("This data folder already holds files, so nothing is restored into it"))
+        if apply:
+            if accounts.user_count():
+                raise RestoreError(N_("This library already has an account, so nothing is restored over it"))
+            for name in CONTENT_DIRS:
+                folder = s.data_dir / name
+                if folder.exists() and any(folder.iterdir()):
+                    raise RestoreError(N_("This data folder already holds files, so nothing is restored into it"))
         staging = s.data_dir / f".restore-{uuid.uuid4().hex[:12]}"
         staging.mkdir(parents=True)
         try:
             _unpack(fileobj, staging, shutil.disk_usage(s.data_dir).free)
             _check_database(staging / "drollery.db")
+            if not apply:
+                con = sqlite3.connect(f"file:{staging / 'drollery.db'}?mode=ro", uri=True)
+                con.row_factory = sqlite3.Row
+                try:
+                    return _summary(con, staging / "media")
+                finally:
+                    con.close()
             # --- from here on things are put in place: the database first (one SQLite operation), then the folders
             source = sqlite3.connect(f"file:{staging / 'drollery.db'}?mode=ro", uri=True)
             try:
@@ -183,8 +194,4 @@ def restore(fileobj) -> Summary:
         pipeline.plan_upkeep(c)
     accounts.clear_setup_code()
     with db.tx() as c:
-        summary = Summary(items=c.execute("SELECT COUNT(*) FROM items").fetchone()[0],
-                          people=c.execute("SELECT COUNT(*) FROM people").fetchone()[0],
-                          users=c.execute("SELECT COUNT(*) FROM users").fetchone()[0])
-    summary.no_file = _count_missing_files()
-    return summary
+        return _summary(c, s.media_dir)

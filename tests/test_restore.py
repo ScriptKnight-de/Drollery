@@ -238,3 +238,57 @@ def test_the_restore_itself_refuses_a_library_with_an_account_even_if_the_page_d
             restore.restore(io.BytesIO(backup))
         with db.tx() as con:
             assert con.execute("SELECT COUNT(*) FROM items").fetchone()[0] == 0
+
+
+# ------------------------------------------------- the same on the command line
+
+def run_cli(*args):
+    from drollery.__main__ import main
+    return main(list(args))
+
+
+def test_the_command_restores_into_a_fresh_data_folder(tmp_path, monkeypatch, capsys):
+    backup = make_backup(tmp_path, monkeypatch)
+    (tmp_path / "x.tgz").write_bytes(backup)
+    _boot(tmp_path / "target", monkeypatch)                                       # an empty volume: not even a database yet
+    assert run_cli("restore", str(tmp_path / "x.tgz")) == 0
+    out = capsys.readouterr().out
+    assert "Restored: 2 items, 1 people, 1 accounts." in out and "sign in with an account from the backup" in out
+    assert accounts.user_count() == 1 and (tmp_path / "target" / "media").is_dir()
+    from drollery.main import app
+    with TestClient(app, follow_redirects=True) as c:                              # and the app starts on it
+        assert "Picture 0" in c.post("/login", data={"username": "admin", "password": PASSWORD}).text
+        assert c.get("/media/1").status_code == 200
+
+
+def test_check_says_what_is_in_the_file_and_changes_nothing(tmp_path, monkeypatch, capsys):
+    full = make_backup(tmp_path, monkeypatch)
+    meta = make_backup(tmp_path / "meta", monkeypatch, kind="metadata")
+    (tmp_path / "full.tgz").write_bytes(full)
+    (tmp_path / "meta.tgz").write_bytes(meta)
+    _boot(tmp_path / "target", monkeypatch)
+    assert run_cli("restore", "--check", str(tmp_path / "full.tgz")) == 0
+    assert "fine and can be restored: 2 items, 1 people, 1 accounts." in capsys.readouterr().out
+    assert run_cli("restore", "--check", str(tmp_path / "meta.tgz")) == 0
+    assert "2 items have no file" in capsys.readouterr().out                       # a metadata-only file says so
+    assert not (tmp_path / "target" / "drollery.db").exists() and not list((tmp_path / "target").glob(".restore-*"))
+    db.init()
+    create_user("someone", PASSWORD)                                              # a library in use can check a file too
+    assert run_cli("restore", "--check", str(tmp_path / "full.tgz")) == 0
+    capsys.readouterr()
+    assert accounts.user_count() == 1 and not (tmp_path / "target" / "media" / "00").exists()
+
+
+def test_the_command_refuses_a_library_in_use_a_missing_file_and_a_bad_file(tmp_path, monkeypatch, capsys):
+    backup = make_backup(tmp_path, monkeypatch)
+    (tmp_path / "x.tgz").write_bytes(backup)
+    (tmp_path / "bad.tgz").write_bytes(b"not an archive")
+    _boot(tmp_path / "target", monkeypatch)
+    assert run_cli("restore", str(tmp_path / "nothing.tgz")) == 1 and "There is no file" in capsys.readouterr().out
+    assert run_cli("restore", str(tmp_path / "bad.tgz")) == 1 and "not a Drollery backup" in capsys.readouterr().out
+    assert accounts.user_count() == 0
+    db.init()
+    create_user("someone", PASSWORD)
+    assert run_cli("restore", str(tmp_path / "x.tgz")) == 1 and "already has an account" in capsys.readouterr().out
+    with db.tx() as con:
+        assert con.execute("SELECT COUNT(*) FROM items").fetchone()[0] == 0

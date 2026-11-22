@@ -36,7 +36,7 @@ def test_the_backup_page_is_in_the_settings_menu_and_offers_both_kinds(client):
     page = client.get("/settings/backup").text
     assert 'href="/settings/backup"' in page and "Back up your library" in page
     assert page.count('action="/settings/backup/download"') == 2 and 'value="full"' in page and 'value="metadata"' in page
-    assert "Keep the file private" in page and "tar xzf" in page
+    assert "Keep the file private" in page and "python -m drollery restore" in page and "Or restore a backup" in page      # how to bring it back
 
 
 def test_a_full_backup_holds_the_database_and_the_files_laid_out_like_the_data_folder(client):

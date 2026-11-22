@@ -26,11 +26,10 @@
 <section class="panel stack">
   <h2>{{ _("Restore") }}</h2>
   <p class="muted">{{ _("The easy way: on a new Drollery that has no account yet, the first page offers “Or restore a backup”. Choose the file there, enter the setup code, and everything comes back.") }}</p>
-  <p class="muted">{{ _("Or by hand: unpack the file into an empty data volume, then start Drollery. With the Docker setup from the README:") }}</p>
-<pre class="restore-code">docker compose down
-docker run --rm -v drollery_drollery-data:/data -v "$PWD":/backup alpine \
-  sh -c "cd /data &amp;&amp; tar xzf /backup/drollery-backup-….tgz"
+  <p class="muted">{{ _("Or on the server, with the same checks: run the restore command into a data volume that has no account yet, then start Drollery. With the Docker setup from the README (add --check to only test the file):") }}</p>
+<pre class="restore-code">docker compose run --rm -v "$PWD":/backup drollery \
+  python -m drollery restore /backup/drollery-backup-….tgz
 docker compose up -d</pre>
-  <p class="hint">{{ _("The volume must be empty, so a restore never overwrites a library by accident. A metadata-only backup brings back the entries; the files come from your own copy of the media folder.") }}</p>
+  <p class="hint">{{ _("A restore never overwrites a library that has an account. A metadata-only backup brings back the entries; the files come from your own copy of the media folder.") }}</p>
 </section>
 {% endblock %}

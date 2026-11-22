@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.4.0] - 2026-11-22
 
 ### Added
 - **Restore a backup in the browser.** On a Drollery that has no account yet, the first page has a second form, *Or restore a
@@ -13,6 +13,9 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
   if it fails. The database goes in through SQLite's own backup, so no file is swapped under the running server. Nobody stays
   signed in from the backup, a restored `config.toml` replaces the default (the old one is kept as `config.toml.before-restore`),
   and a library that already has an account is never touched. After a metadata-only backup it says how many items have no file yet.
+- **`python -m drollery restore FILE`** does the same on the server, for an empty data volume (`docker compose run --rm -v "$PWD":/backup
+  drollery python -m drollery restore /backup/FILE`), with the same checks. `--check` only looks at a file and says what is in it
+  (items, people, accounts, items without a file) and changes nothing, so a backup can be tested at any time.
 
 ## [0.3.0] - 2026-11-22
 

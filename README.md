@@ -50,8 +50,8 @@ volumes:
 ```
 
 The image is published with these tags: `latest` (the newest version on the main branch), a release number such as
-`0.3.0` (that exact release), and `0.3` (the newest `0.3.x`). To stay on one release, use its number, for example
-`ghcr.io/scriptknight-de/drollery:0.3.0`. The same image is also in the Forgejo registry as
+`0.4.0` (that exact release), and `0.4` (the newest `0.4.x`). To stay on one release, use its number, for example
+`ghcr.io/scriptknight-de/drollery:0.4.0`. The same image is also in the Forgejo registry as
 `forgejo.scriptknight.de/scriptknight/drollery`.
 
 **Or use the project's Compose file**, which also gives you the optional Whisper container and the `.env` file. It pulls
@@ -222,7 +222,16 @@ It only works while the library has no account, so a library in use is never ove
 back the entries and tells you how many of them have no file yet. A big library takes a while, and a web server in front of
 Drollery may limit the size of an upload.
 
-Or **by hand**, into an empty volume:
+Or **on the server**, with the same checks, from the command line (Drollery stopped, or running without an account yet):
+
+```bash
+docker compose run --rm -v "$PWD":/backup drollery python -m drollery restore /backup/drollery-backup.tgz
+docker compose up -d
+```
+
+Add `--check` to only look at a file: it says what is in it (items, people, accounts, how many items have no file) and changes
+nothing, so you can test a backup at any time, even on a library in use. Restoring is only done for a library without an
+account. Or unpack it yourself into an empty volume:
 
 ```bash
 docker compose down
