@@ -256,7 +256,8 @@ def test_the_actions_share_one_toolbar_and_the_jobs_dot_shows_the_state(client, 
     for status, want in (("queued", "queued"), ("running", "running"), ("done", "done"), ("failed", "failed")):
         with db.tx() as c:
             c.execute("DELETE FROM jobs WHERE item_id=?", (image_id,))
-            c.execute("INSERT INTO jobs(item_id, type, status, created_at, updated_at) VALUES (?,?,?,0,0)", (image_id, "describe", status))
+            # run_after far ahead: the background worker must not claim the queued row and rewrite it under the test
+            c.execute("INSERT INTO jobs(item_id, type, status, created_at, updated_at, run_after) VALUES (?,?,?,0,0,?)", (image_id, "describe", status, 4e9))
         assert states(client.get(f"/items/{image_id}").text) == [want], status
 
 

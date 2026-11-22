@@ -18,6 +18,11 @@ def upload(client, n=1):
     return client.post("/api/v1/items", files={"file": (f"pic{n}.png", png(100 + n), "image/png")}).json()["id"]
 
 
+def unpack(tar, dest):
+    """tarfile's safe-extraction filter exists from Python 3.11.4 / 3.12; older interpreters extract our own archive as is."""
+    tar.extractall(dest, **({"filter": "data"} if hasattr(tarfile, "data_filter") else {}))
+
+
 def download(client, kind):
     r = client.post("/settings/backup/download", data={"kind": kind})
     assert r.status_code == 200, r.text[:200]
@@ -51,7 +56,7 @@ def test_the_database_in_a_backup_is_a_consistent_copy_that_opens_and_has_the_li
     client.patch(f"/api/v1/items/{item}", json={"tags": ["backed-up"], "title": "Kept safe"})
     _, tar = download(client, "full")
     out = tmp_path / "restored"
-    tar.extractall(out, filter="data")
+    unpack(tar, out)
     conn = sqlite3.connect(out / "drollery.db")
     assert conn.execute("PRAGMA integrity_check").fetchone()[0] == "ok"
     assert conn.execute("SELECT title FROM items WHERE id=?", (item,)).fetchone()[0] == "Kept safe"
@@ -74,7 +79,7 @@ def test_the_restore_command_in_the_readme_style_gives_a_working_library(client,
     _, tar = download(client, "full")
     fresh = tmp_path / "fresh"
     fresh.mkdir()
-    tar.extractall(fresh, filter="data")
+    unpack(tar, fresh)
     monkeypatch.setenv("DROLLERY_DATA", str(fresh))
     get_settings.cache_clear()
     from fastapi.testclient import TestClient

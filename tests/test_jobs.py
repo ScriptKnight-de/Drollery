@@ -38,7 +38,7 @@ def test_each_failed_row_has_its_own_retry_button_and_others_do_not(client):
     _, other = make_failed_job(client, 2)
     with db.tx() as c:
         c.execute("UPDATE jobs SET status='done', error='' WHERE id=?", (other,))
-        c.execute("INSERT INTO jobs(type,item_id,payload,status,created_at,updated_at) VALUES ('describe',NULL,'{}','queued',?,?)", (time.time(), time.time()))
+        c.execute("INSERT INTO jobs(type,item_id,payload,status,created_at,updated_at,run_after) VALUES ('describe',NULL,'{}','queued',?,?,4e9)", (time.time(), time.time()))   # far ahead: the worker must not claim it mid-test
     html = client.get("/jobs").text
     assert f'action="/jobs/{failed}/retry"' in html
     assert f'action="/jobs/{other}/retry"' not in html and html.count("/retry\"") == 1
