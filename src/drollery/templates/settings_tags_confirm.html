@@ -10,6 +10,7 @@
     {% if info.already %}<li>{{ _n("{n} of those already has “{tag}” and keeps it once", "{n} of those already have “{tag}” and keep it once", info.already, tag=target) }}</li>{% endif %}
     {% if info.target_exists %}<li>{{ _("“{tag}” exists already, so these tags are joined with it", tag=target) }}</li>{% endif %}
   </ul>
+  <p class="muted">{{ _("The old names are remembered: when you or the AI use one again, it becomes “{tag}”.", tag=target) }}</p>
   <p class="note">{{ _("This cannot be undone. A backup (Settings > Backup) is the way back.") }}</p>
   <form method="post" action="/settings/tags/merge" class="actions">
     {% for s in sources %}<input type="hidden" name="tags" value="{{ s }}">{% endfor %}

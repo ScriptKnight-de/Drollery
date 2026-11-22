@@ -115,10 +115,28 @@ def by_name(c, name: str) -> list[dict]:
                                        (name.strip(), name.strip()))]
 
 
-def everyone(c) -> list[dict]:
-    rows = c.execute("SELECT p.*, (SELECT COUNT(*) FROM item_people ip WHERE ip.person_id=p.id) AS items "
-                     "FROM people p ORDER BY p.name COLLATE NOCASE").fetchall()
-    return [_row(r) for r in rows]
+PEOPLE_SORTS = {"name": "fold(p.name), p.id", "items": "items DESC, fold(p.name)", "new": "p.created_at DESC, p.id DESC"}
+
+
+def everyone(c, q: str = "", sort: str = "name", unused: bool = False) -> list[dict]:
+    """The people, each with how many items they are on. q looks in the alias and the real name; unused keeps only the people
+    that are on no item; sort is one of PEOPLE_SORTS."""
+    where, args = [], []
+    if q.strip():
+        where.append(f"(p.name || ' ' || p.first_name || ' ' || p.surname) LIKE ? ESCAPE '\\' COLLATE NOCASE")
+        args.append(f"%{_like(q.strip())}%")
+    rows = c.execute("SELECT p.*, (SELECT COUNT(*) FROM item_people ip WHERE ip.person_id=p.id) AS items FROM people p"
+                     + (" WHERE " + " AND ".join(where) if where else "") + f" ORDER BY {PEOPLE_SORTS.get(sort, PEOPLE_SORTS['name'])}", args).fetchall()
+    out = [_row(r) for r in rows]
+    return [p for p in out if p["items"] == 0] if unused else out
+
+
+def delete_unused(c) -> int:
+    """Delete every person that is on no item (their pictures go with them). Returns how many."""
+    ids = [r["id"] for r in c.execute("SELECT p.id FROM people p WHERE NOT EXISTS (SELECT 1 FROM item_people ip WHERE ip.person_id=p.id)")]
+    for pid in ids:
+        delete(c, pid)
+    return len(ids)
 
 
 def of_item(c, item_id: int) -> list[dict]:

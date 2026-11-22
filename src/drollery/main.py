@@ -30,10 +30,9 @@ from .routes_share import api as share_api_router, manage as share_manage_router
 from .routes_settings import router as settings_router
 from .routes_tags import router as tags_router
 from .i18n import t, tn
-from .web import BASE, flash_redirect, jpeg_response, render
+from .web import BASE, PAGE, flash_redirect, jpeg_response, render
 
 log = logging.getLogger("drollery")
-PAGE = 40
 
 
 # ----------------------------------------------------------------- worker

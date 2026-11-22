@@ -165,7 +165,9 @@ already exists, or press **New person** to add them.
 the AI suggested. You can **rename** a tag for the whole library (renaming to a name that exists **merges** the two, an item
 that had both keeps one copy), **merge** several ticked tags into one, **delete** a tag everywhere (the AI is told not to bring it
 back on those items) and **keep as mine** the AI's copies of a tag. Joining tags asks first and says how many items it touches.
-Two entries for the same person can be merged on that person's page (*Merge with another person*): its items go to the other
+Merged tag names are **remembered**: typed again by you or suggested by the AI, an old name becomes the new tag, and the
+tags page lists these renames so you can forget one. The people list can be searched and sorted, and it can delete everyone who is
+on no item. Two entries for the same person can be merged on that person's page (*Merge with another person*): its items go to the other
 person, details the other lacks (name, birthday, gender, link, picture) are filled in, and the entry is deleted. **Settings ›
 People** points out likely duplicates. None of this can be undone; a backup is the way back.
 

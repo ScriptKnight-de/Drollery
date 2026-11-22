@@ -17,6 +17,7 @@ BASE = Path(__file__).parent
 IMAGE_HEADERS = {"Cache-Control": "private, max-age=86400", "X-Content-Type-Options": "nosniff"}
 templates = Jinja2Templates(directory=BASE / "templates")
 FLASH = "drollery_flash"
+PAGE = 40                       # tiles per page of the library (and of a person's items)
 
 
 def _timestamp(value) -> str:

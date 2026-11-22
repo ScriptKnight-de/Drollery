@@ -14,11 +14,25 @@
   </ul>
 </section>
 {% endif %}
+{% if total > 1 or q or unused %}
+<form class="toolbar" method="get" action="/people">
+  <div class="field grow">{{ icon("search") }}<input type="search" name="q" value="{{ q }}" placeholder="{{ _('Find a person') }}" aria-label="{{ _('Find a person') }}" autocomplete="off"></div>
+  <label class="sortpick"><span class="sr-only">{{ _("Sort by") }}</span>
+    <select name="sort" aria-label="{{ _('Sort by') }}" onchange="this.form.submit()">
+      <option value="name" {{ "selected" if sort == "name" }}>{{ _("Name") }}</option>
+      <option value="items" {{ "selected" if sort == "items" }}>{{ _("Most items first") }}</option>
+      <option value="new" {{ "selected" if sort == "new" }}>{{ _("Newest first") }}</option></select></label>
+  {% if unused_total or unused %}<label class="check"><input type="checkbox" name="filter" value="unused" {{ "checked" if unused }} onchange="this.form.submit()"> {{ _n("On no item ({n})", "On no item ({n})", unused_total) }}</label>{% endif %}
+  <button class="btn" type="submit">{{ icon("search") }}{{ _("Find") }}</button>
+</form>
+<div class="listnote">{{ _n("{n} person", "{n} people", rows|length) }}{% if rows|length != total %} {{ _("of {total}", total=total) }}{% endif %}
+  {% if unused_total %} · <form method="post" action="/people/delete-unused" class="inline" data-confirm="{{ _n('Delete the {n} person who is on no item? Their details are lost.', 'Delete the {n} people who are on no item? Their details are lost.', unused_total) }}"><button class="link" type="submit">{{ _n("Delete the {n} person on no item", "Delete the {n} people on no item", unused_total) }}</button></form>{% endif %}</div>
+{% endif %}
 {% if rows %}
 <ul class="people-grid">
   {% for p in rows %}
   <li><a class="person-card{{ ' dup' if p.id in dup_ids }}" href="/people/{{ p.id }}">{{ avatar(p) }}<span class="pc-name">{{ p.name }}</span>{% if p.first_name or p.surname %}{% set real = (p.first_name ~ " " ~ p.surname)|trim %}{% if real != p.name %}<span class="muted small">{{ real }}</span>{% endif %}{% endif %}<span class="muted small">{{ _("Items: {n}", n=p["items"]) }}</span></a></li>
   {% endfor %}
 </ul>
-{% else %}<p class="muted">{{ _("Nobody has been added yet") }}</p>{% endif %}
+{% else %}<p class="muted">{{ _("Nobody has been added yet") if not total else _("Nobody matches that.") }}</p>{% endif %}
 {% endblock %}

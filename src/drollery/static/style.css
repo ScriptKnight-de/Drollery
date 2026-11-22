@@ -712,3 +712,10 @@ form.uploading { opacity: .55; pointer-events: none; }
 .person-card.dup { border-style: dashed; border-color: var(--ac); }
 .dups .plainlist li { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 @media (max-width: 600px) { .mergebar input { min-width: 0; width: 100%; } .mergebar label { width: 100%; flex-wrap: wrap; } }
+.listnote { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; width: fit-content; max-width: 100%; margin: 0 0 16px; padding: 4px 12px; border-radius: 12px;
+  background: color-mix(in srgb, var(--bg) 88%, transparent); font-size: 14px; color: var(--tx2); }
+.listnote form { display: inline; margin: 0; }
+.toolbar .check { display: inline-flex; align-items: center; gap: 8px; margin: 0; white-space: nowrap; font-size: 14px; color: var(--tx2); }
+.toolbar .check input { width: auto; padding: 0; }
+.redirect-list li { display: flex; align-items: center; gap: 12px; }
+.redirect-list form { margin: 0; }

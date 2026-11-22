@@ -70,7 +70,7 @@ def test_renaming_to_a_new_name_moves_the_tag_and_keeps_who_gave_it(client):
     r = post(client, "/settings/tags/merge", tags="colour", target="#Color Tag")                              # normalised like any tag
     assert r.status_code == 303 and "Renamed “colour” to “color-tag” on 2 items" in flash(r)
     assert tags_of(a) == (["color-tag"], []) and tags_of(b) == ([], ["color-tag"])
-    assert found(client, "color-tag") == [a, b] and found(client, "colour") == []
+    assert found(client, "color-tag") == [a, b] and found(client, "colour") == [a, b]               # the old name is remembered: it finds the same items
     assert client.get("/api/v1/items", params={"q": "color-tag"}).json()["items"]                              # the search index follows
     with db.tx() as c:
         assert {r_["tag"] for r_ in c.execute("SELECT tag FROM tag_dismissed")} == {"color-tag"}              # what the AI was told not to say moves along
@@ -85,7 +85,7 @@ def test_joining_tags_asks_first_and_an_item_with_both_keeps_one(client):
     r = post(client, "/settings/tags/merge", tags="cats", target="cat", confirmed="1")
     assert "Merged 1 tags into “cat”: 2 items changed" in flash(r)
     assert tags_of(a) == (["cat"], []) and tags_of(b) == (["cat"], [])                                         # yours wins over the AI's copy
-    assert tags_of(c_) == ([], ["cat"]) and found(client, "cats") == []
+    assert tags_of(c_) == ([], ["cat"]) and found(client, "cats") == found(client, "cat") == [a, b, c_]
 
 
 def test_several_tags_are_merged_into_one(client):

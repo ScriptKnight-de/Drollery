@@ -3,6 +3,20 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Added
+- **Tags remember merges.** When tags are merged or renamed, the old names are remembered: typed again by you, suggested again
+  by the AI, added in bulk, or used in an old link or bookmark, they mean the new tag. The tags page lists these *remembered
+  renames* and each one can be forgotten, which makes the old name an ordinary tag again. Chains are followed (a to b to c), and a
+  name that is a real tag again redirects nowhere.
+- **People list:** search (alias, first name, surname), sort by name, most items or newest, a filter *On no item* and *Delete the N
+  people on no item* (after a confirmation with the number; their pictures go too).
+
+### Fixed
+- A person's page showed only the first 200 items and silently left out the rest. It now shows the first page and loads more as you
+  scroll, like the library, and the heading says how many items the person is on.
+
 ## [0.7.0] - 2026-11-22
 
 ### Added

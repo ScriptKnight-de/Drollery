@@ -45,4 +45,17 @@
 {% else %}
 <p class="muted">{{ _("No tags yet. Tags you add to items, and the AI's suggestions, show up here.") if not q else _("No tag matches that.") }}</p>
 {% endif %}
+
+{% if redirects %}
+<section class="panel stack" id="redirects">
+  <h2>{{ _("Remembered renames") }}</h2>
+  <p class="muted">{{ _("When tags were merged, the old names are remembered: typed again by you or suggested by the AI, they become the new tag. Forgetting one makes the old name an ordinary tag again.") }}</p>
+  <ul class="plainlist redirect-list">
+    {% for r in redirects %}
+    <li><span class="mono">#{{ r.old }}</span> → <b>#{{ r.new }}</b>
+      <form method="post" action="/settings/tags/forget" class="inline"><input type="hidden" name="old" value="{{ r.old }}"><button class="link" type="submit">{{ _("Forget") }}</button></form></li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
 {% endblock %}

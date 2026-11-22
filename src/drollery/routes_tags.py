@@ -21,7 +21,8 @@ def tags_page(request: Request, q: str = "", sort: str = ""):
     sort = sort if sort in ("name", "count") else "name"
     with db.tx() as c:
         rows, total = db.tag_overview(c, q, sort)
-    return render(request, "settings_tags.html", tab="tags", rows=rows, total=total, q=q, sort=sort)
+        redirects = db.list_redirects(c)
+    return render(request, "settings_tags.html", tab="tags", rows=rows, total=total, q=q, sort=sort, redirects=redirects)
 
 
 @router.post("/merge")
@@ -67,3 +68,13 @@ def keep(tag: str = Form("")):
     if not n:
         return flash_redirect("/settings/tags", t("The AI has not given that tag to any item"), "error")
     return flash_redirect("/settings/tags", tn("“{tag}” is now your own tag on {n} item", "“{tag}” is now your own tag on {n} items", n, tag=name))
+
+
+@router.post("/forget")
+def forget(old: str = Form("")):
+    """Stop treating an old tag name as the new one (what was merged stays merged)."""
+    with db.tx() as c:
+        done = db.forget_redirect(c, old)
+    if not done:
+        return flash_redirect("/settings/tags", t("That renamed tag is not remembered any more"), "error")
+    return flash_redirect("/settings/tags", t("Forgotten: “{old}” is an ordinary tag name again", old=db.normalize_tag(old)))

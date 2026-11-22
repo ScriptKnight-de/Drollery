@@ -44,7 +44,7 @@
 {% endif %}
 
 
-<h2 class="with-icon">{{ _("Appears on") }}</h2>
+<h2 class="with-icon">{{ _("Appears on") }}{% if total_items %} <span class="muted small">· {{ _n("{n} item", "{n} items", total_items) }}</span>{% endif %}</h2>
 {% if items %}<div class="grid">{% include "grid.html" %}</div>
 {% else %}<p class="muted">{{ _("Not added to any item yet") }}</p>{% endif %}
 <script src="/static/soundboard.js" defer></script>

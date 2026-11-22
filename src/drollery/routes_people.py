@@ -13,7 +13,7 @@ from . import albums, db, movies, people
 from .config import get_settings
 from .deps import api_auth, web_auth
 from .i18n import N_, t, tn
-from .web import flash_redirect, jpeg_response, render
+from .web import PAGE, flash_redirect, jpeg_response, render
 
 router = APIRouter(dependencies=[Depends(web_auth)])
 files = APIRouter(dependencies=[Depends(api_auth)])
@@ -73,11 +73,24 @@ def _form(p: dict | None = None, **over) -> dict:
 # ------------------------------------------------------------------ pages
 
 @router.get("/people")
-def people_page(request: Request):
+def people_page(request: Request, q: str = "", sort: str = "", filter: str = ""):
+    sort = sort if sort in people.PEOPLE_SORTS else "name"
+    unused = filter == "unused"
     with db.tx() as c:
-        rows = people.everyone(c)
+        rows = people.everyone(c, q, sort, unused)
+        everybody = people.everyone(c)
         dups = people.duplicates(c)
-    return render(request, "people.html", rows=rows, tab="people", dups=dups, dup_ids={p["id"] for g in dups for p in g})
+    return render(request, "people.html", rows=rows, tab="people", dups=dups, dup_ids={p["id"] for g in dups for p in g}, q=q, sort=sort,
+                  unused=unused, total=len(everybody), unused_total=sum(1 for p in everybody if p["items"] == 0))
+
+
+@router.post("/people/delete-unused")
+def delete_unused():
+    with db.tx() as c:
+        n = people.delete_unused(c)
+    if not n:
+        return flash_redirect("/people", t("Everybody is on at least one item"))
+    return flash_redirect("/people", tn("Deleted {n} person who was on no item", "Deleted {n} people who were on no item", n))
 
 
 @router.get("/people/new")
@@ -169,11 +182,13 @@ def person_page(request: Request, person_id: int):
     p = _person(person_id)
     with db.tx() as c:
         others = [{"id": x["id"], "name": x["name"], "real": people.full_name(x)} for x in people.everyone(c) if x["id"] != person_id]
-        items = db.search(c, "", "", "", 200, 0, "", person_id)
+        items = db.search(c, "", "", "", PAGE, 0, "", person_id)
+        total_items = c.execute("SELECT COUNT(*) FROM item_people WHERE person_id=?", (person_id,)).fetchone()[0]
         album_info = albums.summaries(c, [i["id"] for i in items if i["kind"] == "album"])
         movie_info = movies.summaries(c, [i["id"] for i in items if i["kind"] == "movie"])
     return render(request, "person.html", person=p, others=others, full_name=people.full_name(p), form=_form(p), items=items, album_info=album_info, movie_info=movie_info, genders=GENDER_LABELS, today=date.today().isoformat(),
-                  q="", tag="", kind="", src="", track_hits={}, more=False, page=0)
+                  q="", tag="", kind="", src="", sort="", person_id=person_id, track_hits={}, more=len(items) == PAGE, page=0,
+                  total_items=total_items)
 
 
 @router.post("/people/{person_id}")

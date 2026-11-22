@@ -97,6 +97,11 @@ CREATE TABLE IF NOT EXISTS tags (
   PRIMARY KEY (item_id, tag)
 );
 CREATE INDEX IF NOT EXISTS tags_tag ON tags(tag);
+CREATE TABLE IF NOT EXISTS tag_redirects (            -- a tag that was merged into another: the old name becomes the new one from now on
+  old TEXT PRIMARY KEY,
+  new TEXT NOT NULL,
+  created_at REAL NOT NULL
+);
 CREATE TABLE IF NOT EXISTS tag_dismissed (            -- AI tags the user removed; the AI must not bring them back
   item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
   tag TEXT NOT NULL,
@@ -320,6 +325,28 @@ def normalize_tag(tag: str) -> str:
     return re.sub(r"\s+", "-", tag.strip().lower().lstrip("#"))[:40]
 
 
+def resolve_tags(c: sqlite3.Connection, tags: list[str]) -> list[str]:
+    """Tag names with the redirects applied: a name that was merged into another is the other one now (a few hops at most),
+    and a tag given twice stays once."""
+    redirects = {r["old"]: r["new"] for r in c.execute("SELECT old, new FROM tag_redirects")}
+    out = []
+    for t in tags:
+        for _ in range(8):
+            if t not in redirects:
+                break
+            t = redirects[t]
+        out.append(t)
+    return list(dict.fromkeys(out))
+
+
+def list_redirects(c: sqlite3.Connection) -> list[dict]:
+    return [dict(r) for r in c.execute("SELECT old, new, created_at FROM tag_redirects ORDER BY new, old")]
+
+
+def forget_redirect(c: sqlite3.Connection, old: str) -> bool:
+    return c.execute("DELETE FROM tag_redirects WHERE old=?", (normalize_tag(old),)).rowcount > 0
+
+
 def _clean(tags: list[str]) -> list[str]:
     return [t for t in dict.fromkeys(normalize_tag(t) for t in tags) if t]
 
@@ -327,7 +354,7 @@ def _clean(tags: list[str]) -> list[str]:
 def set_user_tags(c: sqlite3.Connection, item_id: int, tags: list[str]) -> None:
     """Replace the user's tags. AI tags are never touched, except that a tag the user types which the AI also
     suggested becomes the user's (it is promoted, not duplicated)."""
-    wanted = _clean(tags)
+    wanted = resolve_tags(c, _clean(tags))
     c.execute("DELETE FROM tags WHERE item_id=? AND source='user'" + (f" AND tag NOT IN ({','.join('?' * len(wanted))})" if wanted else ""),
               (item_id, *wanted))
     for t in wanted:
@@ -342,7 +369,7 @@ def set_ai_tags(c: sqlite3.Connection, item_id: int, tags: list[str]) -> None:
     c.execute("DELETE FROM tags WHERE item_id=? AND source='ai'", (item_id,))
     have = {r["tag"] for r in c.execute("SELECT tag FROM tags WHERE item_id=?", (item_id,))}
     dismissed = {r["tag"] for r in c.execute("SELECT tag FROM tag_dismissed WHERE item_id=?", (item_id,))}
-    for t in _clean(tags):
+    for t in resolve_tags(c, _clean(tags)):
         if t not in have and t not in dismissed:
             c.execute("INSERT INTO tags(item_id,tag,source) VALUES (?,?,'ai')", (item_id, t))
     reindex(c, item_id)
@@ -418,6 +445,12 @@ def merge_tags(c: sqlite3.Connection, sources: list[str], target: str) -> int:
     mine = {r["item_id"] for r in c.execute("SELECT item_id FROM tags WHERE tag=? AND source='user'", (target,))}
     for item_id in mine:                                                  # a tag you have is never also "dismissed" for that item
         c.execute("DELETE FROM tag_dismissed WHERE item_id=? AND tag=?", (item_id, target))
+    now = time.time()
+    for old in sources:                                                    # from now on the old names mean the new one
+        c.execute("INSERT INTO tag_redirects(old,new,created_at) VALUES (?,?,?) ON CONFLICT(old) DO UPDATE SET new=excluded.new, created_at=excluded.created_at",
+                  (old, target, now))
+    c.execute(f"UPDATE tag_redirects SET new=? WHERE new IN ({','.join('?' * len(sources))})", (target, *sources))   # earlier redirects to a name that is gone
+    c.execute("DELETE FROM tag_redirects WHERE old=?", (target,))                                                  # a name that is a real tag again redirects nowhere
     for item_id in touched:
         reindex(c, item_id)
     return len(touched)
@@ -538,7 +571,7 @@ def search(c: sqlite3.Connection, q: str = "", kind: str = "", tag: str = "",
     if tag:
         src = " AND t.source = ?" if tag_source in ("user", "ai") else ""
         where.append(f"EXISTS (SELECT 1 FROM tags t WHERE t.item_id = items.id AND t.tag = ?{src})")
-        args.append(normalize_tag(tag))
+        args.append(resolve_tags(c, [normalize_tag(tag)])[0])               # a link or bookmark with an old name still finds the items
         if src:
             args.append(tag_source)
     match = fts_query(q)
