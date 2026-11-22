@@ -1,7 +1,7 @@
 services:
   drollery:
     # `docker compose up -d` pulls this ready-made image (linux/amd64 and linux/arm64); `docker compose up -d --build`
-    # builds it from this folder instead. DROLLERY_IMAGE in .env pins a version, e.g. ghcr.io/scriptknight-de/drollery:0.5.0
+    # builds it from this folder instead. DROLLERY_IMAGE in .env pins a version, e.g. ghcr.io/scriptknight-de/drollery:0.6.0
     image: ${DROLLERY_IMAGE:-ghcr.io/scriptknight-de/drollery:latest}
     build:
       context: .
