@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.2.9] - 2026-11-22
 
 ### Fixed
 - On a phone the tables in the settings and on the jobs page (API keys, share links, background jobs, AI models, signed-in
