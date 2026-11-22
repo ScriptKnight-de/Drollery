@@ -3,6 +3,12 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Changed
+- A **GIF plays on its tile** in the library, on a loop, instead of showing a still frame. A GIF with a card image of its
+  own keeps that picture, and people whose system asks for less motion (`prefers-reduced-motion`) still see the frame.
+
 ## [0.2.2] - 2026-11-22
 
 ### Changed

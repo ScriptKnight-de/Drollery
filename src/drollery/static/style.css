@@ -657,3 +657,4 @@ form.uploading { opacity: .55; pointer-events: none; }
 .uz-types label b { flex-wrap: wrap; }
 .uz-panel.uploading { opacity: 1; pointer-events: auto; }
 .btnrow { display: flex; gap: 8px; flex-wrap: wrap; margin: 0; }
+.thumb picture { display: contents; }   /* the image inside fills the tile as if the wrapper was not there */

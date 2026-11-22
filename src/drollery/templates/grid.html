@@ -19,6 +19,8 @@
 <a class="tile" href="/items/{{ it.id }}{% if q and it.kind == 'album' %}?q={{ q|urlencode }}{% endif %}">
   <div class="thumb">
     {% if it.has_card %}<img loading="lazy" src="/card/{{ it.id }}?v={{ it.updated_at|int }}" alt="">
+    {% elif it.kind == "gif" %}{# a GIF plays on its tile, on a loop; people who asked for less motion get the still frame #}
+    <picture>{% if it.has_thumb %}<source media="(prefers-reduced-motion: reduce)" srcset="/thumb/{{ it.id }}?v={{ (it.updated_at * 1000)|int }}">{% endif %}<img loading="lazy" src="/media/{{ it.id }}?v={{ (it.updated_at * 1000)|int }}" alt=""></picture>
     {% elif it.has_thumb %}<img loading="lazy" src="/thumb/{{ it.id }}?v={{ (it.updated_at * 1000)|int }}" alt="">
     {% else %}<span class="ph{{ ' k-album' if it.kind == 'album' }}">{{ icon("lute" if it.kind == "audio" else "disc" if it.kind == "album" else "clapperboard" if it.kind == "movie" else "image") }}</span>{% endif %}
     {% set al = album_info.get(it.id) if album_info else none %}

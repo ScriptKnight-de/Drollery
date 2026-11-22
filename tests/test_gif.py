@@ -84,3 +84,17 @@ def test_the_new_name_is_translated(library):
     client.post("/settings/profile", data={"email": "", "language": "de"})
     page = client.get("/").text
     assert "GIFs <i>1</i>" in page and "Bilder <i>1</i>" in page            # GIFs have their own filter, apart from the pictures
+
+
+def test_a_gif_plays_on_its_tile_unless_it_has_a_card_image_of_its_own(library):
+    client, a, g = library
+    home = client.get("/").text
+    tile = home.split(f'href="/items/{g}"')[1].split("</a>")[0]
+    assert f'src="/media/{g}?v=' in tile                                                          # the GIF itself, so it loops
+    assert f'media="(prefers-reduced-motion: reduce)" srcset="/thumb/{g}?v=' in tile              # a still for people who asked for less motion
+    still = home.split(f'href="/items/{a}"')[1].split("</a>")[0]
+    assert f'src="/thumb/{a}?v=' in still and "<picture>" not in still                           # other pictures stay as they were
+    assert client.get(f"/media/{g}").headers["content-type"] == "image/gif"
+    client.post(f"/items/{g}/card", data={"t": 0, "x": 0, "y": 0, "s": 0.5})                       # a crop the owner made is kept
+    tile = client.get("/").text.split(f'href="/items/{g}"')[1].split("</a>")[0]
+    assert f'src="/card/{g}?v=' in tile and f"/media/{g}" not in tile
