@@ -22,10 +22,26 @@ services:
   # Off by default. Turn it on by putting COMPOSE_PROFILES=whisper in .env, then `docker compose up -d`.
   # It is not published to the host: Drollery reaches it inside the stack at http://whisper:8000/v1
   # (Settings > AI models > "Whisper server" preset, model name must match WHISPER_MODEL below).
+  # One-shot, runs first: the Whisper server runs as the unprivileged user "ubuntu" (uid 1000) and must be able to write
+  # to the model volume. A volume that already holds root-owned files (made by an older setup or by another tool) would
+  # make every model download fail with "Permission denied". This hands such files to uid 1000; it changes nothing when
+  # the ownership is already right.
+  whisper-permissions:
+    image: ghcr.io/speaches-ai/speaches:latest-cpu
+    profiles: ["whisper"]
+    restart: "no"
+    user: root
+    entrypoint: ["sh", "-c", "find /models ! -user 1000 -exec chown 1000:1000 {} + ; chmod u+rwx /models"]
+    volumes:
+      - whisper-models:/models
+
   whisper:
     image: ghcr.io/speaches-ai/speaches:latest-cpu
     profiles: ["whisper"]
     restart: unless-stopped
+    depends_on:
+      whisper-permissions:
+        condition: service_completed_successfully
     environment:
       ENABLE_UI: "false"                                  # no demo web UI, the API is all Drollery needs
       LOG_LEVEL: info
@@ -88,8 +104,8 @@ services:
         case "$$code" in
           000) echo "Is the 'whisper' container running and healthy? Check: docker compose ps" ;;
           404) echo "That model does not exist. Check WHISPER_MODEL in .env (for example Systran/faster-whisper-small)." ;;
-          5??) echo "The Whisper server could not fetch the model. The usual reason is that it cannot reach huggingface.co"
-               echo "(no internet, or DNS, firewall or proxy settings); a full or read-only disk is another."
+          5??) echo "The Whisper server could not fetch the model. Two usual reasons: it cannot reach huggingface.co (no internet,"
+               echo "or DNS, firewall or proxy settings), or it cannot write to the model volume (\"Permission denied\", or a full disk)."
                echo "The exact reason is in the server's log: docker compose logs whisper" ;;
           *)   echo "See the server's log: docker compose logs whisper" ;;
         esac

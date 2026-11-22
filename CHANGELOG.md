@@ -3,6 +3,13 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Fixed
+- The optional Whisper stack no longer fails with `Permission denied` (HTTP 500 from the model download) when the model
+  volume already holds root-owned files: a small one-shot step (`whisper-permissions`) hands the volume to the Whisper
+  user before the server starts. The model helper's failure hint now names this cause as well.
+
 ## [0.1.1] - 2026-11-22
 
 ### Changed

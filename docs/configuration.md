@@ -106,7 +106,7 @@ few times if the problem might pass. What the codes mean:
 | Code | Meaning | What to do |
 |---|---|---|
 | `404` | the model name does not exist | fix `WHISPER_MODEL` in `.env` (for example `Systran/faster-whisper-small`) |
-| `500` | the Whisper server could not fetch the model, usually because it cannot reach `huggingface.co` | read the reason in `docker compose logs whisper`; check the machine's DNS, firewall or proxy, or whether Hugging Face is up; test with `docker compose exec whisper curl -sI https://huggingface.co` |
+| `500` | the Whisper server could not fetch or store the model: it cannot reach `huggingface.co`, or it cannot write to the model volume (`Permission denied` in the server log; the `whisper-permissions` step of the compose file fixes that on every start) | read the reason in `docker compose logs whisper`; check the machine's DNS, firewall or proxy, or whether Hugging Face is up; test with `docker compose exec whisper curl -sI https://huggingface.co` |
 | `000` | the helper cannot reach the Whisper server at all | `docker compose ps`: is the `whisper` container running and healthy? |
 
 **A machine without internet:** copy the downloaded model from a machine where it worked (the volume is called

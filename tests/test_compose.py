@@ -114,6 +114,22 @@ def test_dollar_signs_are_escaped_for_compose_except_the_model_default():
     assert not stray, f"Compose would try to fill these in itself: {stray[:3]}"
 
 
+def test_the_model_volume_is_made_writable_for_the_whisper_user_before_the_server_starts():
+    """A volume that already holds root-owned files makes every download fail with 'Permission denied' (HTTP 500)."""
+    perm = COMPOSE.split("  whisper-permissions:\n", 1)[1].split("\n\n", 1)[0]
+    assert "user: root" in perm and "whisper-models:/models" in perm and 'profiles: ["whisper"]' in perm
+    assert "chown 1000:1000" in perm and "! -user 1000" in perm                           # only touches what is not already right
+    assert "/models" in perm and "/home/ubuntu" not in perm                               # works on the volume, nothing else
+    server = COMPOSE.split("\n  whisper:\n", 1)[1].split("\n\n", 1)[0]
+    assert "whisper-permissions" in server and "service_completed_successfully" in server    # the server waits for it
+    assert "whisper-models:/home/ubuntu/.cache/huggingface/hub" in server
+
+
+def test_the_failure_hint_names_the_permission_cause_too(run_helper):
+    _, out, _ = run_helper(("500", "Internal Server Error", "0"))
+    assert "Permission denied" in out and "huggingface.co" in out
+
+
 def test_the_helper_is_still_a_one_shot_that_waits_for_a_healthy_server_and_only_runs_on_request():
     section = helper_section()
     assert 'profiles: ["whisper"]' in section and 'restart: "no"' in section

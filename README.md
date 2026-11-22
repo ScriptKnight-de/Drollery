@@ -265,7 +265,8 @@ requests, because a large file is checked after it has arrived.
 
 **The Whisper model does not download.** Look at `docker compose logs whisper-model`: it prints the HTTP code, what the
 server answered and the usual cause. `404` means the model name in `WHISPER_MODEL` does not exist; `500` almost always
-means the Whisper container cannot reach `huggingface.co` (no internet, DNS, firewall or proxy). The exact reason is in
+means the Whisper container cannot reach `huggingface.co` (no internet, DNS, firewall or proxy) or cannot write to its
+model volume (`Permission denied` in the server log; update to the current compose file, which repairs the volume). The exact reason is in
 `docker compose logs whisper`. See [docs/configuration.md](docs/configuration.md#if-the-model-does-not-download).
 
 **Transcription is very slow.** See the speed note in [docs/configuration.md](docs/configuration.md#whisper-as-a-second-container).
