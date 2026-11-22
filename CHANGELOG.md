@@ -3,6 +3,13 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Fixed
+- A video recorded on its side (a phone held upright) is stored with the size people see, 1080x1920 and not 1920x1080.
+  The item page's *Dimensions* line and the player's shape are right from the start. Videos added earlier keep the size
+  they were stored with; the player corrects its shape in the browser as before.
+
 ## [0.2.5] - 2026-11-22
 
 ### Changed

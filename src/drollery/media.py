@@ -47,6 +47,21 @@ def _run(cmd: list[str], timeout: int = 120) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
 
 
+def _turned(stream: dict) -> bool:
+    """True when the player shows the video on its side: a phone held upright records 1920x1080 and a flag that says turn it
+    by 90 or 270 degrees (a display matrix in newer files, the "rotate" tag in older ones)."""
+    angle = None
+    for side in stream.get("side_data_list") or []:
+        if "rotation" in side:
+            angle = side["rotation"]
+    if angle is None:
+        angle = (stream.get("tags") or {}).get("rotate")
+    try:
+        return round(float(angle)) % 180 == 90
+    except (TypeError, ValueError):
+        return False
+
+
 def probe(path: Path) -> dict:
     r = _run(["ffprobe", "-v", "error", "-print_format", "json", "-show_format", "-show_streams", str(path)])
     if r.returncode != 0:
@@ -62,9 +77,12 @@ def probe(path: Path) -> dict:
             for k, v in (s.get("tags") or {}).items():
                 tags.setdefault(str(k).lower(), str(v).strip())
     tags.update({str(k).lower(): str(v).strip() for k, v in (data.get("format", {}).get("tags") or {}).items()})
+    width, height = video.get("width"), video.get("height")
+    if width and height and _turned(video):                      # the size people see, not the size the frames are stored in
+        width, height = height, width
     return {
-        "width": video.get("width"),
-        "height": video.get("height"),
+        "width": width,
+        "height": height,
         "duration": float(duration) if duration not in (None, "N/A") else None,
         "has_audio": any(s.get("codec_type") == "audio" for s in streams),
         "tags": tags,
