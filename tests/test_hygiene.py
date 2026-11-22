@@ -117,17 +117,6 @@ def test_no_unused_imports_in_the_source():
     assert not problems, problems
 
 
-def test_the_old_display_name_column_is_dropped_on_upgrade(client):
-    from drollery import db
-    with db.tx() as c:
-        c.execute("ALTER TABLE users ADD COLUMN display_name TEXT NOT NULL DEFAULT ''")             # a database from before it was removed
-        assert "display_name" in {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('users')")}
-        db._migrate_users(c)
-        assert "display_name" not in {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('users')")}
-        assert c.execute("SELECT username FROM users").fetchone()["username"] == "admin"            # the account itself is untouched
-    assert client.get("/settings/profile").status_code == 200
-
-
 def test_the_guards_really_catch_what_they_are_for():
     """A guard that never fires proves nothing: feed the patterns examples of what must be caught (and of what must not)."""
     secret = re.compile(r"""(api[_-]?key|apikey|secret|token|passw(or)?d|authorization)\s*[:=]\s*["'](?!\s*["'])([A-Za-z0-9_./+=-]{24,})["']""", re.I)

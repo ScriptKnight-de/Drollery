@@ -267,14 +267,3 @@ def test_an_empty_answer_still_counts_as_done(client, tmp_path, monkeypatch):
     with db.tx() as c:
         assert albums.tracks_of(c, aid)[0]["transcribed_at"] and albums.transcription_state(c, aid)["done"] == 1
     assert "1 of 1 track transcribed" in client.get(f"/items/{aid}").text
-
-
-def test_an_older_database_gets_the_columns_and_the_track_index(tmp_path):
-    con = sqlite3.connect(tmp_path / "old.db")
-    con.row_factory = sqlite3.Row
-    con.executescript("CREATE TABLE tracks (id INTEGER PRIMARY KEY, item_id INTEGER, position INTEGER, title TEXT NOT NULL DEFAULT '');"
-                      "INSERT INTO tracks(item_id,position,title) VALUES (1,1,'Old Song');")
-    db._migrate_tracks(con)
-    cols = {r["name"] for r in con.execute("PRAGMA table_info(tracks)")}
-    assert {"transcript", "transcribed_at"} <= cols
-    assert con.execute("SELECT transcribed_at FROM tracks").fetchone()[0] is None                    # existing tracks count as not transcribed

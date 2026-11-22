@@ -231,35 +231,50 @@ def test_the_setting_beats_the_config_and_junk_falls_back_to_one(client):
     assert accounts.worker_limit() == 1
 
 
-def test_only_as_many_workers_claim_jobs_as_the_limit_allows(tmp_path, monkeypatch):
-    """Eight loops exist; slot n takes jobs only while the limit is above n, so raising or lowering it needs no restart.
-    No app is started here (its own workers would take part): just the database and the loops."""
+def test_the_supervisor_keeps_as_many_workers_busy_as_the_setting_allows(tmp_path, monkeypatch):
+    """The setting is read every two seconds: raising or lowering it needs no restart. No app is started here (its own
+    workers would take part): just the database and the supervisor."""
     import asyncio, threading, time
     from conftest import _boot
     from drollery import accounts, db, main, pipeline
     _boot(tmp_path, monkeypatch)
     db.init()
+    queue, ran, release, release_later = list(range(1, 9)), [], threading.Event(), threading.Event()
+    lock = threading.Lock()
 
-    async def run(limit):
-        accounts.set_setting("jobs.concurrency", str(limit))
-        claimed, ran, release = [], [], threading.Event()
-        monkeypatch.setattr(db, "claim_job", lambda: claimed.append(1) or ({"id": len(claimed)} if len(claimed) <= 8 else None))
-        monkeypatch.setattr(pipeline, "run_job", lambda job: (ran.append(job["id"]), release.wait(10)))     # a job stays busy until released
-        stop = asyncio.Event()
-        tasks = [asyncio.create_task(main._worker_loop(stop, n)) for n in range(accounts.MAX_WORKERS)]
-        deadline = time.monotonic() + 10
-        while len(ran) < limit and time.monotonic() < deadline:               # wait for the slots to fill (as long as a slow machine needs)
+    def claim():
+        with lock:
+            return {"id": queue.pop(0)} if queue else None
+    monkeypatch.setattr(db, "claim_job", claim)
+    monkeypatch.setattr(pipeline, "run_job", lambda job: (ran.append(job["id"]), (release if job["id"] <= 3 else release_later).wait(10)))   # a job stays busy until released
+
+    async def until(count, seconds=10):
+        deadline = time.monotonic() + seconds
+        while len(ran) < count and time.monotonic() < deadline:
             await asyncio.sleep(0.05)
-        await asyncio.sleep(0.5)                                              # and give a slot that must not start the time to (wrongly) do so
-        running = len(ran)
-        release.set()
-        stop.set()
-        await asyncio.gather(*tasks)
-        return running
+        await asyncio.sleep(0.5)                                              # time for a worker that must not start to (wrongly) do so
+        return len(ran)
 
-    assert asyncio.run(run(1)) == 1
-    assert asyncio.run(run(3)) == 3
-    assert asyncio.run(run(8)) == 8
+    async def scenario():
+        accounts.set_setting("jobs.concurrency", "1")
+        stop = asyncio.Event()
+        supervisor = asyncio.create_task(main._supervise(stop))
+        assert await until(1) == 1                                            # one at a time
+        accounts.set_setting("jobs.concurrency", "3")
+        assert await until(3, 15) == 3                                        # raised while running: two more start, no more than that
+        accounts.set_setting("jobs.concurrency", "1")
+        await asyncio.sleep(3)                                                # the supervisor notices (it looks every two seconds)
+        release.set()                                                         # the first three jobs end: only one worker may go on
+        assert await until(4) == 4
+        release_later.set()                                                   # and the queue drains through that one
+        deadline = time.monotonic() + 10
+        while queue and time.monotonic() < deadline:
+            await asyncio.sleep(0.05)
+        stop.set()
+        await asyncio.gather(supervisor)
+
+    asyncio.run(scenario())
+    assert not queue and sorted(ran) == list(range(1, 9))
 
 
 # ------------------------------------------------ transcribe and describe on their own

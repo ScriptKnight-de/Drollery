@@ -238,18 +238,6 @@ def test_the_date_field_is_offered_instead_of_an_age(client):
     assert 'type="date" name="birthday"' in form and 'name="age"' not in form
 
 
-def test_an_old_age_column_is_dropped_on_upgrade(client):
-    with db.tx() as c:
-        c.execute("DROP TABLE item_people")
-        c.execute("DROP TABLE people")
-        c.execute("CREATE TABLE people (id INTEGER PRIMARY KEY, name TEXT NOT NULL, age INTEGER, gender TEXT NOT NULL DEFAULT '', link TEXT NOT NULL DEFAULT '', has_picture INTEGER NOT NULL DEFAULT 0, created_at REAL NOT NULL, updated_at REAL NOT NULL)")
-        c.execute("INSERT INTO people(name, age, created_at, updated_at) VALUES ('Old', 50, 0, 0)")
-        db._migrate_people(c)
-        cols = {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('people')")}
-        assert "birthday" in cols and "age" not in cols
-        assert c.execute("SELECT name, birthday FROM people").fetchone()["birthday"] == ""
-
-
 def test_people_need_a_login(client):
     from fastapi.testclient import TestClient
     from drollery.main import app

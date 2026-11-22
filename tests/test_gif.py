@@ -79,19 +79,6 @@ def test_gifs_get_no_transcription_job(library, monkeypatch):
         assert pipeline.plan_jobs(c, g) == []
 
 
-def test_existing_gifs_move_to_the_new_kind_when_the_app_starts(client):
-    with db.tx() as c:
-        c.execute("INSERT INTO items(kind,title,mime,ext,sha256,created_at,updated_at) VALUES ('image','old gif','image/gif','.gif','x1',0,0)")
-        c.execute("INSERT INTO items(kind,title,mime,ext,sha256,created_at,updated_at) VALUES ('image','old png','image/png','.png','x2',0,0)")
-    db.init()
-    with db.tx() as c:
-        kinds = {r["title"]: r["kind"] for r in c.execute("SELECT title, kind FROM items")}
-    assert kinds["old gif"] == "gif" and kinds["old png"] == "image"
-    db.init()                                                                                      # and it is safe to run again
-    with db.tx() as c:
-        assert c.execute("SELECT kind FROM items WHERE title='old gif'").fetchone()[0] == "gif"
-
-
 def test_the_new_name_is_translated(library):
     client, _, _ = library
     client.post("/settings/profile", data={"email": "", "language": "de"})

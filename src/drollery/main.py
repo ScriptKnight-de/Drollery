@@ -37,12 +37,10 @@ PAGE = 40
 
 # ----------------------------------------------------------------- worker
 
-async def _worker_loop(stop: asyncio.Event, slot: int = 0) -> None:
-    """One of MAX_WORKERS loops. Slot n only takes jobs while the limit set in Settings is above n, so changing it applies at once."""
-    while not stop.is_set():
-        job = None
-        if slot < await asyncio.to_thread(accounts.worker_limit):
-            job = await asyncio.to_thread(db.claim_job)
+async def _worker_loop(stop: asyncio.Event, slot: int, limit: list[int]) -> None:
+    """Slot n works while the number of allowed jobs (limit[0]) is above n; when it is lowered the slot ends after its job."""
+    while not stop.is_set() and slot < limit[0]:
+        job = await asyncio.to_thread(db.claim_job)
         if job is None:
             try:
                 await asyncio.wait_for(stop.wait(), timeout=2)
@@ -50,6 +48,21 @@ async def _worker_loop(stop: asyncio.Event, slot: int = 0) -> None:
                 pass
             continue
         await asyncio.to_thread(pipeline.run_job, job)
+
+
+async def _supervise(stop: asyncio.Event) -> None:
+    """Keeps as many worker loops alive as Settings allow (accounts.worker_limit). A changed setting applies within two seconds."""
+    limit, workers = [1], {}
+    while not stop.is_set():
+        limit[0] = await asyncio.to_thread(accounts.worker_limit)
+        for slot in range(limit[0]):
+            if slot not in workers or workers[slot].done():
+                workers[slot] = asyncio.create_task(_worker_loop(stop, slot, limit))
+        try:
+            await asyncio.wait_for(stop.wait(), timeout=2)
+        except asyncio.TimeoutError:
+            pass
+    await asyncio.gather(*workers.values(), return_exceptions=True)
 
 
 def _announce_setup() -> None:
@@ -68,10 +81,10 @@ async def lifespan(app: FastAPI):
     if accounts.user_count() == 0:
         _announce_setup()
     stop = asyncio.Event()
-    tasks = [asyncio.create_task(_worker_loop(stop, n)) for n in range(accounts.MAX_WORKERS)]
+    supervisor = asyncio.create_task(_supervise(stop))
     yield
     stop.set()
-    await asyncio.gather(*tasks, return_exceptions=True)
+    await asyncio.gather(supervisor, return_exceptions=True)
 
 
 # the interactive API docs are off: they would list every endpoint to anyone who can reach the port (the API is documented in the README)

@@ -473,17 +473,6 @@ def test_only_albums_and_only_signed_in_people_can_look_up(client, anon, album, 
     assert not fake.calls
 
 
-def test_an_older_database_gets_the_new_album_columns(tmp_path):
-    import sqlite3
-    con = sqlite3.connect(tmp_path / "old.db")
-    con.row_factory = sqlite3.Row
-    con.executescript("CREATE TABLE albums (item_id INTEGER PRIMARY KEY, artist TEXT NOT NULL DEFAULT '', subtype TEXT NOT NULL DEFAULT 'album');"
-                      "INSERT INTO albums(item_id, artist) VALUES (1, 'x');")
-    db._migrate_albums(con)
-    row = con.execute("SELECT * FROM albums").fetchone()
-    assert (row["year"], row["label"], row["mbid"], row["details"]) == ("", "", "", "") and row["artist"] == "x"
-
-
 def test_the_basics_sit_in_the_details_box_in_the_right_order(client, mp3s):
     upload(client, [mp3s["one"], mp3s["two"]], subtype="audiobook")
     aid = album_id(client)

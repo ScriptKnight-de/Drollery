@@ -16,7 +16,6 @@ CREATE TABLE IF NOT EXISTS items (
   title_locked INTEGER NOT NULL DEFAULT 0,
   description TEXT NOT NULL DEFAULT '',
   transcript TEXT NOT NULL DEFAULT '',
-  ocr TEXT NOT NULL DEFAULT '',
   mime TEXT NOT NULL,
   ext TEXT NOT NULL,
   original_name TEXT NOT NULL DEFAULT '',
@@ -182,7 +181,7 @@ CREATE TABLE IF NOT EXISTS ai_models (
 );
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
 CREATE VIRTUAL TABLE IF NOT EXISTS items_fts USING fts5(
-  title, description, tags, ai_tags, transcript, ocr, source,
+  title, description, tags, ai_tags, transcript, source,
   tokenize = 'unicode61 remove_diacritics 2', prefix = '2 3'
 );
 """
@@ -210,86 +209,44 @@ def tx():
         conn.close()
 
 
-def _fts_columns(c: sqlite3.Connection) -> list[str]:
-    return [r["name"] for r in c.execute("SELECT name FROM pragma_table_info('items_fts')")]
+FTS_COLUMNS = ["title", "description", "tags", "ai_tags", "transcript", "source"]
+
+# What a database from before Drollery 0.1.0 may lack. Those databases are no longer upgraded in place.
+REQUIRED_COLUMNS = {
+    "items": ("has_card", "card_t", "card_x", "card_y", "card_s"),
+    "users": ("language",),
+    "shares": ("track_id",),
+    "albums": ("year", "label", "mbid", "details"),
+    "tracks": ("transcript", "transcribed_at"),
+    "people": ("birthday",),
+}
 
 
-CARD_COLUMNS = (("has_card", "INTEGER NOT NULL DEFAULT 0"), ("card_t", "REAL"), ("card_x", "REAL"), ("card_y", "REAL"), ("card_s", "REAL"))
-
-
-def _migrate_items(c: sqlite3.Connection) -> None:
-    have = {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('items')")}
-    if have:                                                      # table exists from an earlier version
-        for col, decl in CARD_COLUMNS:
-            if col not in have:
-                c.execute(f"ALTER TABLE items ADD COLUMN {col} {decl}")
-
-
-def _migrate_users(c: sqlite3.Connection) -> None:
-    have = {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('users')")}
-    if have and "language" not in have:
-        c.execute("ALTER TABLE users ADD COLUMN language TEXT NOT NULL DEFAULT ''")
-    if "display_name" in have:                               # the display name was removed: a person has just a user name
-        c.execute("ALTER TABLE users DROP COLUMN display_name")
-
-
-def _migrate_shares(c: sqlite3.Connection) -> None:
-    have = {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('shares')")}
-    if have and "track_id" not in have:
-        c.execute("ALTER TABLE shares ADD COLUMN track_id INTEGER REFERENCES tracks(id) ON DELETE CASCADE")
-
-
-def _migrate_albums(c: sqlite3.Connection) -> None:
-    have = {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('albums')")}
-    for col in ("year", "label", "mbid", "details"):
-        if have and col not in have:
-            c.execute(f"ALTER TABLE albums ADD COLUMN {col} TEXT NOT NULL DEFAULT ''")
-
-
-def _migrate_tracks(c: sqlite3.Connection) -> None:
-    have = {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('tracks')")}
-    if have and "transcript" not in have:
-        c.execute("ALTER TABLE tracks ADD COLUMN transcript TEXT NOT NULL DEFAULT ''")
-    if have and "transcribed_at" not in have:
-        c.execute("ALTER TABLE tracks ADD COLUMN transcribed_at REAL")
-
-
-def _migrate_people(c: sqlite3.Connection) -> None:
-    have = {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('people')")}
-    if have and "birthday" not in have:
-        c.execute("ALTER TABLE people ADD COLUMN birthday TEXT NOT NULL DEFAULT ''")
-    if "age" in have:                                         # a plain age cannot be turned into a date; it is dropped
-        c.execute("ALTER TABLE people DROP COLUMN age")
+def _check_schema(c: sqlite3.Connection) -> None:
+    for table, columns in REQUIRED_COLUMNS.items():
+        have = {r["name"] for r in c.execute(f"SELECT name FROM pragma_table_info('{table}')")}
+        if have and (missing := [col for col in columns if col not in have]):
+            raise RuntimeError(f"This database is from before Drollery 0.1.0 (table {table} lacks {', '.join(missing)}). "
+                               "Start it once with Drollery 0.1.7 (image tag 0.1.7), which upgrades it, then use a newer version.")
 
 
 def init() -> None:
     with tx() as c:
-        _migrate_items(c)
-        _migrate_users(c)
-        _migrate_shares(c)
-        _migrate_albums(c)
-        _migrate_tracks(c)
-        _migrate_people(c)
-        if "ai_tags" not in _fts_columns(c) and _fts_columns(c):       # index from before the user/AI tag split
+        _check_schema(c)
+        # the search index follows FTS_COLUMNS: one from an older layout (with the removed "ocr" column) is rebuilt from the items
+        cols = [r["name"] for r in c.execute("SELECT name FROM pragma_table_info('items_fts')")]
+        rebuild = bool(cols) and cols != FTS_COLUMNS
+        if rebuild:
             c.execute("DROP TABLE items_fts")
-            rebuild = True
-        else:
-            rebuild = False
         c.executescript(SCHEMA)
+        if "ocr" in {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('items')")}:
+            c.execute("ALTER TABLE items DROP COLUMN ocr")                       # the text recognition feature was removed
         if rebuild:
             for (item_id,) in c.execute("SELECT id FROM items").fetchall():
                 reindex(c, item_id)
-        # GIFs used to be stored as plain images
-        c.execute("UPDATE items SET kind='gif' WHERE kind='image' AND mime='image/gif'")
-        # tracks of albums made before the track index existed
-        c.execute("INSERT INTO tracks_fts(rowid,title,transcript) SELECT id,title,transcript FROM tracks WHERE id NOT IN (SELECT rowid FROM tracks_fts)")
         # jobs left 'running' by a crash/restart go back to the queue
         c.execute("UPDATE jobs SET status='queued' WHERE status='running'")
         c.execute("DELETE FROM sessions WHERE expires_at < ?", (time.time(),))
-        # OCR was removed: drop what is left of it
-        c.execute("DELETE FROM jobs WHERE type='ocr'")
-        c.execute("DELETE FROM settings WHERE key='ai.ocr'")
-        c.execute("DELETE FROM ai_models WHERE type='tesseract'")
 
 
 # ---------------------------------------------------------------- items
@@ -327,8 +284,8 @@ def reindex(c: sqlite3.Connection, item_id: int) -> None:
         parts = c.execute("SELECT title, transcript FROM tracks WHERE item_id=? ORDER BY position", (item_id,)).fetchall()
         transcript += " " + " ".join(f"{r['title']} {r['transcript']}" for r in parts)       # track titles and everything said in the tracks
     c.execute(
-        "INSERT INTO items_fts(rowid,title,description,tags,ai_tags,transcript,ocr,source) VALUES (?,?,?,?,?,?,?,?)",
-        (item_id, row["title"], row["description"], user_tags, ai_tags, transcript, row["ocr"], source),
+        "INSERT INTO items_fts(rowid,title,description,tags,ai_tags,transcript,source) VALUES (?,?,?,?,?,?,?)",
+        (item_id, row["title"], row["description"], user_tags, ai_tags, transcript, source),
     )
 
 
@@ -459,7 +416,7 @@ def search(c: sqlite3.Connection, q: str = "", kind: str = "", tag: str = "",
     if match:
         sql = ("SELECT items.* FROM items_fts JOIN items ON items.id = items_fts.rowid "
                "WHERE items_fts MATCH ?" + "".join(f" AND {w}" for w in where) +
-               " ORDER BY bm25(items_fts, 10, 4, 6, 3, 2, 1, 1), items.created_at DESC LIMIT ? OFFSET ?")
+               " ORDER BY bm25(items_fts, 10, 4, 6, 3, 2, 1), items.created_at DESC LIMIT ? OFFSET ?")
         args = [match, *args]
     else:
         sql = ("SELECT items.* FROM items" + (" WHERE " + " AND ".join(where) if where else "") +

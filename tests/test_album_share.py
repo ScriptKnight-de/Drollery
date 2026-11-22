@@ -178,13 +178,3 @@ def test_deleting_the_album_removes_its_shares(client, album):
     with db.tx() as c:
         assert c.execute("SELECT COUNT(*) FROM shares").fetchone()[0] == 0
     assert anon_client().get(f"/s/{sh['token']}").status_code == 404
-
-
-def test_an_older_database_gets_the_track_column(tmp_path):
-    con = sqlite3.connect(tmp_path / "old.db")
-    con.executescript("CREATE TABLE shares (id INTEGER PRIMARY KEY, token TEXT, item_id INTEGER, label TEXT, created_at REAL);"
-                      "INSERT INTO shares(token,item_id,label,created_at) VALUES ('t',1,'',0);")
-    con.row_factory = sqlite3.Row
-    db._migrate_shares(con)
-    assert "track_id" in {r["name"] for r in con.execute("PRAGMA table_info(shares)")}
-    assert con.execute("SELECT track_id FROM shares").fetchone()[0] is None          # existing shares keep working as whole-item shares

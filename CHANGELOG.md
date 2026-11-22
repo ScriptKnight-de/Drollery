@@ -3,6 +3,18 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Changed
+- Databases made before Drollery 0.1.0 are no longer upgraded in place (the code for it is gone, about 70 lines). Such a
+  database stops at start with a message that names the version that still does it, 0.1.7. Everything from 0.1.0 on
+  starts as before.
+- The unused "ocr" column of the items table and of the search index (a removed feature) is dropped when Drollery starts;
+  the index is rebuilt once from the items, search keeps working.
+- The number of background workers follows the setting through one supervisor instead of eight permanent loops.
+- The light and dark palette is written once (`light-dark()`) instead of twice in the stylesheet; every page looks the
+  same (checked pixel by pixel in both themes and with two highlight colours).
+
 ## [0.1.7] - 2026-11-22
 
 ### Fixed

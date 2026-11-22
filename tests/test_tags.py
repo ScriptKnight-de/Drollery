@@ -179,19 +179,37 @@ def test_a_describe_job_writes_ai_tags_only(client, monkeypatch):
 
 
 # ------------------------------------------------------------- migration
-
-def test_an_old_search_index_is_rebuilt_with_the_ai_tags_column(client):
-    """A database created before the split has a 6-column index; startup must rebuild it without losing search."""
+def test_a_database_with_the_removed_ocr_column_is_upgraded_and_keeps_its_search(client):
+    """Versions 0.1.0 to 0.1.7 had an "ocr" column (items and search index) that nothing used. Startup removes it and rebuilds the index."""
     i = make_item(client)
     client.patch(f"/api/v1/items/{i}", json={"tags": ["oldtag"]})
     with db.tx() as c:
         db.set_ai_tags(c, i, ["aitag"])
+        c.execute("ALTER TABLE items ADD COLUMN ocr TEXT NOT NULL DEFAULT ''")
         c.execute("DROP TABLE items_fts")
-        c.execute("CREATE VIRTUAL TABLE items_fts USING fts5(title, description, tags, transcript, ocr, source, "
+        c.execute("CREATE VIRTUAL TABLE items_fts USING fts5(title, description, tags, ai_tags, transcript, ocr, source, "
                   "tokenize = 'unicode61 remove_diacritics 2', prefix = '2 3')")
-        c.execute("INSERT INTO items_fts(rowid,title,description,tags,transcript,ocr,source) VALUES (?,?,?,?,?,?,?)", (i, "t", "", "oldtag aitag", "", "", ""))
+        c.execute("INSERT INTO items_fts(rowid,title,description,tags,ai_tags,transcript,ocr,source) VALUES (?,?,?,?,?,?,?,?)", (i, "t", "", "x", "", "", "", ""))
     db.init()
     with db.tx() as c:
-        assert "ai_tags" in db._fts_columns(c)
+        assert [r["name"] for r in c.execute("SELECT name FROM pragma_table_info('items_fts')")] == db.FTS_COLUMNS
+        assert "ocr" not in {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('items')")}
     assert [x["id"] for x in client.get("/api/v1/items", params={"q": "oldtag"}).json()["items"]] == [i]
     assert [x["id"] for x in client.get("/api/v1/items", params={"q": "aitag"}).json()["items"]] == [i]
+    db.init()                                                                           # and a second start changes nothing
+    assert [x["id"] for x in client.get("/api/v1/items", params={"q": "oldtag"}).json()["items"]] == [i]
+
+
+def test_a_database_from_before_0_1_0_is_refused_with_a_clear_message(tmp_path, monkeypatch):
+    """Those databases are no longer upgraded in place: the message says which version still does it."""
+    import sqlite3
+    import pytest
+    from conftest import _boot
+    _boot(tmp_path, monkeypatch)
+    from drollery.config import get_settings
+    con = sqlite3.connect(get_settings().db_path)
+    con.execute("CREATE TABLE shares (id INTEGER PRIMARY KEY, token TEXT, item_id INTEGER, label TEXT, created_at REAL)")
+    con.commit()
+    con.close()
+    with pytest.raises(RuntimeError, match=r"before Drollery 0\.1\.0.*shares lacks track_id.*0\.1\.7"):
+        db.init()

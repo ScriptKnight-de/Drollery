@@ -1,51 +1,37 @@
 /* Drollery — playful sticker look. Colors are CSS variables: mode via [data-theme], highlight via [data-accent]. */
 :root {
-  color-scheme: dark;
-  --bg: #15141a; --s1: #1d1c24; --s2: #272531;
-  --chip: #000; --chip-ring: rgba(255,255,255,.38); --chip-tx: #fff; --chip-x: #ff4d52; --chip-fld: #23222c;
-  --ln: rgba(255,255,255,.1); --ln2: rgba(255,255,255,.22);
-  --tx: #f1eef8; --tx2: #b0abc2; --tx3: #a19cb4;
+  color-scheme: light dark;            /* follows the system; the menu pins it with data-theme (below) */
+  /* every colour is light-dark(light value, dark value): the palette is written once */
+  --bg: light-dark(#fbf7ef, #15141a); --s1: light-dark(#ffffff, #1d1c24); --s2: light-dark(#f1ebdd, #272531);
+  --chip: light-dark(#eee7d6, #000); --chip-ring: light-dark(rgba(40,30,10,.22), rgba(255,255,255,.38)); --chip-tx: light-dark(#26222e, #fff);
+  --chip-x: light-dark(#e5383b, #ff4d52); --chip-fld: light-dark(#ffffff, #23222c);
+  --ln: light-dark(rgba(40,30,10,.12), rgba(255,255,255,.1)); --ln2: light-dark(rgba(40,30,10,.26), rgba(255,255,255,.22));
+  --tx: light-dark(#26222e, #f1eef8); --tx2: light-dark(#5e586c, #b0abc2); --tx3: light-dark(#675f76, #a19cb4);
   --ac: #ffb800; --ac-on: #16120a;
-  --ac-ink: color-mix(in srgb, var(--ac), white 22%);
-  --ok: #6fd09a; --bad: #ff8a80;
-  --k-image: #ff5fa8; --k-video: #3db5ff; --k-audio: #3fe086; --k-album: #ffa23d; --k-gif: #b58cff; --k-movie: #ff7a6b;
+  --ac-ink: light-dark(color-mix(in srgb, var(--ac), black 42%), color-mix(in srgb, var(--ac), white 22%));
+  --ok: light-dark(#23895a, #6fd09a); --bad: light-dark(#c43d33, #ff8a80);
+  --k-image: light-dark(#e0267d, #ff5fa8); --k-video: light-dark(#0a84e0, #3db5ff); --k-audio: light-dark(#0e9e55, #3fe086);
+  --k-album: light-dark(#d9660a, #ffa23d); --k-gif: light-dark(#8a3fd9, #b58cff); --k-movie: light-dark(#d23c2e, #ff7a6b);
   --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --ease: cubic-bezier(.2,.7,.2,1);
-  --tex-vig: radial-gradient(ellipse 120% 90% at 50% 15%, transparent 50%, rgba(0,0,0,.38));
+  --tex-vig: radial-gradient(ellipse 120% 90% at 50% 15%, transparent 50%, light-dark(rgba(130,85,20,.12), rgba(0,0,0,.38)));
+  --tex-mottle: none;
+  /* the two wall pictures are images, which light-dark() cannot switch everywhere yet: they are set per theme (dark first) */
   --tex-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n' x='0' y='0' width='100%' height='100%'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0.3 0 0 0 -.1'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23n)'/%3E%3C/svg%3E");
   --tex-blocks: url("/static/stone-dark.svg");
-  --tex-mottle: none;
 }
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]) {
-    color-scheme: light;
-    --bg: #fbf7ef; --s1: #ffffff; --s2: #f1ebdd;
-    --chip: #eee7d6; --chip-ring: rgba(40,30,10,.22); --chip-tx: #26222e; --chip-x: #e5383b; --chip-fld: #ffffff;
-    --ln: rgba(40,30,10,.12); --ln2: rgba(40,30,10,.26);
-    --tx: #26222e; --tx2: #5e586c; --tx3: #675f76;
-    --ac-ink: color-mix(in srgb, var(--ac), black 42%);
-    --ok: #23895a; --bad: #c43d33;
-    --k-image: #e0267d; --k-video: #0a84e0; --k-audio: #0e9e55; --k-album: #d9660a; --k-gif: #8a3fd9; --k-movie: #d23c2e;
-    --tex-vig: radial-gradient(ellipse 120% 90% at 50% 15%, transparent 50%, rgba(130,85,20,.12));
     --tex-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n' x='0' y='0' width='100%' height='100%'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.36 0 0 0 0 0.25 0 0 0 0 0.1 0.4 0 0 0 -.14'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23n)'/%3E%3C/svg%3E");
     --tex-blocks: url("/static/stone-light.svg");
-    --tex-mottle: none;
   }
 }
 :root[data-theme="light"] {
   color-scheme: light;
-  --bg: #fbf7ef; --s1: #ffffff; --s2: #f1ebdd;
-  --chip: #eee7d6; --chip-ring: rgba(40,30,10,.22); --chip-tx: #26222e; --chip-x: #e5383b; --chip-fld: #ffffff;
-  --ln: rgba(40,30,10,.12); --ln2: rgba(40,30,10,.26);
-  --tx: #26222e; --tx2: #5e586c; --tx3: #675f76;
-  --ac-ink: color-mix(in srgb, var(--ac), black 42%);
-  --ok: #23895a; --bad: #c43d33;
-  --k-image: #e0267d; --k-video: #0a84e0; --k-audio: #0e9e55; --k-album: #d9660a; --k-gif: #8a3fd9; --k-movie: #d23c2e;
-  --tex-vig: radial-gradient(ellipse 120% 90% at 50% 15%, transparent 50%, rgba(130,85,20,.12));
   --tex-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n' x='0' y='0' width='100%' height='100%'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.36 0 0 0 0 0.25 0 0 0 0 0.1 0.4 0 0 0 -.14'/%3E%3C/filter%3E%3Crect width='100%' height='100%' filter='url(%23n)'/%3E%3C/svg%3E");
   --tex-blocks: url("/static/stone-light.svg");
-  --tex-mottle: none;
 }
+:root[data-theme="dark"] { color-scheme: dark; }
 /* highlight colors: fully saturated; text on them is dark, except white on the two deepest (grape, indigo) to keep 4.5:1 */
 :root[data-accent="gold"] { --ac: #ffb800; }
 :root[data-accent="tomato"] { --ac: #ff3d2e; }

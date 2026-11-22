@@ -168,21 +168,6 @@ def test_card_tools_need_a_login(client, image_id):
 
 # ------------------------------------------------------------ migration
 
-def test_an_older_database_gets_the_card_columns(client, image_id):
-    """Installs from before this feature have no card columns; startup must add them and keep the data."""
-    with db.tx() as c:
-        for col in ("has_card", "card_t", "card_x", "card_y", "card_s"):
-            c.execute(f"ALTER TABLE items DROP COLUMN {col}")
-        assert "has_card" not in {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('items')")}
-    db.init()
-    with db.tx() as c:
-        cols = {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('items')")}
-        assert {"has_card", "card_t", "card_x", "card_y", "card_s"} <= cols
-        item = db.get_item(c, image_id)
-    assert item["title"] == "halves" and item["has_card"] == 0
-    assert client.post(f"/items/{image_id}/card", data={"x": "0", "y": "0", "s": "1"}).status_code == 200
-
-
 def test_item_facts_sit_in_a_details_box_not_under_the_picture(client, image_id):
     client.post(f"/items/{image_id}/edit", data={"title": "Halves", "description": "", "tags": ""})
     with db.tx() as c:
