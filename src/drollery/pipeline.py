@@ -324,4 +324,5 @@ def run_job(job: dict) -> None:
         db.finish_job(job["id"], None, s.job_max_attempts, job["attempts"])
     except Exception as e:  # noqa: BLE001 - a job must never crash the worker
         log.warning("job %s (%s) failed: %s", job["id"], job["type"], e)
-        db.finish_job(job["id"], f"{type(e).__name__}: {e}", s.job_max_attempts, job["attempts"])
+        db.finish_job(job["id"], f"{type(e).__name__}: {e}", s.job_max_attempts, job["attempts"],
+                      pause=300 if getattr(e, "transient", False) else 30)      # a busy service needs minutes, not seconds

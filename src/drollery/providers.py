@@ -26,7 +26,35 @@ Respond with JSON only, no markdown:
 
 
 class ProviderError(Exception):
-    pass
+    """A provider call failed. `transient` marks overload and rate limits, which are worth trying again later."""
+
+    def __init__(self, message: str, transient: bool = False):
+        super().__init__(message)
+        self.transient = transient
+
+
+def _check(r: httpx.Response) -> None:
+    """Like raise_for_status, but the error says what the server answered (Google, OpenAI and Ollama all explain
+    themselves in the body) and whether waiting is likely to help."""
+    if r.status_code < 400:
+        return
+    detail = ""
+    try:
+        body = r.json()
+        err = body.get("error", body) if isinstance(body, dict) else body
+        detail = str(err.get("message", err) if isinstance(err, dict) else err)
+    except ValueError:
+        detail = r.text
+    detail = " ".join(detail.split())[:300]
+    transient = r.status_code in (408, 429, 500, 502, 503, 504)
+    msg = f"HTTP {r.status_code} {r.reason_phrase} from {r.request.url.host}" + (f": {detail}" if detail else "")
+    if transient:
+        msg += ". The service is busy or limiting requests: try again later (Retry on the Jobs page)"
+    elif r.status_code == 404:
+        msg += ". Check the model name in Settings > AI models"
+    elif r.status_code in (401, 403):
+        msg += ". Check the API key in Settings > AI models"
+    raise ProviderError(msg, transient=transient)
 
 
 def _headers(cfg: Provider) -> dict:
@@ -62,7 +90,7 @@ def _transcribe_openai(cfg: Provider, audio: Path) -> str:
     with audio.open("rb") as f:
         r = httpx.post(_url(cfg, "/audio/transcriptions"), headers=_headers(cfg), data=data,
                        files={"file": (audio.name, f, "audio/mpeg")}, timeout=cfg.timeout)
-    r.raise_for_status()
+    _check(r)
     return (r.json().get("text") or "").strip()
 
 
@@ -119,7 +147,7 @@ def _describe_openai(cfg: Provider, image: Path | None, transcript: str, existin
     r = httpx.post(_url(cfg, "/chat/completions"), headers=_headers(cfg), timeout=cfg.timeout,
                    json={"model": cfg.model, "temperature": 0.2,
                          "messages": [{"role": "user", "content": content}]})
-    r.raise_for_status()
+    _check(r)
     return _normalize(parse_json(r.json()["choices"][0]["message"]["content"]))
 
 

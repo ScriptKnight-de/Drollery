@@ -1,0 +1,35 @@
+{% extends "settings_base.html" %}
+{% from "icons.html" import icon %}
+{% block title %}{{ _("Backup") }} · Drollery{% endblock %}
+{% block settings %}
+<section class="panel stack">
+  <h2>{{ _("Back up your library") }}</h2>
+  <p class="muted">{{ _("Download a copy of your library as one file. Drollery keeps running while it is made, and the download starts at once, even for a big library.") }}</p>
+  <div class="backup-choices">
+    <form method="post" action="/settings/backup/download" class="stack">
+      <input type="hidden" name="kind" value="full">
+      <h3>{{ _("Everything") }}</h3>
+      <p class="muted">{{ _("Metadata and content: the database, your files, previews and card images.") }}
+        <span class="mono">{{ (sizes.database + sizes.content)|bytes }}</span></p>
+      <button class="btn primary" type="submit">{{ icon("download") }}{{ _("Download full backup") }}</button>
+    </form>
+    <form method="post" action="/settings/backup/download" class="stack">
+      <input type="hidden" name="kind" value="metadata">
+      <h3>{{ _("Metadata only") }}</h3>
+      <p class="muted">{{ _("Titles, descriptions, tags, transcripts, people, albums, accounts and settings, without the files. Small and quick.") }}
+        <span class="mono">{{ sizes.database|bytes }}</span></p>
+      <button class="btn" type="submit">{{ icon("download") }}{{ _("Download metadata") }}</button>
+    </form>
+  </div>
+  <p class="note">{{ _("Keep the file private. It contains your accounts (password hashes and two-factor secrets) and the API keys you saved for AI models and lookups.") }}</p>
+</section>
+<section class="panel stack">
+  <h2>{{ _("Restore") }}</h2>
+  <p class="muted">{{ _("Unpack the file into an empty data volume, then start Drollery. With the Docker setup from the README:") }}</p>
+<pre class="restore-code">docker compose down
+docker run --rm -v drollery_drollery-data:/data -v "$PWD":/backup alpine \
+  sh -c "cd /data &amp;&amp; tar xzf /backup/drollery-backup-….tgz"
+docker compose up -d</pre>
+  <p class="hint">{{ _("The volume must be empty, so a restore never overwrites a library by accident. A metadata-only backup brings back the entries; the files come from your own copy of the media folder.") }}</p>
+</section>
+{% endblock %}

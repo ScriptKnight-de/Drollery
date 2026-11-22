@@ -509,7 +509,7 @@ def claim_job() -> dict | None:
     return dict(row) if row else None
 
 
-def finish_job(job_id: int, error: str | None, max_attempts: int, attempts: int) -> None:
+def finish_job(job_id: int, error: str | None, max_attempts: int, attempts: int, pause: int = 30) -> None:
     now = time.time()
     with tx() as c:
         if error is None:
@@ -518,4 +518,4 @@ def finish_job(job_id: int, error: str | None, max_attempts: int, attempts: int)
             c.execute("UPDATE jobs SET status='failed', error=?, updated_at=? WHERE id=?", (error[:8000], now, job_id))
         else:
             c.execute("UPDATE jobs SET status='queued', error=?, run_after=?, updated_at=? WHERE id=?",
-                      (error[:8000], now + 30 * attempts, now, job_id))
+                      (error[:8000], now + pause * attempts, now, job_id))

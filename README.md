@@ -208,6 +208,11 @@ docker run --rm -v drollery_drollery-data:/data -v "$PWD":/backup alpine \
   tar czf /backup/drollery-backup.tgz -C /data .
 ```
 
+**From the web interface:** **Settings › Backup** downloads your library as one `.tgz` file, either *everything*
+(database and files) or *metadata only* (titles, tags, transcripts, people, accounts and settings: small and quick).
+Drollery keeps running while it is made, and the download starts at once. The file is laid out like the data folder, so
+the restore below works for it. Keep it private: it contains your accounts and saved API keys.
+
 **Restore** a backup into an empty volume:
 
 ```bash
@@ -243,19 +248,18 @@ keeps your data; only `docker compose down -v` deletes the volume, **and with it
 **I lost the setup code.** Run `docker compose logs drollery`. It is printed every time Drollery starts while no account
 exists yet; once you have created your account it is no longer needed.
 
-**I forgot my password.** There is no password reset yet. If you set up two-factor authentication you can still use a
-**backup code** to sign in and change the password under **Settings › Security**. Otherwise you can remove the account
-(your library is kept) and create a new one with a new setup code:
+**I can't sign in any more** (forgotten password, lost two-factor device and backup codes). Run this on the machine
+where Drollery runs:
 
 ```bash
-docker compose exec -T drollery python - <<'EOF'
-from drollery import db
-with db.tx() as c:
-    for table in ("sessions", "api_keys", "users"):
-        c.execute(f"DELETE FROM {table}")
-EOF
-docker compose restart drollery && docker compose logs drollery
+docker compose exec drollery python -m drollery reset-admin
 ```
+
+It prints a new one-time password, turns two-factor authentication off and signs the account out everywhere. Sign in
+with it, then change it under **Settings › Security** and switch two-factor authentication on again. Nothing else
+changes: your library, tags and settings stay as they are. With more than one account, add `--user NAME`. If the sign-in
+page says "too many attempts", wait 15 minutes or run `docker compose restart drollery`. Only someone who can run
+commands on your server can do this, which is the point: they already control the data.
 
 **An upload or a link failed.** Open **Jobs** (header) to see what happened; a failed job shows its error and a **Retry**
 button. A link from your own network needs [allowing](docs/configuration.md#fetching-links) first.

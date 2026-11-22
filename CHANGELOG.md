@@ -6,11 +6,19 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 ## [Unreleased]
 
 ### Added
+- **Settings › Backup**: download the library as one `.tgz`, either everything or metadata only. It is streamed (no extra
+  disk space, the download starts at once), consistent while Drollery runs, and restores with the documented steps.
+- **`python -m drollery reset-admin`**: a way back in when the password (and the two-factor device) are lost. It sets a new
+  one-time password, turns two-factor off and signs the account out everywhere.
 - **Custom provider** preset for any OpenAI-compatible service.
 - The model is **chosen from the list the server offers** (queried automatically once the address is known), with
   *Other…* for a name that is not listed. Gemini's `models/` prefix is removed from the names.
 - **Delete** a failed background job, or **Delete failed** to clear them all, on the jobs page (after a confirmation).
   Only failed jobs can be deleted; nothing is retried and no item is touched.
+
+### Changed
+- A failed AI call now says what the service answered (for example Google's "model is overloaded") and what to check.
+  A busy or rate-limited service (HTTP 429 or 5xx) makes the job wait five minutes per attempt instead of 30 seconds.
 
 ## [0.1.2] - 2026-11-22
 

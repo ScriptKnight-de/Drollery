@@ -3,11 +3,12 @@ from __future__ import annotations
 
 import re
 
+import anyio.to_thread
 import segno
 from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, StreamingResponse
 
-from . import __version__, accounts, aisettings, db, i18n, imdb, pipeline, security
+from . import __version__, accounts, aisettings, backup, db, i18n, imdb, pipeline, security
 from .config import get_settings
 from .deps import web_auth
 from .i18n import t, tn
@@ -60,6 +61,34 @@ GITHUB_URL = "https://github.com/ScriptKnight-de"
 @router.get("/about")
 def about_page(request: Request):
     return render(request, "settings_about.html", tab="about", kofi_url=KOFI_URL, github_url=GITHUB_URL, version=__version__)
+
+
+# ----------------------------------------------------------------- backup
+
+@router.get("/backup")
+def backup_page(request: Request):
+    return render(request, "settings_backup.html", tab="backup", sizes=backup.sizes())
+
+
+async def _backup_body(kind: str):
+    """An async body, so that a browser which goes away cancels it and the `finally` stops the writer at once (a plain
+    generator is not closed reliably, which would leave the writer and its snapshot waiting)."""
+    dl = backup.Download(kind)
+    try:
+        while (chunk := await anyio.to_thread.run_sync(dl.read, abandon_on_cancel=True)) is not None:
+            yield chunk
+    finally:
+        dl.cancel()
+
+
+@router.post("/backup/download")
+def backup_download(kind: str = Form("full")):
+    """Stream a .tgz of the metadata (database) or of everything (database and files). POST, so a link on another site
+    cannot start a heavy download for a signed-in user."""
+    if kind not in backup.KINDS:
+        return flash_redirect("/settings/backup", t("Choose what to back up"), "error")
+    return StreamingResponse(_backup_body(kind), media_type="application/gzip",
+                             headers={"Content-Disposition": f'attachment; filename="{backup.filename(kind)}"', "Cache-Control": "no-store"})
 
 
 # ----------------------------------------------------------- online lookup
