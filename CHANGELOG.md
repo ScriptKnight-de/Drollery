@@ -3,6 +3,19 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Added
+- **Settings > Tags:** every tag with its count as yours and as the AI's, searchable and sortable. **Rename** a tag for the whole
+  library (to a name that exists, it is a **merge**; an item that had both keeps one copy, and yours wins over the AI's),
+  **merge** several ticked tags into one, **delete** a tag everywhere (the AI is told not to bring it back on those items) and
+  **keep as mine** the AI's copies of a tag. Joining tags asks first and says how many items it touches; the search follows.
+- **Merge people:** on a person's page, *Merge with another person* shows what moves (items, filled-in details, the picture)
+  and asks first. The target keeps its own values, gaps are filled from the merged person, which is then deleted. Settings >
+  People points out **possible duplicates** (same alias or real name, ignoring case, spaces and accents) and suggests merging the
+  one who knows less into the other.
+- None of this can be undone, and every action is all-or-nothing: a failure changes nothing.
+
 ## [0.6.0] - 2026-11-22
 
 ### Added

@@ -371,6 +371,82 @@ def dismiss_ai_tags(c: sqlite3.Connection, item_id: int, tag: str = "") -> int:
     return len(gone)
 
 
+# ------------------------------------------------------------ managing tags
+
+def tag_overview(c: sqlite3.Connection, q: str = "", sort: str = "name", limit: int = 400) -> tuple[list[dict], int]:
+    """Every tag with how many items carry it as yours and as the AI's, and how many tags there are in all (the list is cut at `limit`)."""
+    like = normalize_tag(q).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    where, args = ("WHERE tag LIKE ? ESCAPE '\\'", [f"%{like}%"]) if like else ("", [])
+    order = "n DESC, tag" if sort == "count" else "tag"
+    rows = c.execute(f"SELECT tag, SUM(source='user') AS mine, SUM(source='ai') AS ai, COUNT(*) AS n FROM tags {where} GROUP BY tag ORDER BY {order}",
+                     args).fetchall()
+    return [dict(r) for r in rows[:limit]], len(rows)
+
+
+def tag_preview(c: sqlite3.Connection, sources: list[str], target: str) -> dict:
+    """What merging the tags `sources` into `target` would do, for the question before it is done."""
+    marks = ",".join("?" * len(sources))
+    items = {r["item_id"] for r in c.execute(f"SELECT DISTINCT item_id FROM tags WHERE tag IN ({marks})", sources)}
+    has_target = {r["item_id"] for r in c.execute("SELECT item_id FROM tags WHERE tag=?", (target,))}
+    exists = c.execute("SELECT 1 FROM tags WHERE tag=? LIMIT 1", (target,)).fetchone() is not None
+    return {"items": len(items), "already": len(items & has_target), "target_exists": exists}
+
+
+def merge_tags(c: sqlite3.Connection, sources: list[str], target: str) -> int:
+    """Give every item that carries one of `sources` the tag `target` instead (a rename when there is one source and the target
+    is new). An item that has both keeps one copy, and it counts as yours when either was. The memory of AI tags the user
+    removed moves along. Returns how many items changed."""
+    target = normalize_tag(target)
+    sources = [s for s in dict.fromkeys(normalize_tag(x) for x in sources) if s and s != target]
+    if not target or not sources:
+        return 0
+    touched: set[int] = set()
+    for old in sources:
+        for r in c.execute("SELECT item_id, source FROM tags WHERE tag=?", (old,)).fetchall():
+            item_id = r["item_id"]
+            touched.add(item_id)
+            existing = c.execute("SELECT source FROM tags WHERE item_id=? AND tag=?", (item_id, target)).fetchone()
+            if existing:
+                if r["source"] == "user" and existing["source"] != "user":
+                    c.execute("UPDATE tags SET source='user' WHERE item_id=? AND tag=?", (item_id, target))
+                c.execute("DELETE FROM tags WHERE item_id=? AND tag=?", (item_id, old))
+            else:
+                c.execute("UPDATE tags SET tag=? WHERE item_id=? AND tag=?", (target, item_id, old))
+        for r in c.execute("SELECT item_id FROM tag_dismissed WHERE tag=?", (old,)).fetchall():
+            c.execute("INSERT OR IGNORE INTO tag_dismissed(item_id,tag) VALUES (?,?)", (r["item_id"], target))
+        c.execute("DELETE FROM tag_dismissed WHERE tag=?", (old,))
+    mine = {r["item_id"] for r in c.execute("SELECT item_id FROM tags WHERE tag=? AND source='user'", (target,))}
+    for item_id in mine:                                                  # a tag you have is never also "dismissed" for that item
+        c.execute("DELETE FROM tag_dismissed WHERE item_id=? AND tag=?", (item_id, target))
+    for item_id in touched:
+        reindex(c, item_id)
+    return len(touched)
+
+
+def delete_tag(c: sqlite3.Connection, tag: str) -> int:
+    """Take a tag off every item. The AI's version is remembered as removed for each item, so the AI does not bring it back.
+    Returns how many items it was on."""
+    tag = normalize_tag(tag)
+    rows = c.execute("SELECT item_id, source FROM tags WHERE tag=?", (tag,)).fetchall()
+    for r in rows:
+        if r["source"] == "ai":
+            c.execute("INSERT OR IGNORE INTO tag_dismissed(item_id,tag) VALUES (?,?)", (r["item_id"], tag))
+    c.execute("DELETE FROM tags WHERE tag=?", (tag,))
+    for r in rows:
+        reindex(c, r["item_id"])
+    return len(rows)
+
+
+def keep_ai_tag_everywhere(c: sqlite3.Connection, tag: str) -> int:
+    """Make every AI copy of this tag one of your own. Returns how many items changed."""
+    tag = normalize_tag(tag)
+    ids = [r["item_id"] for r in c.execute("SELECT item_id FROM tags WHERE tag=? AND source='ai'", (tag,))]
+    c.execute("UPDATE tags SET source='user' WHERE tag=? AND source='ai'", (tag,))
+    for item_id in ids:
+        reindex(c, item_id)
+    return len(ids)
+
+
 def clear_all_ai_tags(c: sqlite3.Connection) -> int:
     """Remove every AI tag in the library (the user's tags and the dismissed memory stay)."""
     ids = [r["item_id"] for r in c.execute("SELECT DISTINCT item_id FROM tags WHERE source='ai'")]

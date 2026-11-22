@@ -161,6 +161,14 @@ stored once, under **Settings › People**, with an **alias** (how they are know
 social media. Items are found under any of the names. Start typing in the item's people field to pick someone who
 already exists, or press **New person** to add them.
 
+**Looking after your tags and people:** **Settings › Tags** lists every tag with how many items carry it as yours and as one
+the AI suggested. You can **rename** a tag for the whole library (renaming to a name that exists **merges** the two, an item
+that had both keeps one copy), **merge** several ticked tags into one, **delete** a tag everywhere (the AI is told not to bring it
+back on those items) and **keep as mine** the AI's copies of a tag. Joining tags asks first and says how many items it touches.
+Two entries for the same person can be merged on that person's page (*Merge with another person*): its items go to the other
+person, details the other lacks (name, birthday, gender, link, picture) are filled in, and the entry is deleted. **Settings ›
+People** points out likely duplicates. None of this can be undone; a backup is the way back.
+
 If an AI model is set up, it also suggests tags. **Your tags and the AI's stay apart:** you can keep or remove the AI's
 with one click, and what you wrote is never overwritten.
 

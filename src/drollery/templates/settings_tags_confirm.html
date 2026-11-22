@@ -1,0 +1,21 @@
+{% extends "settings_base.html" %}
+{% from "icons.html" import icon %}
+{% block title %}{{ _("Merge tags") }} · Drollery{% endblock %}
+{% block settings %}
+<section class="panel stack">
+  <h2>{{ _("Merge into “{tag}”?", tag=target) }}</h2>
+  <p class="muted">{% for s in sources %}<b>#{{ s }}</b>{% if not loop.last %}, {% endif %}{% endfor %} → <b>#{{ target }}</b></p>
+  <ul class="plainlist">
+    <li>{{ _n("{n} item carries one of them and gets “{tag}” instead", "{n} items carry one of them and get “{tag}” instead", info["items"], tag=target) }}</li>
+    {% if info.already %}<li>{{ _n("{n} of those already has “{tag}” and keeps it once", "{n} of those already have “{tag}” and keep it once", info.already, tag=target) }}</li>{% endif %}
+    {% if info.target_exists %}<li>{{ _("“{tag}” exists already, so these tags are joined with it", tag=target) }}</li>{% endif %}
+  </ul>
+  <p class="note">{{ _("This cannot be undone. A backup (Settings > Backup) is the way back.") }}</p>
+  <form method="post" action="/settings/tags/merge" class="actions">
+    {% for s in sources %}<input type="hidden" name="tags" value="{{ s }}">{% endfor %}
+    <input type="hidden" name="target" value="{{ target }}"><input type="hidden" name="confirmed" value="1">
+    <button class="btn primary" type="submit">{{ icon("check") }}{{ _("Merge") }}</button>
+    <a class="btn" href="/settings/tags">{{ _("Cancel") }}</a>
+  </form>
+</section>
+{% endblock %}

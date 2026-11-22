@@ -28,6 +28,7 @@ from .routes_album import router as album_router, files as album_files_router, a
 from .routes_card import files as card_files_router, router as card_router
 from .routes_share import api as share_api_router, manage as share_manage_router, public as share_public_router, share_context, FILE_HEADERS
 from .routes_settings import router as settings_router
+from .routes_tags import router as tags_router
 from .i18n import t, tn
 from .web import BASE, flash_redirect, jpeg_response, render
 
@@ -114,6 +115,7 @@ app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
 app.add_middleware(UploadRedirects)
 app.include_router(auth_router)
 app.include_router(settings_router)
+app.include_router(tags_router)
 app.include_router(card_router)
 app.include_router(card_files_router)
 app.include_router(movie_router)

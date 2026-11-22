@@ -1,0 +1,20 @@
+{% extends "settings_base.html" %}
+{% from "icons.html" import icon %}
+{% block title %}{{ _("Merge people") }} · Drollery{% endblock %}
+{% block settings %}
+<section class="panel stack">
+  <h2>{{ _("Merge “{a}” into “{b}”?", a=info.source.name, b=info.target.name) }}</h2>
+  <p class="muted">{{ _("{a} will be deleted. Everything it is linked to goes to {b}; {b} keeps its own details.", a=info.source.name, b=info.target.name) }}</p>
+  <ul class="plainlist">
+    <li>{{ _n("{n} item moves to {b}", "{n} items move to {b}", info["items"] - info.already, b=info.target.name) }}{% if info.already %} ({{ _n("{n} item has both and keeps one link", "{n} items have both and keep one link", info.already) }}){% endif %}</li>
+    {% if info.filled %}<li>{{ _("Filled in from {a}, because {b} has nothing there:", a=info.source.name, b=info.target.name) }} {% for f in info.filled %}{{ _(labels[f]) }}{% if not loop.last %}, {% endif %}{% endfor %}</li>{% endif %}
+    {% if info.picture %}<li>{{ _("The picture of {a} becomes the picture of {b}", a=info.source.name, b=info.target.name) }}</li>{% endif %}
+  </ul>
+  <p class="note">{{ _("This cannot be undone. A backup (Settings > Backup) is the way back.") }}</p>
+  <form method="post" action="/people/{{ info.source.id }}/merge" class="actions">
+    <input type="hidden" name="into" value="{{ info.target.id }}">
+    <button class="btn primary" type="submit">{{ icon("check") }}{{ _("Merge") }}</button>
+    <a class="btn" href="/people/{{ info.source.id }}">{{ _("Cancel") }}</a>
+  </form>
+</section>
+{% endblock %}

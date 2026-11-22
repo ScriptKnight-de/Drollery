@@ -1,0 +1,48 @@
+{% extends "settings_base.html" %}
+{% from "icons.html" import icon %}
+{% block title %}{{ _("Tags") }} · Drollery{% endblock %}
+{% block settings %}
+<section class="panel stack">
+  <h2>{{ _("Tags") }}</h2>
+  <p class="muted">{{ _("Rename, merge or delete tags for the whole library. The counts say how many items carry a tag as yours and as one the AI suggested. Renaming to a name that exists merges the two. Nothing here can be undone; a backup (Settings > Backup) is the way back.") }}</p>
+  <form class="toolbar" method="get" action="/settings/tags">
+    <div class="field grow">{{ icon("search") }}<input type="search" name="q" value="{{ q }}" placeholder="{{ _('Find a tag') }}" aria-label="{{ _('Find a tag') }}" autocomplete="off"></div>
+    <label class="sortpick"><span class="sr-only">{{ _("Sort by") }}</span>
+      <select name="sort" aria-label="{{ _('Sort by') }}" onchange="this.form.submit()">
+        <option value="name" {{ "selected" if sort == "name" }}>{{ _("Name") }}</option><option value="count" {{ "selected" if sort == "count" }}>{{ _("Most used first") }}</option></select></label>
+    <button class="btn" type="submit">{{ icon("search") }}{{ _("Find") }}</button>
+  </form>
+  <p class="hint">{{ _n("{n} tag", "{n} tags", total) }}{% if total > rows|length %} · {{ _("showing the first {n}; search to narrow it down", n=rows|length) }}{% endif %}</p>
+</section>
+
+{% if rows %}
+<form id="merge-form" method="post" action="/settings/tags/merge" class="panel mergebar">
+  <label>{{ _("Merge the ticked tags into") }} <input name="target" placeholder="{{ _('tag name') }}" autocomplete="off" required maxlength="40"></label>
+  <button class="btn primary" type="submit">{{ icon("check") }}{{ _("Merge") }}</button>
+</form>
+<div class="panel flush">
+  <table class="tagtable">
+    <thead><tr><th class="nw"><span class="sr-only">{{ _("Select") }}</span></th><th>{{ _("Tag") }}</th><th class="nw">{{ _("Yours") }}</th><th class="nw">{{ _("AI") }}</th><th>{{ _("Rename") }}</th><th></th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+    <tr>
+      <td><input type="checkbox" name="tags" value="{{ r.tag }}" form="merge-form" aria-label="{{ _('Select') }} {{ r.tag }}"></td>
+      <td><a href="/?tag={{ r.tag|urlencode }}">#{{ r.tag }}</a></td>
+      <td class="nw">{{ r.mine or 0 }}</td>
+      <td class="nw">{{ r.ai or 0 }}</td>
+      <td><form method="post" action="/settings/tags/merge" class="inline-rename">
+        <input type="hidden" name="tags" value="{{ r.tag }}"><input name="target" value="{{ r.tag }}" aria-label="{{ _('New name for {tag}', tag=r.tag) }}" maxlength="40" required>
+        <button class="btn small" type="submit">{{ _("Rename") }}</button></form></td>
+      <td class="actions"><div class="acts">
+        {% if r.ai %}<form method="post" action="/settings/tags/keep"><input type="hidden" name="tag" value="{{ r.tag }}"><button class="btn small" type="submit" title="{{ _('Make every AI copy of this tag one of yours') }}">{{ icon("check") }}{{ _("Keep as mine") }}</button></form>{% endif %}
+        <form method="post" action="/settings/tags/delete" data-confirm="{{ _n('Delete “{tag}” from {n} item? It cannot be undone.', 'Delete “{tag}” from {n} items? It cannot be undone.', r.n, tag=r.tag) }}"><input type="hidden" name="tag" value="{{ r.tag }}"><button class="btn small danger" type="submit" aria-label="{{ _('Delete') }} {{ r.tag }}">{{ icon("trash") }}</button></form>
+      </div></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<p class="muted">{{ _("No tags yet. Tags you add to items, and the AI's suggestions, show up here.") if not q else _("No tag matches that.") }}</p>
+{% endif %}
+{% endblock %}

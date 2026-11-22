@@ -1,6 +1,7 @@
 """People: creators and others involved. One record per person, shared by every item they are linked to."""
 from __future__ import annotations
 
+import os
 import re
 import time
 from datetime import date
@@ -149,6 +150,75 @@ def delete(c, person_id: int) -> None:
     for i in ids:
         db.reindex(c, i)
     picture_path(person_id).unlink(missing_ok=True)
+
+
+def merge_preview(c, source_id: int, target_id: int) -> dict:
+    """What merging `source` into `target` would do: how many items move, how many already have the target, which empty
+    details of the target are filled from the source."""
+    source, target = get(c, source_id), get(c, target_id)
+    if source is None or target is None or source_id == target_id:
+        raise PersonError(N_("Choose another person to merge into"))
+    items = {r["item_id"] for r in c.execute("SELECT item_id FROM item_people WHERE person_id=?", (source_id,))}
+    has = {r["item_id"] for r in c.execute("SELECT item_id FROM item_people WHERE person_id=?", (target_id,))}
+    filled = [f for f in FILLABLE if not target[f] and source[f]]
+    picture = bool(source["has_picture"] and not target["has_picture"])
+    return {"source": source, "target": target, "items": len(items), "already": len(items & has), "filled": filled, "picture": picture}
+
+
+FILLABLE = ("first_name", "surname", "birthday", "gender", "link")
+
+
+def merge(c, source_id: int, target_id: int) -> dict:
+    """Merge `source` into `target`: its items go to the target (one link each), details the target lacks are filled from it
+    (and its picture, if the target has none), and the source person is deleted. The target keeps its own values."""
+    info = merge_preview(c, source_id, target_id)
+    source, target = info["source"], info["target"]
+    affected = [r["item_id"] for r in c.execute("SELECT item_id FROM item_people WHERE person_id=?", (source_id,))]
+    c.execute("INSERT OR IGNORE INTO item_people(item_id, person_id) SELECT item_id, ? FROM item_people WHERE person_id=?", (target_id, source_id))
+    if info["filled"]:
+        sets = ", ".join(f"{f}=?" for f in info["filled"])
+        c.execute(f"UPDATE people SET {sets} WHERE id=?", [source[f] for f in info["filled"]] + [target_id])
+    if info["picture"]:
+        picture_path(target_id).parent.mkdir(parents=True, exist_ok=True)
+        if picture_path(source_id).exists():
+            os.replace(picture_path(source_id), picture_path(target_id))
+            c.execute("UPDATE people SET has_picture=1 WHERE id=?", (target_id,))
+    c.execute("UPDATE people SET updated_at=? WHERE id=?", (time.time(), target_id))
+    c.execute("DELETE FROM people WHERE id=?", (source_id,))                      # its links go with it (cascade)
+    picture_path(source_id).unlink(missing_ok=True)
+    for item_id in set(affected) | {r["item_id"] for r in c.execute("SELECT item_id FROM item_people WHERE person_id=?", (target_id,))}:
+        db.reindex(c, item_id)                                                    # found under the target's names now
+    return info
+
+
+def _same_person_key(p: dict) -> list[str]:
+    """Keys under which two people look like one: the alias without case, spaces and accents, and the real name when there is one."""
+    keys = [" ".join(db._fold(p["name"]).split())]
+    real = " ".join(db._fold(full_name(p)).split())
+    if real and real != keys[0]:
+        keys.append(real)
+    return [k for k in keys if k]
+
+
+def _filled(p: dict) -> int:
+    """How much is known about a person: the details that can be filled in, and a picture."""
+    return sum(bool(p.get(f)) for f in FILLABLE) + bool(p.get("has_picture"))
+
+
+def duplicates(c) -> list[list[dict]]:
+    """Groups of people that look like the same person (same alias or same real name, ignoring case, spaces and accents). Each
+    group starts with the person who knows least (the newer one when it is a tie): that one is the one to merge into the next."""
+    groups: dict[str, set[int]] = {}
+    everyone_ = {p["id"]: p for p in everyone(c)}
+    for p in everyone_.values():
+        for key in _same_person_key(p):
+            groups.setdefault(key, set()).add(p["id"])
+    seen, out = set(), []
+    for ids in groups.values():
+        if len(ids) > 1 and frozenset(ids) not in seen:
+            seen.add(frozenset(ids))
+            out.append(sorted((everyone_[i] for i in ids), key=lambda p: (_filled(p), -p["id"])))      # first: the one to merge into the other
+    return out
 
 
 def set_picture(person_id: int, src: Path) -> bool:

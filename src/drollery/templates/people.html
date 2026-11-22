@@ -4,10 +4,20 @@
 {% block settings %}
 <p class="muted lead">{{ _("Creators and everyone involved. Each person is stored once and can be added to any item.") }}</p>
 <p class="add-more" style="text-align:left"><a class="btn small" href="/people/new">{{ icon("plus") }}{{ _("New person") }}</a></p>
+{% if dups %}
+<section class="panel stack dups">
+  <h2>{{ _("Possible duplicates") }}</h2>
+  <p class="muted">{{ _("These look like the same person. Check, then merge them.") }}</p>
+  <ul class="plainlist">
+    {% for g in dups %}<li>{% for p in g %}<a href="/people/{{ p.id }}">{{ p.name }}</a>{% if p.first_name or p.surname %} <span class="muted small">({{ (p.first_name ~ " " ~ p.surname)|trim }})</span>{% endif %}{% if not loop.last %} · {% endif %}{% endfor %}
+      {% if g|length == 2 %}<a class="btn small" href="/people/{{ g[0].id }}/merge?into={{ g[1].id }}">{{ icon("users") }}{{ _("Review the merge") }}</a>{% endif %}</li>{% endfor %}
+  </ul>
+</section>
+{% endif %}
 {% if rows %}
 <ul class="people-grid">
   {% for p in rows %}
-  <li><a class="person-card" href="/people/{{ p.id }}">{{ avatar(p) }}<span class="pc-name">{{ p.name }}</span>{% if p.first_name or p.surname %}{% set real = (p.first_name ~ " " ~ p.surname)|trim %}{% if real != p.name %}<span class="muted small">{{ real }}</span>{% endif %}{% endif %}<span class="muted small">{{ _("Items: {n}", n=p["items"]) }}</span></a></li>
+  <li><a class="person-card{{ ' dup' if p.id in dup_ids }}" href="/people/{{ p.id }}">{{ avatar(p) }}<span class="pc-name">{{ p.name }}</span>{% if p.first_name or p.surname %}{% set real = (p.first_name ~ " " ~ p.surname)|trim %}{% if real != p.name %}<span class="muted small">{{ real }}</span>{% endif %}{% endif %}<span class="muted small">{{ _("Items: {n}", n=p["items"]) }}</span></a></li>
   {% endfor %}
 </ul>
 {% else %}<p class="muted">{{ _("Nobody has been added yet") }}</p>{% endif %}

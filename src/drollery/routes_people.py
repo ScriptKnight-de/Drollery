@@ -12,12 +12,13 @@ from fastapi.responses import JSONResponse
 from . import albums, db, movies, people
 from .config import get_settings
 from .deps import api_auth, web_auth
-from .i18n import N_, t
+from .i18n import N_, t, tn
 from .web import flash_redirect, jpeg_response, render
 
 router = APIRouter(dependencies=[Depends(web_auth)])
 files = APIRouter(dependencies=[Depends(api_auth)])
 
+MERGE_LABELS = {"first_name": N_("First name"), "surname": N_("Surname"), "birthday": N_("Birthday"), "gender": N_("Gender"), "link": N_("Social media link")}
 GENDER_LABELS = {"female": N_("Female"), "male": N_("Male"), "nonbinary": N_("Non-binary"), "other": N_("Other")}
 
 
@@ -75,7 +76,8 @@ def _form(p: dict | None = None, **over) -> dict:
 def people_page(request: Request):
     with db.tx() as c:
         rows = people.everyone(c)
-    return render(request, "people.html", rows=rows, tab="people")
+        dups = people.duplicates(c)
+    return render(request, "people.html", rows=rows, tab="people", dups=dups, dup_ids={p["id"] for g in dups for p in g})
 
 
 @router.get("/people/new")
@@ -136,14 +138,41 @@ async def create(request: Request, name: str = Form(""), first_name: str = Form(
     return flash_redirect(f"/people/{pid}", t("{name} added", name=data["name"]))
 
 
+@router.get("/people/{person_id}/merge")
+def merge_page(request: Request, person_id: int, into: str = ""):
+    """The question before two people are merged: what moves, what is filled in, and that it cannot be undone."""
+    _person(person_id)
+    target = int(into) if into.strip().isdigit() else 0
+    try:
+        with db.tx() as c:
+            info = people.merge_preview(c, person_id, target)
+    except people.PersonError as e:
+        return flash_redirect(f"/people/{person_id}", t(str(e)), "error")
+    return render(request, "person_merge.html", tab="people", info=info, labels=MERGE_LABELS)
+
+
+@router.post("/people/{person_id}/merge")
+def merge_do(person_id: int, into: str = Form("")):
+    _person(person_id)
+    target = int(into) if into.strip().isdigit() else 0
+    try:
+        with db.tx() as c:
+            info = people.merge(c, person_id, target)
+    except people.PersonError as e:
+        return flash_redirect(f"/people/{person_id}", t(str(e)), "error")
+    return flash_redirect(f"/people/{target}", tn("Merged “{a}” into “{b}”: {n} item moved", "Merged “{a}” into “{b}”: {n} items moved",
+                                                     info["items"] - info["already"], a=info["source"]["name"], b=info["target"]["name"]))
+
+
 @router.get("/people/{person_id}")
 def person_page(request: Request, person_id: int):
     p = _person(person_id)
     with db.tx() as c:
+        others = [{"id": x["id"], "name": x["name"], "real": people.full_name(x)} for x in people.everyone(c) if x["id"] != person_id]
         items = db.search(c, "", "", "", 200, 0, "", person_id)
         album_info = albums.summaries(c, [i["id"] for i in items if i["kind"] == "album"])
         movie_info = movies.summaries(c, [i["id"] for i in items if i["kind"] == "movie"])
-    return render(request, "person.html", person=p, full_name=people.full_name(p), form=_form(p), items=items, album_info=album_info, movie_info=movie_info, genders=GENDER_LABELS, today=date.today().isoformat(),
+    return render(request, "person.html", person=p, others=others, full_name=people.full_name(p), form=_form(p), items=items, album_info=album_info, movie_info=movie_info, genders=GENDER_LABELS, today=date.today().isoformat(),
                   q="", tag="", kind="", src="", track_hits={}, more=False, page=0)
 
 
