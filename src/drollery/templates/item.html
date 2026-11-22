@@ -8,7 +8,7 @@
   <div>
     <div class="frame">
       {% if item.kind in ("image", "gif") %}<img src="/media/{{ item.id }}" alt="{{ item.title }}">
-      {% elif item.kind in ("video", "movie") %}<video src="/media/{{ item.id }}" controls preload="metadata" {% if item.has_thumb %}poster="/thumb/{{ item.id }}"{% endif %}></video>
+      {% elif item.kind in ("video", "movie") %}<video src="/media/{{ item.id }}" controls preload="metadata" {% if item.has_thumb %}poster="/thumb/{{ item.id }}?v={{ (item.updated_at * 1000)|int }}"{% endif %}></video>
       {% else %}<div class="sound-stage" style="--h: {{ ((item.id * 137.508) % 360)|round|int }}">{{ sound_play(item) }}</div>{% endif %}
     </div>
     {% include "item_actions.html" %}

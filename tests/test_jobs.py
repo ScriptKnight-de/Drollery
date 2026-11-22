@@ -335,3 +335,24 @@ def test_the_bulk_buttons_do_one_step_for_every_item(client, tmp_path, monkeypat
     assert {t for t, _ in _queued()} == {"describe"}
     client.post("/settings/ai/reprocess", data={"step": "transcribe"})
     assert {t for t, _ in _queued()} == {"transcribe"}
+
+
+def test_a_new_video_that_takes_over_a_deleted_ones_id_gets_a_fresh_preview_address(client, tmp_path):
+    """SQLite hands the id of the last deleted item to the next one, and the browser keeps a preview for a day:
+    the address of the preview must therefore change with the item, or the old picture shows up."""
+    import re, subprocess, time
+    from test_fetch import make_video
+
+    def poster(i):
+        return re.search(r'poster="(/thumb/\d+\?v=\d+)"', client.get(f"/items/{i}").text).group(1)
+
+    first = _talking_clip(client, tmp_path)
+    before = poster(first)
+    client.post(f"/items/{first}/delete")
+    time.sleep(0.01)
+    other = tmp_path / "other.mp4"
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "color=c=green:s=160x120:r=10:d=1", "-f", "lavfi", "-i", "sine=f=500:d=1",
+                    "-shortest", "-c:v", "libx264", "-pix_fmt", "yuv420p", "-c:a", "libopus", str(other)], check=True)
+    second = client.post("/api/v1/items", files={"file": ("other.mp4", other.read_bytes(), "video/mp4")}).json()["id"]
+    assert second == first                                                               # the id really is reused
+    assert poster(second) != before
