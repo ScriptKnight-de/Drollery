@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.5.0] - 2026-11-22
 
 ### Added
 - **Select several items in the library.** *Select* switches a selection mode on: a click marks a tile instead of opening it,
