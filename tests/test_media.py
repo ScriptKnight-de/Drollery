@@ -1,4 +1,5 @@
 """What is stored about a video's size: the size people see, also when the phone recorded it on its side."""
+import struct
 import subprocess
 
 import pytest
@@ -6,14 +7,31 @@ import pytest
 from drollery import db, media, pipeline
 
 
+ONE = 0x10000      # 1.0 in the 16.16 fixed point numbers of an MP4 transformation matrix
+MATRICES = {       # a, b, u, c, d, v, x, y, w of the matrix that turns the picture by this many degrees
+    90: (0, ONE, 0, -ONE, 0, 0, 0, 0, 0x40000000),
+    180: (-ONE, 0, 0, 0, -ONE, 0, 0, 0, 0x40000000),
+    270: (0, -ONE, 0, ONE, 0, 0, 0, 0, 0x40000000),
+}
+
+
+def turn(path, degrees):
+    """Write "turn the picture" into the first track of an MP4 file, the way a phone does. Done on the bytes themselves:
+    the ffmpeg option for it (-display_rotation) only exists in ffmpeg 6 and newer, and the tests run on whatever ffmpeg there is."""
+    data = bytearray(path.read_bytes())
+    at = data.index(b"tkhd") + 4
+    version = data[at]
+    at += 4 + (20 if version == 0 else 32) + 16                          # past version, flags, times, ids, duration, layer and volume
+    data[at:at + 36] = struct.pack(">9i", *MATRICES[degrees % 360])
+    path.write_bytes(bytes(data))
+
+
 def make(tmp_path, name, rotation=None):
-    plain = tmp_path / f"{name}-plain.mp4"
+    out = tmp_path / f"{name}.mp4"
     subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "testsrc2=size=320x180:rate=10:duration=1", "-f", "lavfi", "-i", "sine=f=300:d=1",
-                    "-shortest", "-pix_fmt", "yuv420p", "-c:v", "libx264", "-c:a", "aac", str(plain)], check=True)
-    if rotation is None:
-        return plain
-    out = tmp_path / f"{name}.mp4"                                       # the same frames plus a flag that says "turn them"
-    subprocess.run(["ffmpeg", "-v", "error", "-y", "-display_rotation", str(rotation), "-i", str(plain), "-c", "copy", str(out)], check=True)
+                    "-shortest", "-pix_fmt", "yuv420p", "-c:v", "libx264", "-c:a", "aac", str(out)], check=True)
+    if rotation is not None and rotation % 360 != 0:
+        turn(out, rotation)                                              # the same frames plus a flag that says "turn them"
     return out
 
 
