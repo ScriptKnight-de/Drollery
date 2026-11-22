@@ -8,6 +8,7 @@
 
   function mark(on) { document.cookie = "drollery_embed=" + (on ? "1" : "") + "; path=/; SameSite=Lax" + (on ? "" : "; max-age=0"); }
   mark(false);
+  var nativeLightDismiss = "closedBy" in HTMLDialogElement.prototype;      // the dialog has closedby="any"; older browsers need the script for the backdrop
 
   document.addEventListener("click", function (e) {
     var link = e.target.closest && e.target.closest("[data-popup]");
@@ -21,7 +22,7 @@
       if (window.drolleryBusy) window.drolleryBusy.show(link.dataset.busy || dlg.dataset.loading, dlg);      // until the page inside has arrived
       return;
     }
-    if (e.target === dlg || (e.target.closest && e.target.closest("[data-close]") && dlg.contains(e.target))) dlg.close();
+    if ((!nativeLightDismiss && e.target === dlg) || (e.target.closest && e.target.closest("[data-close]") && dlg.contains(e.target))) dlg.close();
   });
   frame.addEventListener("load", function () {
     if (frame.getAttribute("src") !== "about:blank" && window.drolleryBusy) window.drolleryBusy.hide();

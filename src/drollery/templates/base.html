@@ -65,7 +65,7 @@
 {% if flash %}<p class="note {{ flash.kind }}" role="status">{{ flash.text }}</p>{% endif %}
 {% block content %}{% endblock %}
 </main>
-<dialog id="confirm-dialog" class="modal confirm" aria-labelledby="cf-title">
+<dialog id="confirm-dialog" class="modal confirm" closedby="any" aria-labelledby="cf-title">
   <div class="modal-head"><h2 id="cf-title">{{ _("Are you sure?") }}</h2></div>
   <div class="modal-body" id="cf-text"></div>
   <div class="modal-foot">
@@ -139,10 +139,11 @@
       dlg.querySelector("[data-cf=no]").focus();
     }, true);
     if (dlg) {
+      var nativeLightDismiss = "closedBy" in HTMLDialogElement.prototype;      // closedby="any" closes it on the backdrop; the script only does it where that is missing
       dlg.addEventListener("click", function (e) {
         var yes = e.target.closest("[data-cf=yes]"), no = e.target.closest("[data-cf=no]");
         if (yes && pending) { var p = pending; pending = null; dlg.close(); p.form.dataset.confirmed = "1"; p.form.requestSubmit(p.submitter); }
-        else if (no || e.target === dlg) { pending = null; dlg.close(); }
+        else if (no || (!nativeLightDismiss && e.target === dlg)) { pending = null; dlg.close(); }
       });
       dlg.addEventListener("close", function () { pending = null; });
     }

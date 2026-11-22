@@ -25,9 +25,10 @@
     }).catch(function () { body.textContent = dlg.dataset.error; });
   }
 
+  var nativeLightDismiss = "closedBy" in HTMLDialogElement.prototype;      // the dialog has closedby="any"; older browsers need the script for the backdrop
   document.addEventListener("click", function (e) {
     var open = e.target.closest && e.target.closest("[data-transcript]");
     if (open) { show(open.dataset.transcript); return; }
-    if (e.target === dlg || (e.target.closest && e.target.closest("[data-close]") && dlg.contains(e.target))) dlg.close();   // the backdrop or the close button
+    if ((!nativeLightDismiss && e.target === dlg) || (e.target.closest && e.target.closest("[data-close]") && dlg.contains(e.target))) dlg.close();   // the backdrop or the close button
   });
 })();

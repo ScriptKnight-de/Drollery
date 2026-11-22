@@ -114,7 +114,7 @@
   // choosing, dropping, pasting
   pick.addEventListener("change", function () { onFiles(pick.files); });
   urlGo.addEventListener("click", function () { onLink(url.value); });
-  url.addEventListener("keydown", function (e) { if (e.key === "Enter") { e.preventDefault(); onLink(url.value); } });
+  url.addEventListener("keydown", function (e) { if (e.key === "Enter" && !e.isComposing && e.keyCode !== 229) { e.preventDefault(); onLink(url.value); }   // not while an IME is confirming a word });
   url.addEventListener("paste", function () { setTimeout(function () { onLink(url.value); }, 0); });
   document.getElementById("uz-change").addEventListener("click", function () { pick.value = ""; pick.click(); });
   document.getElementById("uz-cancel").addEventListener("click", reset);

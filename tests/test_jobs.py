@@ -356,3 +356,18 @@ def test_a_new_video_that_takes_over_a_deleted_ones_id_gets_a_fresh_preview_addr
     second = client.post("/api/v1/items", files={"file": ("other.mp4", other.read_bytes(), "video/mp4")}).json()["id"]
     assert second == first                                                               # the id really is reused
     assert poster(second) != before
+
+
+# ------------------------------------------------------------ small web-platform details
+
+def test_the_windows_close_on_the_backdrop_by_themselves_and_the_script_only_covers_old_browsers(client):
+    """closedby="any" does the backdrop click natively; the scripts keep it only where the browser lacks it (progressive enhancement)."""
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[1] / "src" / "drollery"
+    assert 'id="confirm-dialog" class="modal confirm" closedby="any"' in client.get("/").text
+    assert 'closedby="any"' in (root / "templates" / "popup_dialog.html").read_text()
+    assert 'id="transcript-dialog" class="modal" closedby="any"' in (root / "templates" / "album.html").read_text()
+    for js in ("popup.js", "transcript.js"):
+        text = (root / "static" / js).read_text()
+        assert '"closedBy" in HTMLDialogElement.prototype' in text and "!nativeLightDismiss && e.target === dlg" in text
+    assert "e.isComposing" in (root / "static" / "uploader.js").read_text()                 # Enter that confirms an IME word does not add the link

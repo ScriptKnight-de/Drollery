@@ -6,6 +6,10 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 ## [Unreleased]
 
 ### Changed
+- The pop-up windows (confirmation, transcript, the framed pages) close on a click outside them through the browser's own
+  `closedby="any"`; the old script stays only for browsers that lack it.
+- Pressing Enter to confirm a word with an input method (Japanese, Chinese, Korean) in the link field no longer adds the
+  half-typed link.
 - Polish of the look, the character stays (stone wall, gold, folio numbers): the muted grey text now reaches 4.5:1 contrast
   in both themes (it was 3.6:1 in the light one); headings and the back link that sat straight on the wall get a label
   plate; radii follow size (controls 12, cards 16, panels 20) instead of nearly everything being a pill; weights are 400
