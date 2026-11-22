@@ -3,6 +3,17 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Added
+- **Restore a backup in the browser.** On a Drollery that has no account yet, the first page has a second form, *Or restore a
+  backup*: choose the `.tgz` from Settings > Backup, enter the setup code, and the library, accounts, settings, files and
+  previews come back. The file is checked on the way in (only the parts a backup has, no links, no file name that leaves
+  the folder, enough free disk space, an intact Drollery database with an account, not older than 0.1.0) and nothing is changed
+  if it fails. The database goes in through SQLite's own backup, so no file is swapped under the running server. Nobody stays
+  signed in from the backup, a restored `config.toml` replaces the default (the old one is kept as `config.toml.before-restore`),
+  and a library that already has an account is never touched. After a metadata-only backup it says how many items have no file yet.
+
 ## [0.3.0] - 2026-11-22
 
 ### Added

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% from "icons.html" import icon %}
 {% block title %}{{ _('Set up') }} · Drollery{% endblock %}
 {% block content %}
 <div class="login-wrap wide">
@@ -8,7 +9,7 @@
   <p class="muted">{{ _("Create the admin account for this library. You can turn on two-factor authentication afterwards in Settings") }}</p>
   {% if error %}<p class="note error" role="alert">{{ error }}</p>{% endif %}
   <label>{{ _("Setup code") }}
-    <input name="code" autocomplete="off" autofocus required>
+    <input name="code" autocomplete="off" {{ "" if restore_error else "autofocus" }} required>
     <span class="hint">{{ _("Printed in the container log:") }} <code>docker compose logs drollery</code>. {{ _("It proves you control this server") }}</span>
   </label>
   <label>{{ _("Username") }} <input name="username" value="{{ form.username or '' }}" autocomplete="username" required></label>
@@ -17,5 +18,15 @@
   <label>{{ _("Repeat password") }} <input type="password" name="password2" autocomplete="new-password" required></label>
   <button class="btn primary" type="submit">{{ _("Create admin account") }}</button>
 </form>
+<form class="panel login" method="post" action="/setup/restore" enctype="multipart/form-data" data-upload id="restore-form">
+  <h2>{{ _("Or restore a backup") }}</h2>
+  <p class="muted">{{ _("Moving to this server? Choose the backup file you downloaded under Settings > Backup. Your library, accounts and settings come back, and you sign in with an account from the backup") }}</p>
+  {% if restore_error %}<p class="note error" role="alert">{{ restore_error }}</p>{% endif %}
+  <label>{{ _("Setup code") }} <input name="code" autocomplete="off" {{ "autofocus" if restore_error }} required></label>
+  <label>{{ _("Backup file") }} <input type="file" name="backup" accept=".tgz,.gz,application/gzip" required>
+    <span class="hint">{{ _("A big library takes a while. A web server in front of Drollery may limit how large an upload can be") }}</span></label>
+  <button class="btn" type="submit">{{ icon("upload") }}{{ _("Restore") }}</button>
+</form>
 </div>
+{% include "upload_ui.html" %}
 {% endblock %}

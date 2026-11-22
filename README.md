@@ -214,7 +214,15 @@ docker run --rm -v drollery_drollery-data:/data -v "$PWD":/backup alpine \
 Drollery keeps running while it is made, and the download starts at once. The file is laid out like the data folder, so
 the restore below works for it. Keep it private: it contains your accounts and saved API keys.
 
-**Restore** a backup into an empty volume:
+**Restore** a backup: on a new Drollery that has no account yet, the first page offers **Or restore a backup**. Choose the
+file, enter the setup code from the container log, and your library, accounts and settings come back; then you sign in
+with an account from the backup. Drollery checks the file first (only the parts a backup has, nothing that could leave
+its folder, enough free disk space, an intact database with at least one account) and changes nothing if it does not pass.
+It only works while the library has no account, so a library in use is never overwritten. A metadata-only backup brings
+back the entries and tells you how many of them have no file yet. A big library takes a while, and a web server in front of
+Drollery may limit the size of an upload.
+
+Or **by hand**, into an empty volume:
 
 ```bash
 docker compose down

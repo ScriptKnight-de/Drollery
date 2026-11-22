@@ -3,11 +3,12 @@ from __future__ import annotations
 
 import re
 
-from fastapi import APIRouter, Form, Request
+import anyio.to_thread
+from fastapi import APIRouter, File, Form, Request, UploadFile
 from fastapi.responses import RedirectResponse
 
-from . import accounts, i18n, security, shares
-from .i18n import t
+from . import accounts, i18n, restore, security, shares
+from .i18n import t, tn
 from .config import get_settings
 from .deps import PENDING_COOKIE, SESSION_COOKIE, client_ip
 from .web import flash_redirect, render
@@ -68,6 +69,33 @@ def setup(request: Request, code: str = Form(""), username: str = Form(""),
     resp = flash_redirect("/settings/ai", t("Admin account created. Next, tell Drollery which AI models to use, or skip this for now"))
     _set_session(resp, request, user_id)
     return resp
+
+
+@router.post("/setup/restore")
+async def setup_restore(request: Request, code: str = Form(""), backup: UploadFile | None = File(default=None)):
+    """First run: bring back a library from a backup file (Settings > Backup) instead of creating a new one."""
+    if accounts.user_count():
+        return RedirectResponse("/", status_code=303)
+    ip = client_ip(request)
+
+    def fail(msg: str, status: int = 422):
+        return render(request, "setup.html", status_code=status, form={}, restore_error=msg)
+
+    if security.ip_throttle.blocked(f"setup|{ip}"):
+        return fail(t("Too many attempts. Wait a few minutes and try again"), 429)
+    if not security.safe_equal(code.strip(), accounts.get_setup_code()):
+        security.ip_throttle.fail(f"setup|{ip}")
+        return fail(t("That setup code is not correct. It is printed in the container log"))
+    if backup is None or not backup.filename:
+        return fail(t("Choose the backup file"))
+    try:
+        summary = await anyio.to_thread.run_sync(restore.restore, backup.file)
+    except restore.RestoreError as e:
+        return fail(t(str(e)))
+    text = tn("Backup restored: {n} item", "Backup restored: {n} items", summary.items)
+    if summary.no_file:
+        text += ". " + tn("{n} item has no file yet", "{n} items have no file yet", summary.no_file)
+    return flash_redirect("/login", text + ". " + t("Sign in with an account from the backup"))
 
 
 # --------------------------------------------------------------- language

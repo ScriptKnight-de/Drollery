@@ -25,7 +25,8 @@
 </section>
 <section class="panel stack">
   <h2>{{ _("Restore") }}</h2>
-  <p class="muted">{{ _("Unpack the file into an empty data volume, then start Drollery. With the Docker setup from the README:") }}</p>
+  <p class="muted">{{ _("The easy way: on a new Drollery that has no account yet, the first page offers “Or restore a backup”. Choose the file there, enter the setup code, and everything comes back.") }}</p>
+  <p class="muted">{{ _("Or by hand: unpack the file into an empty data volume, then start Drollery. With the Docker setup from the README:") }}</p>
 <pre class="restore-code">docker compose down
 docker run --rm -v drollery_drollery-data:/data -v "$PWD":/backup alpine \
   sh -c "cd /data &amp;&amp; tar xzf /backup/drollery-backup-….tgz"
