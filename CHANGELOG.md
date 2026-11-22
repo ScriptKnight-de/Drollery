@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.8.0] - 2026-11-22
 
 ### Added
 - **Tags remember merges.** When tags are merged or renamed, the old names are remembered: typed again by you, suggested again
