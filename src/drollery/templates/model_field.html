@@ -1,0 +1,12 @@
+{# The model name: a plain text box until the server's model list is known, then a list to choose from (no typos possible)
+   with "Other…" as the way out for a name the server does not list. The posted field is always the text input called "model". #}
+<span id="model-field" {% if oob %}hx-swap-oob="true"{% endif %}>
+  {% if ids %}
+  <select id="model-select" aria-label="Model">
+    <option value="" {{ "selected" if not value }} disabled>{{ _("Choose a model") }}</option>
+    {% for m in ids %}<option value="{{ m }}" {{ "selected" if m == value }}>{{ m }}</option>{% endfor %}
+    <option value="__other__" {{ "selected" if value and value not in ids }}>{{ _("Other…") }}</option>
+  </select>
+  {% endif %}
+  <input name="model" value="{{ value }}" placeholder="moondream" {{ "hidden" if ids and (not value or value in ids) }}>
+</span>

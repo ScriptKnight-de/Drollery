@@ -491,6 +491,14 @@ def retry_job(job_id: int) -> bool:
                          (time.time(), job_id)).rowcount > 0
 
 
+def delete_failed_jobs(job_id: int | None = None) -> int:
+    """Remove failed jobs (one, or all when job_id is None) from the list. Only failed ones: queued and running jobs stay."""
+    with tx() as c:
+        if job_id is None:
+            return c.execute("DELETE FROM jobs WHERE status='failed'").rowcount
+        return c.execute("DELETE FROM jobs WHERE id=? AND status='failed'", (job_id,)).rowcount
+
+
 def claim_job() -> dict | None:
     now = time.time()
     with tx() as c:

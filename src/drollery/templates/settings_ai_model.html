@@ -21,7 +21,7 @@
 
   <div class="form grp" data-types="openai">
     <label>Base URL <input name="base_url" value="{{ model.base_url }}" placeholder="http://host.docker.internal:11434/v1"><span class="hint">{{ _("Any OpenAI-compatible server: Ollama, llama.cpp, LocalAI, a Whisper server, OpenAI…") }}</span></label>
-    <label>Model <input name="model" value="{{ model.model }}" list="model-list" placeholder="moondream"><span class="hint">{{ _("Use “Test connection” to list the models the server offers") }}</span></label>
+    <label>Model {% with value=model.model, ids=[] %}{% include "model_field.html" %}{% endwith %}<span class="hint">{{ _("Models the server offers. Choose “Other…” to type a name") }}</span></label>
     <label>{{ _("API key") }} <input type="password" name="api_key" value="" autocomplete="off" placeholder="{{ _('Stored. Leave empty to keep it') if model.has_key else _('Only if the server needs one') }}">
       {% if model.has_key %}<span class="check"><input type="checkbox" name="clear_key" value="1"> {{ _("Remove the stored key") }}</span>{% endif %}
       <span class="hint">{{ _("Kept in this server's database and never shown again") }}</span></label>
@@ -38,11 +38,10 @@
 
   <div class="actions">
     <button class="btn primary" type="submit">{{ _("Save model") }}</button>
-    <button class="btn" type="button" hx-post="/settings/ai/test" hx-include="#model-form" hx-target="#test-form" hx-swap="innerHTML">{{ icon("zap") }}{{ _("Test connection") }}</button>
+    <button class="btn" type="button" id="test-btn" hx-post="/settings/ai/test" hx-include="#model-form" hx-target="#test-form" hx-swap="innerHTML">{{ icon("zap") }}{{ _("Test connection") }}</button>
     <span id="test-form"></span>
   </div>
 </form>
-<datalist id="model-list"></datalist>
 <script>
   (function () {
     var form = document.getElementById("model-form"), type = document.getElementById("f-type");
@@ -53,8 +52,20 @@
         var p = JSON.parse(b.dataset.preset);
         ["name", "base_url", "model"].forEach(function (k) { if (form.elements[k]) form.elements[k].value = p[k] || ""; });
         type.value = p.type; sync();
+        form.elements.model.hidden = false; var s = document.getElementById("model-select"); if (s) s.remove();
+        (p.base_url ? form.elements.model : form.elements.base_url).focus();
+        if (p.base_url) ask();
       });
     });
+    // Ask the server for its models whenever the address or key changes (and once on load), so the model is chosen, not typed.
+    function ask() { if (type.value === "openai" && form.elements.base_url.value.trim()) htmx.trigger("#test-btn", "click"); }
+    ["base_url", "api_key"].forEach(function (k) { form.elements[k].addEventListener("change", ask); });
+    form.addEventListener("change", function (e) {
+      if (e.target.id !== "model-select") return;
+      var input = form.elements.model;
+      if (e.target.value === "__other__") { input.hidden = false; input.focus(); } else { input.value = e.target.value; input.hidden = true; }
+    });
+    window.addEventListener("load", ask);
   })();
 </script>
 {% endblock %}

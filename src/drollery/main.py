@@ -434,6 +434,20 @@ def jobs_retry():
     return RedirectResponse("/jobs", status_code=303)
 
 
+@app.post("/jobs/delete-failed", dependencies=[Depends(web_auth)])
+def jobs_delete_failed():
+    """Clear every failed job from the list (nothing is retried and no item is touched)."""
+    n = db.delete_failed_jobs()
+    return flash_redirect("/jobs", t("Deleted {n} failed job(s)", n=n) if n else t("There were no failed jobs"))
+
+
+@app.post("/jobs/{job_id}/delete", dependencies=[Depends(web_auth)])
+def job_delete(job_id: int):
+    if db.delete_failed_jobs(job_id):
+        return flash_redirect("/jobs", t("Job deleted"))
+    return flash_redirect("/jobs", t("That job can't be deleted: only failed jobs can be removed"), "error")
+
+
 @app.post("/jobs/{job_id}/retry", dependencies=[Depends(web_auth)])
 def job_retry(job_id: int, next: str = Form("/jobs")):
     """Run one failed job again, from the jobs list or from an item page."""

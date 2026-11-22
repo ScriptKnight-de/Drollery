@@ -69,6 +69,13 @@ give it a job and test the connection. Two jobs exist:
 | Transcription | writes down what is said in clips, sounds and album tracks, so it becomes searchable | an extracted mono 16 kHz MP3 |
 | Naming and tagging | suggests a title, a description and tags | a 640 px preview picture and/or the transcript |
 
+**Adding a provider.** On the *Add a model* page, pick a preset or **Custom provider** (an empty form for any
+OpenAI-compatible service, such as Google Gemini at `https://generativelanguage.googleapis.com/v1beta/openai/`). Once a
+base URL is entered, Drollery asks the server for its model list by itself (and again when you change the address or
+key) and you **choose the model from that list**, so a misspelled name cannot happen. Pick *Other…* to type a name the
+server does not list. Names that come with a `models/` prefix (Gemini does that) are shown without it, which is what
+chat calls expect.
+
 A model can be:
 
 | Type | Use it for |

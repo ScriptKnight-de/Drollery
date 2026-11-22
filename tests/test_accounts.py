@@ -439,3 +439,49 @@ def test_about_tab_links_to_kofi_and_github(client):
     assert 'href="https://ko-fi.com/scriptknight"' in html and 'href="https://github.com/ScriptKnight-de"' in html
     assert 'rel="noopener noreferrer"' in html and "Version " in html
     assert 'href="/settings/about"' in client.get("/settings/profile").text          # the tab is in the bar
+
+
+# ---------------------------------------------------- the model is chosen from the server's list
+
+def fake_models(monkeypatch, ids):
+    class Resp:
+        status_code = 200
+        def json(self): return {"data": [{"id": i} for i in ids]}
+    monkeypatch.setattr(aisettings.httpx, "get", lambda url, **kw: Resp())
+
+
+def test_the_queried_models_come_back_as_a_list_to_choose_from(client, monkeypatch):
+    fake_models(monkeypatch, ["llava", "moondream"])
+    html = client.post("/settings/ai/test", data={"type": "openai", "base_url": "http://llm.test/v1", "model": "moondream"}).text
+    assert 'id="model-select"' in html and 'hx-swap-oob="true"' in html and 'id="model-field"' in html
+    assert re.search(r'<option value="llava"\s*>llava</option>', html)
+    assert 'value="moondream" selected' in html and "Other…" in html
+    assert 'name="model" value="moondream"' in html and "hidden" in html.split('name="model"')[1].split(">")[0]    # the posted field is kept in sync
+
+
+def test_a_name_the_server_does_not_list_opens_the_text_box_so_nothing_is_lost(client, monkeypatch):
+    fake_models(monkeypatch, ["llava"])
+    html = client.post("/settings/ai/test", data={"type": "openai", "base_url": "http://llm.test/v1", "model": "special-one"}).text
+    assert 'value="__other__" selected' in html and 'name="model" value="special-one"' in html
+    assert "hidden" not in html.split('name="model"')[1].split(">")[0]
+    assert "not in that list" in html
+
+
+def test_no_model_list_means_a_plain_text_box(client, monkeypatch):
+    fake_models(monkeypatch, [])
+    html = client.post("/settings/ai/test", data={"type": "openai", "base_url": "http://llm.test/v1", "model": "x"}).text
+    assert "model-select" not in html and "model-field" not in html                         # the page keeps its text box untouched
+
+
+def test_geminis_models_prefix_is_removed_so_the_name_works_for_chat(client, monkeypatch):
+    fake_models(monkeypatch, ["models/gemini-a-flash", "models/gemini-b-pro"])
+    html = client.post("/settings/ai/test", data={"type": "openai", "base_url": "http://llm.test/v1", "model": "gemini-a-flash"}).text
+    assert re.search(r'<option value="gemini-a-flash" selected>', html)
+    assert "models/gemini" not in html and "not in that list" not in html
+
+
+def test_the_add_page_has_a_custom_provider_preset_and_asks_for_the_list(client):
+    html = client.get("/settings/ai/models/new").text
+    assert "Custom provider" in html and 'id="test-btn"' in html and 'name="model"' in html
+    preset = next(p for p in aisettings.PRESETS if p["label"] == "Custom provider")
+    assert preset["type"] == "openai" and preset["base_url"] == "" and preset["model"] == "" and preset["name"] == ""

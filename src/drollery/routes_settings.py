@@ -421,4 +421,4 @@ def model_test(request: Request, id: str = Form(""), type: str = Form(""), base_
         stored = accounts.get_model(int(id))
         key = stored["api_key"] if stored else ""
     ok, message, ids = aisettings.test_model({"type": type, "base_url": base_url, "model": model, "api_key": key, "command": command})
-    return render(request, "ai_test_result.html", ok=ok, message=message, model_ids=ids)
+    return render(request, "ai_test_result.html", ok=ok, message=message, model_ids=ids, value=model.strip())

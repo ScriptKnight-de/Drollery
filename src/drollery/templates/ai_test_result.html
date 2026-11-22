@@ -1,2 +1,2 @@
 <span class="test {{ 'ok' if ok else 'bad' }}" role="status">{{ message }}</span>
-{% if model_ids %}<datalist id="model-list" hx-swap-oob="true">{% for m in model_ids %}<option value="{{ m }}"></option>{% endfor %}</datalist>{% endif %}
+{% if model_ids %}{% with ids=model_ids, oob=true %}{% include "model_field.html" %}{% endwith %}{% endif %}

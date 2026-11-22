@@ -1,3 +1,4 @@
+import re
 import json
 import time
 
@@ -157,3 +158,50 @@ def test_tool_errors_keep_their_detail(monkeypatch, tmp_path):
         assert detail.strip() in str(e) and len(str(e)) > 1200
     else:
         raise AssertionError("expected a MediaError")
+
+
+# ------------------------------------------------------------------ deleting failed jobs
+
+def test_a_failed_job_can_be_deleted_and_nothing_else_is_touched(client):
+    item_a, a = make_failed_job(client, 1)
+    item_b, b = make_failed_job(client, 2)
+    r = client.post(f"/jobs/{a}/delete")
+    assert r.status_code == 200 and "Job deleted" in r.text
+    with db.tx() as c:
+        assert c.execute("SELECT COUNT(*) FROM jobs WHERE id=?", (a,)).fetchone()[0] == 0
+        assert c.execute("SELECT COUNT(*) FROM items WHERE id=?", (item_a,)).fetchone()[0] == 1       # the item stays
+    assert row(b)["status"] == "failed"
+
+
+def test_only_failed_jobs_can_be_deleted(client):
+    _, jid = make_failed_job(client, 1)
+    for status in ("queued", "running", "done"):
+        with db.tx() as c:
+            c.execute("UPDATE jobs SET status=? WHERE id=?", (status, jid))
+        r = client.post(f"/jobs/{jid}/delete")
+        assert "only failed jobs can be removed" in r.text and row(jid)["status"] == status
+    assert "only failed jobs" in client.post("/jobs/99999/delete").text                              # unknown id: same calm answer
+
+
+def test_delete_failed_clears_every_failed_job_and_keeps_the_rest(client):
+    _, a = make_failed_job(client, 1)
+    _, b = make_failed_job(client, 2, kind="fetch")
+    _, keep = make_failed_job(client, 3)
+    with db.tx() as c:
+        c.execute("UPDATE jobs SET status='queued', error='' WHERE id=?", (keep,))
+    r = client.post("/jobs/delete-failed")
+    assert "Deleted 2 failed job(s)" in r.text
+    with db.tx() as c:
+        left = [x["id"] for x in c.execute("SELECT id FROM jobs ORDER BY id")]
+    assert a not in left and b not in left and keep in left
+    assert "There were no failed jobs" in client.post("/jobs/delete-failed").text
+
+
+def test_the_jobs_page_offers_delete_only_where_it_applies(client):
+    _, failed = make_failed_job(client, 1)
+    _, other = make_failed_job(client, 2)
+    with db.tx() as c:
+        c.execute("UPDATE jobs SET status='done', error='' WHERE id=?", (other,))
+    html = client.get("/jobs").text
+    assert f'action="/jobs/{failed}/delete"' in html and f'action="/jobs/{other}/delete"' not in html
+    assert re.search(r'<form[^>]*action="/jobs/delete-failed"[^>]*data-confirm=', html)                  # asks before clearing the list

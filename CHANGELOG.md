@@ -3,6 +3,15 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Added
+- **Custom provider** preset for any OpenAI-compatible service.
+- The model is **chosen from the list the server offers** (queried automatically once the address is known), with
+  *Other…* for a name that is not listed. Gemini's `models/` prefix is removed from the names.
+- **Delete** a failed background job, or **Delete failed** to clear them all, on the jobs page (after a confirmation).
+  Only failed jobs can be deleted; nothing is retried and no item is touched.
+
 ## [0.1.2] - 2026-11-22
 
 ### Fixed

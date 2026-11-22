@@ -27,6 +27,7 @@ COMPAT = {"transcribe": ("openai", "command"), "describe": ("openai",)}
 
 PRESETS = [
     {"label": N_("Ollama (local vision)"), "type": "openai", "base_url": "http://host.docker.internal:11434/v1", "model": "moondream", "name": "Ollama vision"},
+    {"label": N_("Custom provider"), "type": "openai", "base_url": "", "model": "", "name": ""},
     {"label": "OpenAI", "type": "openai", "base_url": "https://api.openai.com/v1", "model": "gpt-4o-mini", "name": "OpenAI"},
     {"label": "Whisper server", "type": "openai", "base_url": "http://whisper:8000/v1", "model": "Systran/faster-whisper-small", "name": "Whisper small"},
     {"label": "Whisper (OpenAI)", "type": "openai", "base_url": "https://api.openai.com/v1", "model": "whisper-1", "name": "OpenAI Whisper"},
@@ -91,7 +92,7 @@ def test_model(data: dict) -> tuple[bool, str, list[str]]:
         if r.status_code != 200:
             return True, t("Reached the server (GET /models answered {status}); model listing isn't supported but chat and audio calls may still work", status=r.status_code), []
         try:
-            ids = sorted({m["id"] for m in r.json().get("data", []) if "id" in m})
+            ids = sorted({str(m["id"]).removeprefix("models/") for m in r.json().get("data", []) if "id" in m})
         except (ValueError, TypeError, AttributeError):
             ids = []
         wanted = data.get("model") or ""

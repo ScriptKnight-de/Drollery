@@ -6,7 +6,10 @@
 <a class="back" href="/">{{ icon("arrow-left") }}{{ _("Back to library") }}</a>
 <div class="page-head">
   <h1>{{ _("Background jobs") }}</h1>
-  <form method="post" action="/jobs/retry-failed"><button class="btn" type="submit">{{ icon("retry") }}{{ _("Retry failed") }}</button></form>
+  <div class="acts">
+    <form method="post" action="/jobs/retry-failed"><button class="btn" type="submit">{{ icon("retry") }}{{ _("Retry failed") }}</button></form>
+    <form method="post" action="/jobs/delete-failed" data-confirm="{{ _('Remove every failed job from this list? Nothing is retried and no item is deleted.') }}"><button class="btn danger" type="submit">{{ icon("trash") }}{{ _("Delete failed") }}</button></form>
+  </div>
 </div>
 {% if jobs %}
 <div class="panel flush">
@@ -20,6 +23,7 @@
       <td class="errcell">{{ errbox(j.error) }}</td>
       <td class="actions">{% if j.status == "failed" %}<div class="acts">
         <form method="post" action="/jobs/{{ j.id }}/retry"><input type="hidden" name="next" value="/jobs"><button class="btn small" type="submit" aria-label="{{ _('Retry job {id}', id=j.id) }}">{{ icon("retry") }}{{ _("Retry") }}</button></form>
+        <form method="post" action="/jobs/{{ j.id }}/delete"><button class="btn small danger" type="submit" aria-label="{{ _('Delete job {id}', id=j.id) }}">{{ icon("trash") }}{{ _("Delete") }}</button></form>
       </div>{% endif %}</td></tr>
   {% endfor %}
   </tbody>
