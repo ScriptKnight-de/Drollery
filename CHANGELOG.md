@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.3.0] - 2026-11-22
 
 ### Added
 - **Sort menu** next to the type filters: automatic (relevance for a search, otherwise newest), newest, oldest, title A-Z and
