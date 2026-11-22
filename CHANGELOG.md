@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.2.6] - 2026-11-22
 
 ### Fixed
 - A video recorded on its side (a phone held upright) is stored with the size people see, 1080x1920 and not 1920x1080.
