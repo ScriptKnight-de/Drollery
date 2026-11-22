@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.2.5] - 2026-11-22
 
 ### Changed
 - A GIF on a library tile shows its still frame and **plays only while the pointer is on the tile** (or the tile has the
