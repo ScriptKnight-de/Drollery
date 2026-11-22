@@ -271,3 +271,18 @@ def test_the_card_image_is_the_preview_of_a_video_on_its_page_and_on_a_shared_li
     assert f'poster="/s/{token}/thumb"' in client.get(f"/s/{token}").text
     client.post(f"/items/{video_id}/card/reset")
     assert poster().startswith(f"/thumb/{video_id}?v=") and client.get(f"/s/{token}/thumb").content == frame      # reset: back to the frame
+
+
+def test_the_player_keeps_the_shape_of_the_film_whatever_its_preview_picture(client, video_id):
+    """A square card image used to make the player square until the film loaded: the page now gives the player the film's ratio."""
+    page = client.get(f"/items/{video_id}").text
+    with db.tx() as c:
+        item = db.get_item(c, video_id)
+    assert f'style="--ar: {round(item["width"] / item["height"], 4)}"' in page and "/static/videoframe.js" in page
+    client.post(f"/items/{video_id}/card/picture", files={"image": ("mine.png", two_color_png(120, 120), "image/png")})
+    assert f'style="--ar: {round(item["width"] / item["height"], 4)}"' in client.get(f"/items/{video_id}").text      # the same with a square picture
+    token = __import__("re").search(r"/s/([A-Za-z0-9_-]{20,})", client.post(f"/items/{video_id}/shares", data={"preset": "never", "label": "", "next": f"/items/{video_id}"}).text).group(1)
+    shared = client.get(f"/s/{token}").text
+    assert "--ar:" in shared and "/static/videoframe.js" in shared
+    css = client.get("/static/style.css").text
+    assert "aspect-ratio: var(--ar)" in css and "object-fit: contain" in css

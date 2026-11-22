@@ -3,6 +3,14 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Fixed
+- The video player no longer changes its shape when the film loads: with a square card image as its preview it was
+  square first and then jumped to the shape of the film. The player now has the film's ratio from the start (taken from
+  the stored size, then confirmed by the browser), the picture sits centred in it and the rest is grey. The same on a
+  shared link.
+
 ## [0.2.3] - 2026-11-22
 
 ### Changed

@@ -197,6 +197,11 @@ kbd { color: var(--tx3); border: 2px solid var(--ln); border-radius: 6px; paddin
 @media (min-width: 801px) { .detail:not(.album) > :first-child { position: sticky; top: 76px; } }   /* the picture stays in view next to the long forms */
 .frame { background: var(--s1); border: 2px solid var(--ln); border-radius: 20px; padding: 12px; display: grid; place-items: center; box-shadow: 0 6px 0 var(--ln); }
 .frame img, .frame video { max-width: 100%; max-height: 72vh; border-radius: 8px; display: block; background: #000; }
+/* a video keeps the shape of the film whatever its preview picture is (a square card image, say): the player has that
+   ratio from the start, the picture sits centred in it and the rest is grey, so nothing jumps when the video loads */
+.frame video { --ar: 1.7778; --vh: 72vh; width: min(100%, calc(var(--vh) * var(--ar))); max-width: none; max-height: var(--vh); aspect-ratio: var(--ar);
+  object-fit: contain; background: #2b2a31; }
+.share .frame video { --vh: 78vh; }
 .frame audio { width: 100%; margin: 16px 0; }
 .side { display: grid; gap: 16px; }
 .itemhead { display: grid; gap: 12px; }
@@ -394,7 +399,7 @@ td.clip { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-spa
 .share { max-width: 860px; margin: 0 auto; display: grid; gap: 16px; }
 .share .cover { max-width: 420px; width: 100%; justify-self: center; }
 .share h1 { margin-top: 4px; } .share p { margin: 0; }
-.share .frame img, .share .frame video { max-height: 78vh; }
+.share .frame img { max-height: 78vh; }
 
 /* user tags vs AI tags */
 button.link { background: none; border: 0; padding: 0; color: var(--ac-ink); font: inherit; cursor: pointer; }
