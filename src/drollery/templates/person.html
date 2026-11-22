@@ -9,6 +9,7 @@
   <div>
     <h1>{{ person.name }}</h1>
     <dl class="facts-inline">
+      {% if full_name and full_name != person.name %}<dt>{{ _("Name") }}</dt><dd>{{ full_name }}</dd>{% endif %}
       {% if person.birthday %}<dt>{{ _("Birthday") }}</dt><dd>{{ person.birthday }}</dd>{% endif %}
       {% if person.age is not none %}<dt>{{ _("Age") }}</dt><dd>{{ person.age }}</dd>{% endif %}
       {% if person.gender in genders %}<dt>{{ _("Gender") }}</dt><dd>{{ _(genders[person.gender]) }}</dd>{% endif %}

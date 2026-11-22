@@ -7,7 +7,7 @@
 {% if rows %}
 <ul class="people-grid">
   {% for p in rows %}
-  <li><a class="person-card" href="/people/{{ p.id }}">{{ avatar(p) }}<span class="pc-name">{{ p.name }}</span><span class="muted small">{{ _("Items: {n}", n=p["items"]) }}</span></a></li>
+  <li><a class="person-card" href="/people/{{ p.id }}">{{ avatar(p) }}<span class="pc-name">{{ p.name }}</span>{% if p.first_name or p.surname %}{% set real = (p.first_name ~ " " ~ p.surname)|trim %}{% if real != p.name %}<span class="muted small">{{ real }}</span>{% endif %}{% endif %}<span class="muted small">{{ _("Items: {n}", n=p["items"]) }}</span></a></li>
   {% endfor %}
 </ul>
 {% else %}<p class="muted">{{ _("Nobody has been added yet") }}</p>{% endif %}

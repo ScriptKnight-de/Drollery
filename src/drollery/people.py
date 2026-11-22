@@ -44,10 +44,21 @@ def _row(r) -> dict:
     return d
 
 
-def clean(name: str, birthday: str, gender: str, link: str) -> dict:
-    name = re.sub(r"\s+", " ", (name or "").strip())
+def full_name(p: dict) -> str:
+    """First name and surname together (empty when neither is known)."""
+    return " ".join(x for x in (p.get("first_name", ""), p.get("surname", "")) if x)
+
+
+def _tidy(text: str) -> str:
+    return re.sub(r"\s+", " ", (text or "").strip())[:MAX_NAME]
+
+
+def clean(name: str, birthday: str, gender: str, link: str, first_name: str = "", surname: str = "") -> dict:
+    """`name` is the alias, the main label. Without one, the real name stands in for it."""
+    name, first_name, surname = _tidy(name), _tidy(first_name), _tidy(surname)
+    name = name or _tidy(f"{first_name} {surname}")
     if not name:
-        raise PersonError(N_("Give the person a name"))
+        raise PersonError(N_("Give the person an alias, a name or a surname"))
     birthday = (birthday or "").strip()
     if birthday:
         born = parse_birthday(birthday)
@@ -60,18 +71,18 @@ def clean(name: str, birthday: str, gender: str, link: str) -> dict:
     link = (link or "").strip()
     if link and (not re.match(r"^https?://[^\s]+$", link, re.I) or len(link) > MAX_LINK):
         raise PersonError(N_("The link must start with http:// or https://"))
-    return {"name": name[:MAX_NAME], "birthday": birthday, "gender": gender, "link": link}
+    return {"name": name, "first_name": first_name, "surname": surname, "birthday": birthday, "gender": gender, "link": link}
 
 
 def create(c, data: dict) -> int:
     now = time.time()
-    return c.execute("INSERT INTO people(name,birthday,gender,link,created_at,updated_at) VALUES (?,?,?,?,?,?)",
-                     (data["name"], data["birthday"], data["gender"], data["link"], now, now)).lastrowid
+    return c.execute("INSERT INTO people(name,first_name,surname,birthday,gender,link,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?)",
+                     (data["name"], data["first_name"], data["surname"], data["birthday"], data["gender"], data["link"], now, now)).lastrowid
 
 
 def update(c, person_id: int, data: dict) -> None:
-    c.execute("UPDATE people SET name=?, birthday=?, gender=?, link=?, updated_at=? WHERE id=?",
-              (data["name"], data["birthday"], data["gender"], data["link"], time.time(), person_id))
+    c.execute("UPDATE people SET name=?, first_name=?, surname=?, birthday=?, gender=?, link=?, updated_at=? WHERE id=?",
+              (data["name"], data["first_name"], data["surname"], data["birthday"], data["gender"], data["link"], time.time(), person_id))
     reindex_items_of(c, person_id)                                      # a new name changes how their items are found
 
 
@@ -84,19 +95,23 @@ def _like(text: str) -> str:
     return text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
 
 
+_ANY_NAME = "(name || ' ' || first_name || ' ' || surname)"        # what is searched: the alias, and the real name as "first surname"
+
+
 def search(c, q: str, limit: int = 8) -> list[dict]:
-    """People whose name contains what was typed; names that start with it come first."""
+    """People whose alias or real name contains what was typed; aliases that start with it come first."""
     q = q.strip()
     if not q:
         return []
-    rows = c.execute("SELECT * FROM people WHERE name LIKE ? ESCAPE '\\' COLLATE NOCASE "
+    rows = c.execute(f"SELECT * FROM people WHERE {_ANY_NAME} LIKE ? ESCAPE '\\' COLLATE NOCASE "
                      "ORDER BY (name LIKE ? ESCAPE '\\' COLLATE NOCASE) DESC, name COLLATE NOCASE LIMIT ?",
                      (f"%{_like(q)}%", f"{_like(q)}%", limit)).fetchall()
     return [_row(r) for r in rows]
 
 
 def by_name(c, name: str) -> list[dict]:
-    return [_row(r) for r in c.execute("SELECT * FROM people WHERE name = ? COLLATE NOCASE ORDER BY id", (name.strip(),))]
+    return [_row(r) for r in c.execute("SELECT * FROM people WHERE name = ? COLLATE NOCASE OR TRIM(first_name || ' ' || surname) = ? COLLATE NOCASE ORDER BY id",
+                                       (name.strip(), name.strip()))]
 
 
 def everyone(c) -> list[dict]:
@@ -159,7 +174,7 @@ def set_picture(person_id: int, src: Path) -> bool:
 
 def note(p: dict) -> str:
     """A few facts that tell two people with the same name apart (shown next to suggestions)."""
-    bits = []
+    bits = [full_name(p)] if full_name(p) and full_name(p) != p.get("name") else []
     if p.get("age") is not None:
         bits.append(str(p["age"]))
     if p.get("gender"):

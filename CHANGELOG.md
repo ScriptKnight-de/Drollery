@@ -3,6 +3,13 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Added
+- People have an **alias** (the main name, shown everywhere, and used for the lookup) and optional **first name** and
+  **surname**. Without an alias the real name stands in for it. The search bar, the people field and the item search find
+  a person and their items under any of the three. People you already have keep their name as the alias.
+
 ## [0.2.0] - 2026-11-22
 
 ### Changed

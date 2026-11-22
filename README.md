@@ -156,9 +156,10 @@ You need your own free keys; they are stored only on your server.
 
 Under an item's edit box you can add **tags** (type a word and press space or Enter; each becomes a small chip with a
 cross to remove it), a **description**, and the **people involved**. People (creators, voice actors, anyone) are
-stored once, under **Settings › People**, with a picture, a **birthday** (their age is worked out for you), a gender and a
-link to their social media. Start typing a name in the item's people field to pick someone who already exists, or press
-**New person** to add them.
+stored once, under **Settings › People**, with an **alias** (how they are known and shown everywhere), their real
+**first name** and **surname**, a picture, a **birthday** (their age is worked out for you), a gender and a link to their
+social media. Items are found under any of the names. Start typing in the item's people field to pick someone who
+already exists, or press **New person** to add them.
 
 If an AI model is set up, it also suggests tags. **Your tags and the AI's stay apart:** you can keep or remove the AI's
 with one click, and what you wrote is never overwritten.

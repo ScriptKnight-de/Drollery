@@ -54,7 +54,7 @@ def test_only_a_name_is_required(client):
 
 
 @pytest.mark.parametrize("data,message", [
-    ({"name": "  "}, "Give the person a name"),
+    ({"name": "  "}, "Give the person an alias, a name or a surname"),
     ({"name": "X", "birthday": "not a date"}, "real date"),
     ({"name": "X", "birthday": "2023-02-30"}, "real date"),
     ({"name": "X", "birthday": "2999-01-01"}, "real date"),
@@ -304,3 +304,63 @@ def test_save_and_delete_sit_in_one_row_and_delete_still_asks(client):
     row = page.split('class="actions"')[1].split("</div>")[0]
     assert "Save person" in row and "Delete person" in row and 'form="delete-person"' in row and 'class="btn small' not in row
     assert "data-confirm=" in page.split('id="delete-person"')[1].split(">")[0]
+
+
+# ------------------------------------------------- alias, first name and surname
+
+def test_a_person_has_an_alias_and_a_real_name(client):
+    r = client.post("/people", data={"name": "  Pixel   Pete ", "first_name": " Max ", "surname": "Muster  Mann"})
+    assert "Pixel Pete added" in r.text
+    with db.tx() as c:
+        p = people.get(c, pid_of("Pixel Pete"))
+    assert (p["name"], p["first_name"], p["surname"]) == ("Pixel Pete", "Max", "Muster Mann")        # tidied, the alias stays the main label
+    page = client.get(f"/people/{p['id']}").text
+    assert "<h1>Pixel Pete</h1>" in page and "Max Muster Mann" in page                               # the real name is a fact on the page
+    assert 'name="first_name"' in page and 'name="surname"' in page and "Alias" in page
+    assert "Max Muster Mann" in client.get("/people").text                                           # and on the card in the list
+
+
+def test_without_an_alias_the_real_name_stands_in_and_one_of_the_three_is_needed(client):
+    client.post("/people", data={"first_name": "Erika", "surname": "Beispiel"})
+    assert pid_of("Erika Beispiel")
+    client.post("/people", data={"first_name": "Solo"})
+    assert pid_of("Solo")
+    r = client.post("/people", data={"name": " ", "first_name": " ", "surname": ""})
+    assert r.status_code == 422 and "Give the person an alias, a name or a surname" in r.text
+
+
+def test_people_are_found_by_alias_first_name_or_surname(client, item_id):
+    client.post("/people", data={"name": "Pixel Pete", "first_name": "Max", "surname": "Mustermann"})
+    client.post("/people", data={"name": "Plain"})
+    find = lambda q: [p["name"] for p in client.get("/people/search", params={"q": q}).json()]
+    assert find("pixel") == ["Pixel Pete"] and find("muster") == ["Pixel Pete"] and find("max must") == ["Pixel Pete"]
+    note = client.get("/people/search", params={"q": "muster"}).json()[0]["note"]
+    assert note.startswith("Max Mustermann")                                                           # tells two people with one alias apart
+    pid = pid_of("Pixel Pete")
+    client.post(f"/items/{item_id}/people", data={"person_id": pid})
+    for q in ("pixel", "mustermann", "max"):                                                           # their items are found under every name
+        assert [x["id"] for x in client.get("/api/v1/items", params={"q": q}).json()["items"]] == [item_id]
+    assert "Pixel Pete is already there" in client.post(f"/items/{item_id}/people", data={"name": "max mustermann"}).text    # and a typed real name picks them
+
+
+def test_editing_the_real_name_updates_the_search_of_their_items(client, item_id):
+    client.post("/people", data={"name": "Pixel Pete"})
+    pid = pid_of("Pixel Pete")
+    client.post(f"/items/{item_id}/people", data={"person_id": pid})
+    assert client.get("/api/v1/items", params={"q": "mustermann"}).json()["items"] == []
+    client.post(f"/people/{pid}", data={"name": "Pixel Pete", "first_name": "Max", "surname": "Mustermann"})
+    assert [x["id"] for x in client.get("/api/v1/items", params={"q": "mustermann"}).json()["items"]] == [item_id]
+
+
+def test_an_older_database_gets_the_new_name_columns_and_keeps_its_people(client):
+    """People made before the real-name fields have their old name as the alias and empty first name and surname."""
+    with db.tx() as c:
+        c.execute("INSERT INTO people(name, created_at, updated_at) VALUES ('Old Timer', 0, 0)")
+        c.execute("ALTER TABLE people DROP COLUMN first_name")
+        c.execute("ALTER TABLE people DROP COLUMN surname")
+    db.init()
+    with db.tx() as c:
+        cols = {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('people')")}
+        row = c.execute("SELECT name, first_name, surname FROM people WHERE name='Old Timer'").fetchone()
+    assert {"first_name", "surname"} <= cols and (row["first_name"], row["surname"]) == ("", "")
+    assert client.get(f"/people/{pid_of('Old Timer')}").status_code == 200

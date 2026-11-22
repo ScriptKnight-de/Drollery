@@ -72,7 +72,9 @@ CREATE VIRTUAL TABLE IF NOT EXISTS tracks_fts USING fts5(
 );
 CREATE TABLE IF NOT EXISTS people (                  -- creators and other people involved; one record for everything they appear on
   id INTEGER PRIMARY KEY,
-  name TEXT NOT NULL,
+  name TEXT NOT NULL,                                  -- the alias: how the person is known and shown everywhere
+  first_name TEXT NOT NULL DEFAULT '',                 -- the real name, optional
+  surname TEXT NOT NULL DEFAULT '',
   birthday TEXT NOT NULL DEFAULT '',                   -- YYYY-MM-DD; the age is worked out from it
   gender TEXT NOT NULL DEFAULT '',
   link TEXT NOT NULL DEFAULT '',                       -- a social media page
@@ -222,6 +224,12 @@ REQUIRED_COLUMNS = {
 }
 
 
+# Columns added after the first release: a database made before them gets them at start.
+ADDED_COLUMNS = {
+    "people": (("first_name", "TEXT NOT NULL DEFAULT ''"), ("surname", "TEXT NOT NULL DEFAULT ''")),
+}
+
+
 def _check_schema(c: sqlite3.Connection) -> None:
     for table, columns in REQUIRED_COLUMNS.items():
         have = {r["name"] for r in c.execute(f"SELECT name FROM pragma_table_info('{table}')")}
@@ -239,6 +247,11 @@ def init() -> None:
         if rebuild:
             c.execute("DROP TABLE items_fts")
         c.executescript(SCHEMA)
+        for table, columns in ADDED_COLUMNS.items():
+            have = {r["name"] for r in c.execute(f"SELECT name FROM pragma_table_info('{table}')")}
+            for column, declaration in columns:
+                if column not in have:
+                    c.execute(f"ALTER TABLE {table} ADD COLUMN {column} {declaration}")
         if "ocr" in {r["name"] for r in c.execute("SELECT name FROM pragma_table_info('items')")}:
             c.execute("ALTER TABLE items DROP COLUMN ocr")                       # the text recognition feature was removed
         if rebuild:
@@ -259,7 +272,7 @@ def reindex(c: sqlite3.Connection, item_id: int) -> None:
     user_tags = " ".join(r["tag"] for r in c.execute("SELECT tag FROM tags WHERE item_id=? AND source='user'", (item_id,)))
     ai_tags = " ".join(r["tag"] for r in c.execute("SELECT tag FROM tags WHERE item_id=? AND source='ai'", (item_id,)))
     source = f"{row['source_url']} {row['source_meta']} {row['original_name']}"
-    source += " " + " ".join(r["name"] for r in c.execute("SELECT p.name FROM people p JOIN item_people ip ON ip.person_id=p.id WHERE ip.item_id=?", (item_id,)))   # found by who made it
+    source += " " + " ".join(r["names"] for r in c.execute("SELECT p.name || ' ' || p.first_name || ' ' || p.surname AS names FROM people p JOIN item_people ip ON ip.person_id=p.id WHERE ip.item_id=?", (item_id,)))   # found by who made it, under any of their names
     transcript = row["transcript"]
     if row["kind"] == "movie":                                      # a movie is found by the film it parodies or dubs, its year, cast, directors and genres
         m = c.execute("SELECT original_title, year, imdb_id, details FROM movies WHERE item_id=?", (item_id,)).fetchone()

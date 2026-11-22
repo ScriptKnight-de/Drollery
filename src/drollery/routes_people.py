@@ -62,9 +62,9 @@ async def _save_picture(person_id: int, up: UploadFile | None) -> bool:
 
 
 def _form(p: dict | None = None, **over) -> dict:
-    base = {"name": "", "birthday": "", "gender": "", "link": ""}
+    base = {"name": "", "first_name": "", "surname": "", "birthday": "", "gender": "", "link": ""}      # "name" is the alias
     if p:
-        base.update({"name": p["name"], "birthday": p["birthday"], "gender": p["gender"], "link": p["link"]})
+        base.update({k: p[k] for k in base})
     base.update(over)
     return base
 
@@ -96,7 +96,7 @@ def suggest(q: str = ""):
 
 
 def _note(p: dict) -> str:
-    return " · ".join(x for x in (str(p["age"]) if p["age"] is not None else "", t(GENDER_LABELS[p["gender"]]) if p["gender"] in GENDER_LABELS else "") if x)
+    return " · ".join(x for x in (people.full_name(p) if people.full_name(p) != p["name"] else "", str(p["age"]) if p["age"] is not None else "", t(GENDER_LABELS[p["gender"]]) if p["gender"] in GENDER_LABELS else "") if x)
 
 
 @router.get("/people/search")
@@ -110,13 +110,13 @@ def search(q: str = ""):
 
 
 @router.post("/people")
-async def create(request: Request, name: str = Form(""), birthday: str = Form(""), gender: str = Form(""), link: str = Form(""),
-                 item: int = Form(0), picture: UploadFile | None = File(default=None)):
-    form = _form(name=name, birthday=birthday, gender=gender, link=link)
+async def create(request: Request, name: str = Form(""), first_name: str = Form(""), surname: str = Form(""), birthday: str = Form(""),
+                 gender: str = Form(""), link: str = Form(""), item: int = Form(0), picture: UploadFile | None = File(default=None)):
+    form = _form(name=name, first_name=first_name, surname=surname, birthday=birthday, gender=gender, link=link)
     if item > 0:
         _item_exists(item)
     try:
-        data = people.clean(name, birthday, gender, link)
+        data = people.clean(name, birthday, gender, link, first_name, surname)
         with db.tx() as c:
             pid = people.create(c, data)
         try:
@@ -143,16 +143,16 @@ def person_page(request: Request, person_id: int):
         items = db.search(c, "", "", "", 200, 0, "", person_id)
         album_info = albums.summaries(c, [i["id"] for i in items if i["kind"] == "album"])
         movie_info = movies.summaries(c, [i["id"] for i in items if i["kind"] == "movie"])
-    return render(request, "person.html", person=p, form=_form(p), items=items, album_info=album_info, movie_info=movie_info, genders=GENDER_LABELS, today=date.today().isoformat(),
+    return render(request, "person.html", person=p, full_name=people.full_name(p), form=_form(p), items=items, album_info=album_info, movie_info=movie_info, genders=GENDER_LABELS, today=date.today().isoformat(),
                   q="", tag="", kind="", src="", track_hits={}, more=False, page=0)
 
 
 @router.post("/people/{person_id}")
-async def save(request: Request, person_id: int, name: str = Form(""), birthday: str = Form(""), gender: str = Form(""), link: str = Form(""),
-               remove_picture: str = Form(""), picture: UploadFile | None = File(default=None)):
+async def save(request: Request, person_id: int, name: str = Form(""), first_name: str = Form(""), surname: str = Form(""), birthday: str = Form(""),
+               gender: str = Form(""), link: str = Form(""), remove_picture: str = Form(""), picture: UploadFile | None = File(default=None)):
     p = _person(person_id)
     try:
-        data = people.clean(name, birthday, gender, link)
+        data = people.clean(name, birthday, gender, link, first_name, surname)
         got = await _save_picture(person_id, picture)
     except people.PersonError as e:
         return flash_redirect(f"/people/{person_id}", t(str(e)), "error")
