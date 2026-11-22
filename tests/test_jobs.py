@@ -302,9 +302,8 @@ def _queued():
 
 
 def _pause_workers(monkeypatch):
-    """The app's own workers would claim the queued rows under the test: tell them the limit is zero."""
-    from drollery import accounts
-    monkeypatch.setattr(accounts, "worker_limit", lambda: 0)
+    from conftest import pause_workers
+    pause_workers(monkeypatch)
 
 
 def test_transcribing_and_describing_can_be_started_separately(client, tmp_path, monkeypatch):
@@ -476,3 +475,12 @@ def test_the_stylesheet_is_well_formed():
         i += 1
     assert not in_comment, "a comment is never closed"
     assert depth == 0, f"{depth} blocks are never closed"
+
+
+def test_wide_tables_scroll_inside_their_panel_instead_of_being_cut_off(client):
+    """On a phone a table wider than the screen used to be clipped, with its buttons (revoke, retry, delete) out of reach."""
+    import re
+    css = client.get("/static/style.css").text
+    flush = re.search(r"\.panel\.flush \{([^}]*)\}", css).group(1)
+    assert "overflow-x: auto" in flush and "overflow: hidden" not in flush
+    assert "flex-wrap: wrap" in re.search(r"\.page-head \{([^}]*)\}", css).group(1)          # the buttons next to a title wrap instead of running off the screen

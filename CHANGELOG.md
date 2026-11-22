@@ -3,6 +3,15 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Fixed
+- On a phone the tables in the settings and on the jobs page (API keys, share links, background jobs, AI models, signed-in
+  devices) are no longer cut off: they scroll inside their panel, so *Revoke*, *Regenerate*, *Copy*, *Retry* and *Delete* can be
+  reached. The jobs page no longer scrolls sideways, and the *this device* mark in the device list is not clipped.
+- The hint under the card image cropper and the words of the "nothing here" pages sit on a label plate instead of straight on
+  the stone wall.
+
 ## [0.2.8] - 2026-11-22
 
 ### Fixed

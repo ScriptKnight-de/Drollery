@@ -187,12 +187,14 @@ kbd { color: var(--tx3); border: 2px solid var(--ln); border-radius: 6px; paddin
 .empty svg { width: 280px; max-width: 80%; height: auto; color: var(--ac); opacity: .7; margin-bottom: 24px; }
 .empty h2 { color: var(--tx); margin-bottom: 4px; }
 .empty p { margin: 0; font-size: 14px; }
+/* the empty-state words sit straight on the wall: a label plate each */
+.empty h2, .empty p { width: fit-content; margin-inline: auto; padding: 4px 12px; border-radius: 12px; background: color-mix(in srgb, var(--bg) 88%, transparent); }
 
 /* item page */
 .back { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 16px; color: var(--tx2); font-size: 14px; font-weight: 500; }
 .back:hover { color: var(--tx); text-decoration: none; }
 /* text that would sit straight on the stone wall gets a label plate of the page colour, so it stays readable on the texture */
-.back, .page-head > h1, .page-head > h2, .lead, .share > .hint { width: fit-content; padding: 4px 12px; border-radius: 12px; background: color-mix(in srgb, var(--bg) 88%, transparent); }
+.back, .page-head > h1, .page-head > h2, .lead, .share > .hint, .stage + .hint { width: fit-content; padding: 4px 12px; border-radius: 12px; background: color-mix(in srgb, var(--bg) 88%, transparent); }
 .detail { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 32px; align-items: start; }
 /* the picture (or the track list) stays in view next to the long forms; a long list scrolls inside its own column */
 @media (min-width: 801px) {
@@ -308,7 +310,7 @@ audio::-webkit-media-controls-panel { background-color: var(--s1); }
 .legal { max-width: 720px; }
 .legal h1 { margin-top: 0; }
 .panel { background: var(--s1); border: 2px solid var(--ln); border-radius: 20px; padding: 20px; }
-.panel.flush { padding: 0; overflow: hidden; }
+.panel.flush { padding: 0; overflow-x: auto; }   /* a wide table scrolls inside its panel, the buttons in its last column stay reachable on a phone */
 .form { display: grid; gap: 16px; }
 .form label { display: grid; gap: 4px; font-size: 14px; line-height: 20px; font-weight: 500; color: var(--tx2); }
 .form .btn { justify-self: start; }
@@ -342,13 +344,14 @@ audio::-webkit-media-controls-panel { background-color: var(--s1); }
 @media (max-width: 800px) { .detail { grid-template-columns: 1fr; } .add { grid-template-columns: 1fr; } }
 
 /* jobs + login */
-.page-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; }
+.page-head { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; }
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
 th { text-align: left; font-weight: 500; color: var(--tx3); font-size: 14px; }
 th, td { padding: 12px 20px; border-bottom: 2px solid var(--ln); line-height: 20px; }
 tbody tr:last-child td { border-bottom: 0; }
 tbody tr:hover { background: var(--s2); }
-td.clip { max-width: 360px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+td.clip { max-width: 360px; } .narrow-form td.clip { max-width: 240px; }
+td.clip { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .login-wrap { max-width: 360px; margin: 48px auto; }
 .doodle svg { width: 100%; height: auto; color: var(--ac); opacity: .7; margin-bottom: 16px; }
 .login { display: grid; gap: 16px; padding: 24px; }

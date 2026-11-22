@@ -15,6 +15,15 @@ def _boot(tmp_path, monkeypatch):
     shares.share_throttle.reset()
 
 
+def pause_workers(monkeypatch):
+    """The app's own background workers must not take queued jobs away under a test: only the test's own thread may claim one.
+    (Lowering the worker limit is not enough: the supervisor only looks at it every two seconds.)"""
+    import threading
+    from drollery import db
+    real = db.claim_job
+    monkeypatch.setattr(db, "claim_job", lambda: real() if threading.current_thread() is threading.main_thread() else None)
+
+
 def create_user(username: str, password: str, email: str = "", role: str = "admin") -> int:
     """Make an account directly (the app itself only ever creates the first admin through the setup page)."""
     import time

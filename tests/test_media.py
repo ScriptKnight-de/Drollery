@@ -71,8 +71,9 @@ def size(vid):
 
 
 def test_old_videos_get_the_size_people_see_once(client, tmp_path, monkeypatch):
+    from conftest import pause_workers
     from drollery import accounts
-    monkeypatch.setattr(accounts, "worker_limit", lambda: 0)                  # the app's own workers must not take the job
+    pause_workers(monkeypatch)
     upright, plain = upload(client, tmp_path, "upright", 90), upload(client, tmp_path, "plain")
     with db.tx() as c:
         c.execute("DELETE FROM jobs")
@@ -89,8 +90,9 @@ def test_old_videos_get_the_size_people_see_once(client, tmp_path, monkeypatch):
 
 
 def test_the_check_skips_a_missing_file_and_does_not_queue_without_videos(client, tmp_path, monkeypatch):
+    from conftest import pause_workers
     from drollery import accounts
-    monkeypatch.setattr(accounts, "worker_limit", lambda: 0)
+    pause_workers(monkeypatch)
     accounts.set_setting(pipeline.VIDEO_SIZES_DONE, None)
     assert run_upkeep() is None                                               # a library without videos has nothing to check
     gone, upright = upload(client, tmp_path, "gone"), upload(client, tmp_path, "upright", 90)
@@ -106,9 +108,10 @@ def test_the_check_skips_a_missing_file_and_does_not_queue_without_videos(client
 
 
 def test_the_check_is_queued_when_the_app_starts_with_old_videos(client, tmp_path, monkeypatch):
+    from conftest import pause_workers
     from drollery import accounts
     from drollery.main import app
-    monkeypatch.setattr(accounts, "worker_limit", lambda: 0)
+    pause_workers(monkeypatch)
     vid = upload(client, tmp_path, "upright", 90)
     with db.tx() as c:
         c.execute("DELETE FROM jobs")
