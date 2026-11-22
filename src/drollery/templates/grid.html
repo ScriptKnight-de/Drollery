@@ -3,8 +3,9 @@
 {% for it in items %}
 {% if it.kind == "audio" %}
 {% set pic = it.has_card or it.has_thumb %}
-<div class="tile sound" style="--h: {{ ((it.id * 137.508) % 360)|round|int }}">
+<div class="tile sound" data-id="{{ it.id }}" style="--h: {{ ((it.id * 137.508) % 360)|round|int }}">
   <div class="thumb">
+    <span class="pick" aria-hidden="true">{{ icon("check") }}</span>
     {% if it.has_card %}<img loading="lazy" src="/card/{{ it.id }}?v={{ it.updated_at|int }}" alt="">
     {% elif it.has_thumb %}<img loading="lazy" src="/thumb/{{ it.id }}?v={{ (it.updated_at * 1000)|int }}" alt="">{% endif %}
     {{ sound_play(it, pic) }}
@@ -16,8 +17,9 @@
   </a>
 </div>
 {% else %}
-<a class="tile" href="/items/{{ it.id }}{% if q and it.kind == 'album' %}?q={{ q|urlencode }}{% endif %}">
+<a class="tile" data-id="{{ it.id }}" href="/items/{{ it.id }}{% if q and it.kind == 'album' %}?q={{ q|urlencode }}{% endif %}">
   <div class="thumb">
+    <span class="pick" aria-hidden="true">{{ icon("check") }}</span>
     {% if it.has_card %}<img loading="lazy" src="/card/{{ it.id }}?v={{ it.updated_at|int }}" alt="">
     {% elif it.has_thumb %}<img loading="lazy" src="/thumb/{{ it.id }}?v={{ (it.updated_at * 1000)|int }}" alt=""{% if it.kind == "gif" %} data-play="/media/{{ it.id }}?v={{ (it.updated_at * 1000)|int }}"{% endif %}>{# a GIF shows its still frame and plays (see gifhover.js) while the pointer is on the tile #}
     {% else %}<span class="ph{{ ' k-album' if it.kind == 'album' }}">{{ icon("lute" if it.kind == "audio" else "disc" if it.kind == "album" else "clapperboard" if it.kind == "movie" else "image") }}</span>{% endif %}

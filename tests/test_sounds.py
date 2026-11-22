@@ -66,7 +66,7 @@ def test_every_sound_card_has_its_own_colour_that_stays_the_same(client, tmp_pat
         p = make_mp3(tmp_path / f"s{n}.mp3", f"Sound {n}", n + 1)
         ids.append(client.post("/api/v1/items", files={"file": (f"s{n}.mp3", p.read_bytes(), "audio/mpeg")}).json()["id"])
     html = client.get("/").text
-    hues = [int(re.search(r'<div class="tile sound" style="--h: (\d+)"', tile_of(html, i)).group(1)) for i in ids]
+    hues = [int(re.search(r'<div class="tile sound" data-id="\d+" style="--h: (\d+)"', tile_of(html, i)).group(1)) for i in ids]
     assert len(set(hues)) == 5 and all(0 <= h <= 360 for h in hues)
     gaps = sorted(abs(a - b) for a in hues for b in hues if a < b)
     assert gaps[0] >= 20                                                   # neighbours do not look alike

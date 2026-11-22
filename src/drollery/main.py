@@ -28,7 +28,7 @@ from .routes_album import router as album_router, files as album_files_router, a
 from .routes_card import files as card_files_router, router as card_router
 from .routes_share import api as share_api_router, manage as share_manage_router, public as share_public_router, share_context, FILE_HEADERS
 from .routes_settings import router as settings_router
-from .i18n import t
+from .i18n import t, tn
 from .web import BASE, flash_redirect, jpeg_response, render
 
 log = logging.getLogger("drollery")
@@ -334,7 +334,11 @@ def home(request: Request, q: str = "", kind: str = "", tag: str = "", src: str 
         movie_info = movies.summaries(c, [i["id"] for i in items if i["kind"] == "movie"])
         track_hits = albums.track_hits(c, q, album_ids) if q.strip() else {}
     tpl = "grid.html" if request.headers.get("hx-request") and not request.headers.get("hx-boosted") else "index.html"
-    return render(request, tpl, items=items, q=q, kind=kind, tag=tag, src=src, sort=sort, person_id=person, person_row=person_row, page=page, more=len(items) == PAGE, counts=counts, pending=pending, album_info=album_info, movie_info=movie_info, track_hits=track_hits)
+    bulk_people = []
+    if tpl == "index.html":
+        with db.tx() as c:
+            bulk_people = [{"id": p["id"], "name": p["name"]} for p in people.everyone(c)]       # for the selection's "add person"
+    return render(request, tpl, bulk_people=bulk_people, items=items, q=q, kind=kind, tag=tag, src=src, sort=sort, person_id=person, person_row=person_row, page=page, more=len(items) == PAGE, counts=counts, pending=pending, album_info=album_info, movie_info=movie_info, track_hits=track_hits)
 
 
 @app.post("/add", dependencies=[Depends(web_auth)])
@@ -372,6 +376,76 @@ def item_page(request: Request, item_id: int):
         movie = movies.get(c, item_id) if item["kind"] == "movie" else None
     return render(request, "item.html", item=item, jobs=jobs, item_people=item_people, movie=movie, movie_facts=movies.facts(movie) if movie else {},
                   subtypes=movies.SUBTYPES, **share_context(request, item))
+
+
+BULK_MAX = 500          # items one bulk action may touch
+BULK_ACTIONS = ("tag_add", "tag_remove", "person_add", "person_remove", "ai", "delete")
+
+
+@app.post("/items/bulk", dependencies=[Depends(web_auth)])
+def items_bulk(ids: str = Form(""), action: str = Form(""), tags: str = Form(""), person_id: str = Form(""), step: str = Form(""),
+               next: str = Form("/")):
+    """One action for several items at once (the selection on the library page). `ids` is a comma separated list of item ids."""
+    back = shares.safe_next(next, "/")
+    wanted = list(dict.fromkeys(int(x) for x in ids.replace(" ", "").split(",") if x.isdigit() and int(x) > 0))
+    if action not in BULK_ACTIONS or not wanted:
+        return flash_redirect(back, t("Select some items and choose an action"), "error")
+    if len(wanted) > BULK_MAX:
+        return flash_redirect(back, t("That is too many at once: {n} items at most", n=BULK_MAX), "error")
+    new_tags = list(dict.fromkeys(db.normalize_tag(x) for x in _parse_tags(tags) if db.normalize_tag(x)))
+    if action in ("tag_add", "tag_remove") and not new_tags:
+        return flash_redirect(back, t("Type at least one tag"), "error")
+    person = None
+    if action in ("person_add", "person_remove"):
+        with db.tx() as c:
+            person = people.get(c, int(person_id)) if person_id.strip().isdigit() and int(person_id) > 0 else None
+        if person is None:
+            return flash_redirect(back, t("Choose a person"), "error")
+    done = 0
+    with db.tx() as c:
+        have = {r["id"] for r in c.execute(f"SELECT id FROM items WHERE id IN ({','.join('?' * len(wanted))})", wanted)}
+        found = [i for i in wanted if i in have]
+        if action == "delete":
+            doomed = [db.get_item(c, i) for i in found]
+        elif action == "ai":
+            busy = {r[0] for r in c.execute("SELECT DISTINCT item_id FROM jobs WHERE status IN ('queued','running') AND item_id IS NOT NULL")}
+        for i in found:
+            if action == "tag_add":
+                mine = db.get_item(c, i)["tags"]
+                db.set_user_tags(c, i, mine + [x for x in new_tags if x not in mine])
+                done += 1
+            elif action == "tag_remove":
+                mine = db.get_item(c, i)["tags"]
+                if any(x in mine for x in new_tags):
+                    db.set_user_tags(c, i, [x for x in mine if x not in new_tags])
+                    done += 1
+            elif action == "person_add":
+                done += people.link(c, i, person["id"])
+            elif action == "person_remove":
+                had = c.execute("SELECT 1 FROM item_people WHERE item_id=? AND person_id=?", (i, person["id"])).fetchone()
+                if had:
+                    people.unlink(c, i, person["id"])
+                    done += 1
+            elif action == "ai":
+                if i not in busy and pipeline.plan_jobs(c, i, step if step in ("transcribe", "describe") else ""):
+                    done += 1
+    if action == "delete":                                                # the files go outside the transaction, like a single delete
+        for item in doomed:
+            _delete_item(item)
+            done += 1
+    gone = len(wanted) - len(found)
+    text = {
+        "tag_add": lambda: tn("Tags added to {n} item", "Tags added to {n} items", done),
+        "tag_remove": lambda: tn("Tags removed from {n} item", "Tags removed from {n} items", done),
+        "person_add": lambda: tn("{name} added to {n} item", "{name} added to {n} items", done, name=person["name"] if person else ""),
+        "person_remove": lambda: tn("{name} removed from {n} item", "{name} removed from {n} items", done, name=person["name"] if person else ""),
+        "ai": lambda: tn("Queued AI processing for {n} item", "Queued AI processing for {n} items", done) if done
+                      else t("Nothing to queue: no AI model is assigned, or every item is already queued"),
+        "delete": lambda: tn("Deleted {n} item", "Deleted {n} items", done),
+    }[action]()
+    if gone:
+        text += ". " + tn("{n} item was not found", "{n} items were not found", gone)
+    return flash_redirect(back, text)
 
 
 @app.post("/items/{item_id}/edit", dependencies=[Depends(web_auth)])

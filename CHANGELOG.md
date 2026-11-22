@@ -3,6 +3,17 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Added
+- **Select several items in the library.** *Select* switches a selection mode on: a click marks a tile instead of opening it,
+  Shift marks a range, Space or Enter marks a focused tile, Esc leaves the mode. A bar shows the count and offers *Select
+  all loaded*, *Clear selection* and one action for all marked items: **add tags**, **remove tags**, **add a person**,
+  **remove a person**, **run the AI** (everything, only transcribe or only describe) and **delete** (after a confirmation that
+  names the number). The selection survives loading more tiles and changing the search; the count says when some chosen
+  items are out of view. At most 500 items per action, items that no longer exist are skipped and counted, and your own tags are
+  the only ones that change.
+
 ## [0.4.0] - 2026-11-22
 
 ### Added

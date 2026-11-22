@@ -29,6 +29,7 @@
       <option value="best" {{ "selected" if sort == "best" }}>{{ _("Best match") }}</option>
     </select>
   </label>
+  <button class="btn" type="button" id="select-toggle" aria-pressed="false">{{ icon("check") }}{{ _("Select") }}</button>
   <input type="hidden" name="tag" value="{{ tag }}">
   <input type="hidden" name="src" value="{{ src }}">
   <input type="hidden" name="person" value="{{ person_id or '' }}">
@@ -43,8 +44,41 @@
 {% endif %}
 
 <section id="grid" class="grid">{% include "grid.html" %}</section>
+
+<div id="bulkbar" class="bulkbar" role="region" aria-label="{{ _('Selection') }}" hidden
+     data-count="{{ _('{n} selected', n='{n}') }}" data-shown="{{ _('{n} selected, {m} shown', n='{n}', m='{m}') }}"
+     data-delete-one="{{ _('Delete the selected item? It cannot be brought back.') }}"
+     data-delete-many="{{ _('Delete the {n} selected items? They cannot be brought back.', n='{n}') }}">
+  <form id="bulk-form" method="post" action="/items/bulk">
+    <input type="hidden" name="ids"><input type="hidden" name="next"><input type="hidden" name="action">
+    <div class="bulk-row">
+      <b id="bulk-count" aria-live="polite"></b>
+      <button type="button" class="btn small" id="bulk-all">{{ _("Select all loaded") }}</button>
+      <button type="button" class="btn small" id="bulk-none">{{ _("Clear selection") }}</button>
+      <button type="button" class="btn small" id="bulk-done">{{ _("Done") }}</button>
+      <span class="bulk-actions">
+        <button type="button" class="btn small" data-bulk="tag_add">{{ _("Add tags") }}</button>
+        <button type="button" class="btn small" data-bulk="tag_remove">{{ _("Remove tags") }}</button>
+        <button type="button" class="btn small" data-bulk="person_add">{{ icon("user") }}{{ _("Add person") }}</button>
+        <button type="button" class="btn small" data-bulk="person_remove">{{ _("Remove person") }}</button>
+        <button type="button" class="btn small" data-bulk="ai">{{ icon("cpu") }}{{ _("Run AI") }}</button>
+        <button type="button" class="btn small danger" data-bulk="delete">{{ icon("trash") }}{{ _("Delete") }}</button>
+      </span>
+    </div>
+    <div class="bulk-row bulk-params" id="bulk-params" hidden>
+      <label data-for="tag_add tag_remove" hidden>{{ _("Tags") }} <input name="tags" placeholder="{{ _('Separate with spaces') }}" autocomplete="off"></label>
+      <label data-for="person_add person_remove" hidden>{{ _("Person") }}
+        <select name="person_id"><option value="">{{ _("Choose a person") }}</option>{% for p in bulk_people %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select></label>
+      <label data-for="ai" hidden>{{ _("What to run") }}
+        <select name="step"><option value="">{{ _("Everything") }}</option><option value="transcribe">{{ _("Only transcribe") }}</option><option value="describe">{{ _("Only describe") }}</option></select></label>
+      <button type="submit" class="btn primary small" id="bulk-apply">{{ _("Apply") }}</button>
+      <button type="button" class="btn small" id="bulk-cancel">{{ _("Cancel") }}</button>
+    </div>
+  </form>
+</div>
 <script src="/static/searchsuggest.js" defer></script>
 <script src="/static/searchstate.js" defer></script>
+<script src="/static/bulk.js" defer></script>
 <script src="/static/gifhover.js" defer></script>
 <script>
   var drop = document.querySelector(".drop");
