@@ -3,6 +3,13 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Changed
+- A GIF on a library tile shows its still frame and **plays only while the pointer is on the tile** (or the tile has the
+  keyboard focus). The GIF file is fetched only then, which also saves data in a long list. A GIF with a card image of
+  its own keeps that picture, and people whose system asks for less motion never get the animation on the tiles.
+
 ## [0.2.4] - 2026-11-22
 
 ### Fixed
