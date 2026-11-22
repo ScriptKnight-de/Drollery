@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.2.1] - 2026-11-22
 
 ### Added
 - People have an **alias** (the main name, shown everywhere, and used for the lookup) and optional **first name** and

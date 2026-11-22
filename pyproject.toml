@@ -1,6 +1,6 @@
 [project]
 name = "drollery"
-version = "0.2.0"
+version = "0.2.1"
 description = "Self-hosted library for memes and funny video/audio clips, with pluggable AI tagging, transcription and full-text search."
 readme = "README.md"
 requires-python = ">=3.11"
