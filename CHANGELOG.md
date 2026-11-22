@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.2.2] - 2026-11-22
 
 ### Changed
 - A clip's **card image** is now also its preview where the video is shown: the poster of the player on its page and the
