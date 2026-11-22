@@ -3,6 +3,12 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Fixed
+- Adding a link (the "Paste a link" field in the upload zone) did nothing in 0.1.6: a comment in the Enter-key handler
+  swallowed its closing brackets, so the whole upload script failed to load. A test now checks the syntax of every script.
+
 ## [0.1.6] - 2026-11-22
 
 ### Changed

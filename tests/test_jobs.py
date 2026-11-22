@@ -411,3 +411,26 @@ def test_stored_pictures_are_cached_for_a_day_and_never_sniffed(client, tmp_path
     i = client.post("/api/v1/items", files={"file": ("a.png", png(7), "image/png")}).json()["id"]
     r = client.get(f"/thumb/{i}")
     assert r.status_code == 200 and r.headers["cache-control"] == "private, max-age=86400" and r.headers["x-content-type-options"] == "nosniff"
+
+
+def test_every_script_of_the_pages_parses(client, tmp_path):
+    """A stray character in a script silently kills every feature in it (a comment once swallowed the closing brackets of the
+    link field's handler): check the syntax of the static scripts and of the inline scripts of the main pages."""
+    import re, shutil, subprocess
+    from pathlib import Path
+    node = shutil.which("node")
+    if not node:
+        import pytest
+        pytest.skip("node is needed to check the scripts")
+    files = [p for p in (Path(__file__).resolve().parents[1] / "src" / "drollery" / "static").glob("*.js") if not p.name.endswith(".min.js")]
+    for n, page in enumerate(("/", "/jobs", "/settings/ai", "/settings/backup", "/login")):
+        for m, (attrs, body) in enumerate(re.findall(r"<script([^>]*)>(.*?)</script>", client.get(page).text, re.S)):
+            if " src=" in attrs or "json" in attrs:                                   # a file (checked above) or a block of data
+                continue
+            f = tmp_path / f"inline-{n}-{m}.js"
+            f.write_text(body)
+            files.append(f)
+    assert len(files) > 10
+    for f in files:
+        r = subprocess.run([node, "--check", str(f)], capture_output=True, text=True)
+        assert r.returncode == 0, f"{f.name}: {r.stderr[:300]}"
