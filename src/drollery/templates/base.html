@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="dark light">
   <title>{% block title %}Drollery{% endblock %}</title>
-  <script>
+  <script nonce="{{ request.state.nonce }}">
     /* apply saved theme before first paint to avoid a flash */
     try {
       var r = document.documentElement, t = localStorage.getItem("drollery.theme"), a = localStorage.getItem("drollery.accent");
@@ -82,7 +82,7 @@
   </div>
 </footer>
 {% endif %}
-<script>
+<script nonce="{{ request.state.nonce }}">
   (function () {
     var root = document.documentElement, menus = Array.prototype.slice.call(document.querySelectorAll("details.menu"));
     function save(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
@@ -148,6 +148,8 @@
       dlg.addEventListener("close", function () { pending = null; });
     }
   })();
+  // a field marked data-autosubmit sends its form as soon as it changes
+  document.addEventListener("change", function (e) { var f = e.target.closest && e.target.closest("[data-autosubmit]"); if (f && f.form) f.form.submit(); });
   // copy buttons (works on plain http too, where navigator.clipboard is unavailable)
   document.addEventListener("click", function (e) {
     var b = e.target.closest("[data-copy]"); if (!b) return;

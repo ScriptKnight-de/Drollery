@@ -39,7 +39,7 @@
   <button class="btn primary" type="submit">{{ icon("plus") }}{{ _("Create album") }}</button>
 </form>
 <script src="/static/tagfield.js" defer></script>
-<script>
+<script nonce="{{ request.state.nonce }}">
   (function () {
     var input = document.querySelector("#album-form input[name=files]"), text = document.getElementById("picked-text");
     if (!input || !text) return;

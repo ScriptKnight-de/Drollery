@@ -14,6 +14,29 @@ from . import accounts, aisettings, i18n
 from .config import get_settings
 
 BASE = Path(__file__).parent
+def security_headers(nonce: str) -> dict[str, str]:
+    """Headers every response carries. The page may run its own scripts (those with this request's nonce) and the files of /static,
+    and load nothing from another site: no outside script, image, font, frame or connection. Pages of this site may be framed by
+    this site only (the popups of the item and album pages do that). The inline style attributes are allowed because the tiles set
+    a colour variable with one."""
+    csp = "; ".join([
+        "default-src 'self'",
+        f"script-src 'self' 'nonce-{nonce}'",
+        "style-src 'self' 'unsafe-inline'",
+        "img-src 'self' data: blob:",
+        "media-src 'self' blob:",
+        "font-src 'self'",
+        "connect-src 'self'",
+        "object-src 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "frame-ancestors 'self'",
+    ])
+    return {"Content-Security-Policy": csp, "X-Frame-Options": "SAMEORIGIN", "X-Content-Type-Options": "nosniff",
+            "Referrer-Policy": "same-origin", "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=(), usb=()",
+            "Cross-Origin-Opener-Policy": "same-origin"}
+
+
 IMAGE_HEADERS = {"Cache-Control": "private, max-age=86400", "X-Content-Type-Options": "nosniff"}
 templates = Jinja2Templates(directory=BASE / "templates")
 FLASH = "drollery_flash"

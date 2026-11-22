@@ -3,6 +3,17 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Added
+- **Protective headers on every answer:** a content security policy (own scripts only, each inline script carries a nonce that is
+  new for every request, nothing is loaded from another site, forms and frames only to and from this site), `X-Frame-Options`,
+  `Referrer-Policy: same-origin`, `X-Content-Type-Options` and a permissions policy that switches off camera, microphone and
+  location. The two fields that sent their form through an inline `onchange` now use a small shared script.
+- **Check the latest backup** (Settings > Backup): unpacks an automatic backup into a scratch folder and checks it the way a
+  restore does (files, database, accounts), tells what is in it, and leaves the library untouched. Every backup in the list has its
+  own *Check* button too, and a full backup that lacks files is reported.
+
 ## [0.8.0] - 2026-11-22
 
 ### Added

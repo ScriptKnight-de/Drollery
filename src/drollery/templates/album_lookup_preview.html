@@ -42,7 +42,7 @@
     <a class="btn" href="/items/{{ item.id }}">{{ _("Cancel") }}</a>
   </div>
 </form>
-<script>
+<script nonce="{{ request.state.nonce }}">
   // the "All" box in the table head ticks or clears every track; it shows a dash when only some are ticked
   (function () {
     var all = document.getElementById("pick-all");

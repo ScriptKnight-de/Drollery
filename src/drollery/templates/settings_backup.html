@@ -53,7 +53,10 @@
     {% else %}{{ _("No automatic backup has been made yet") }}{% endif %}
     {% if auto.enabled and not auto_status.running %} · {% if auto_due %}{{ _("The next one starts within a minute") }}{% else %}{{ _("Next: {when}", when=next_run|int|timestamp) }}{% endif %}{% endif %}
   </p>
-  <form method="post" action="/settings/backup/auto/run"><button class="btn" type="submit" {{ "disabled" if auto_status.running }}>{{ icon("download") }}{{ _("Back up now") }}</button></form>
+  <div class="acts">
+    <form method="post" action="/settings/backup/auto/run"><button class="btn" type="submit" {{ "disabled" if auto_status.running }}>{{ icon("download") }}{{ _("Back up now") }}</button></form>
+    {% if auto_list %}<form method="post" action="/settings/backup/auto/check" data-busy="{{ _('Checking the backup…') }}"><button class="btn" type="submit">{{ icon("check") }}{{ _("Check the latest backup") }}</button></form>{% endif %}
+  </div>
   {% if auto_list %}
   <div class="panel flush">
     <table>
@@ -62,6 +65,7 @@
       {% for b in auto_list %}
       <tr><td class="nw">{{ b.made|int|timestamp }}</td><td>{{ _("Everything") if b.kind == "full" else _("Metadata only") }}</td><td class="nw">{{ b.size|bytes }}</td>
         <td class="actions"><div class="acts">
+          <form method="post" action="/settings/backup/auto/{{ b.name }}/check" data-busy="{{ _('Checking the backup…') }}"><button class="btn small" type="submit">{{ icon("check") }}{{ _("Check") }}</button></form>
           <a class="btn small" href="/settings/backup/auto/{{ b.name }}" download>{{ icon("download") }}{{ _("Download") }}</a>
           <form method="post" action="/settings/backup/auto/{{ b.name }}/delete" data-confirm="{{ _('Delete this backup?') }}"><button class="btn small danger" type="submit" aria-label="{{ _('Delete') }}">{{ icon("trash") }}</button></form>
         </div></td></tr>

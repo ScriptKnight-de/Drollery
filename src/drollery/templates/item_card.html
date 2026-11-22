@@ -62,7 +62,7 @@
 </form>
 {% endif %}
 
-<script>
+<script nonce="{{ request.state.nonce }}">
 (function () {
   var form = document.getElementById("card-form"), stage = document.getElementById("stage"), img = document.getElementById("frame"),
       box = document.getElementById("box"), zoom = document.getElementById("zoom"), zoomRead = document.getElementById("zoom-read"),

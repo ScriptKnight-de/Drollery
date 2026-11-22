@@ -8,7 +8,7 @@
   <form class="toolbar" method="get" action="/settings/tags">
     <div class="field grow">{{ icon("search") }}<input type="search" name="q" value="{{ q }}" placeholder="{{ _('Find a tag') }}" aria-label="{{ _('Find a tag') }}" autocomplete="off"></div>
     <label class="sortpick"><span class="sr-only">{{ _("Sort by") }}</span>
-      <select name="sort" aria-label="{{ _('Sort by') }}" onchange="this.form.submit()">
+      <select name="sort" aria-label="{{ _('Sort by') }}" data-autosubmit>
         <option value="name" {{ "selected" if sort == "name" }}>{{ _("Name") }}</option><option value="count" {{ "selected" if sort == "count" }}>{{ _("Most used first") }}</option></select></label>
     <button class="btn" type="submit">{{ icon("search") }}{{ _("Find") }}</button>
   </form>

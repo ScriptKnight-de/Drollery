@@ -10,7 +10,7 @@ import segno
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
 
-from . import autobackup, __version__, accounts, aisettings, backup, db, i18n, imdb, pipeline, security
+from . import autobackup, __version__, accounts, aisettings, backup, db, i18n, imdb, pipeline, restore, security
 from .config import get_settings
 from .deps import web_auth
 from .i18n import t, tn
@@ -94,6 +94,40 @@ def backup_auto_run():
     if not autobackup.run_in_background():
         return flash_redirect("/settings/backup", t("A backup is already running"), "error")
     return flash_redirect("/settings/backup", t("The backup has started. It shows up in the list below when it is done"))
+
+
+def _check_automatic_backup(name: str | None):
+    """Unpack a backup of the folder into a scratch folder and check it the way a restore does, without touching the library. Without
+    a name: the newest one."""
+    if name is None:
+        found = autobackup.listing()
+        if not found:
+            return flash_redirect("/settings/backup", t("There is no automatic backup to check yet"), "error")
+        name = found[0]["name"]
+    path = autobackup.path_of(name)
+    if path is None:
+        return flash_redirect("/settings/backup", t("That backup does not exist any more"), "error")
+    try:
+        with open(path, "rb") as f:
+            summary = restore.restore(f, apply=False)
+    except restore.RestoreError as e:
+        return flash_redirect("/settings/backup", t("This backup cannot be restored: {why}", why=t(str(e))), "error")
+    except OSError:
+        return flash_redirect("/settings/backup", t("This backup could not be read"), "error")
+    text = t("This backup is fine and can be restored. Items: {items}, people: {people}, accounts: {users}", items=summary.items, people=summary.people, users=summary.users)
+    if "-full" in name and summary.no_file:
+        return flash_redirect("/settings/backup", text + " · " + tn("{n} item has no file in it", "{n} items have no file in it", summary.no_file), "error")
+    return flash_redirect("/settings/backup", text)
+
+
+@router.post("/backup/auto/check")
+def backup_auto_check_latest():
+    return _check_automatic_backup(None)
+
+
+@router.post("/backup/auto/{name}/check")
+def backup_auto_check(name: str):
+    return _check_automatic_backup(name)
 
 
 @router.get("/backup/auto/{name}")

@@ -1,4 +1,4 @@
 <!doctype html>
 <meta charset="utf-8">
 <title>Drollery</title>
-<script>parent.postMessage("drollery-done", location.origin);</script>
+<script nonce="{{ request.state.nonce }}">parent.postMessage("drollery-done", location.origin);</script>

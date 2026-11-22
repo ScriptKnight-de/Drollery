@@ -42,7 +42,7 @@
     <span id="test-form"></span>
   </div>
 </form>
-<script>
+<script nonce="{{ request.state.nonce }}">
   (function () {
     var form = document.getElementById("model-form"), type = document.getElementById("f-type");
     function sync() { form.querySelectorAll("[data-types]").forEach(function (g) { g.hidden = g.dataset.types.split(" ").indexOf(type.value) < 0; }); }

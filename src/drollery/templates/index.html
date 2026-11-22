@@ -80,7 +80,7 @@
 <script src="/static/searchstate.js" defer></script>
 <script src="/static/bulk.js" defer></script>
 <script src="/static/gifhover.js" defer></script>
-<script>
+<script nonce="{{ request.state.nonce }}">
   var drop = document.querySelector(".drop");
   if (drop) {
     ["dragenter", "dragover"].forEach(function (n) { drop.addEventListener(n, function () { drop.classList.add("over"); }); });

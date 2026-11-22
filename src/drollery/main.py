@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import secrets
 import shutil
 import tempfile
 import time
@@ -30,7 +31,7 @@ from .routes_share import api as share_api_router, manage as share_manage_router
 from .routes_settings import router as settings_router
 from .routes_tags import router as tags_router
 from .i18n import t, tn
-from .web import BASE, PAGE, flash_redirect, jpeg_response, render
+from .web import BASE, PAGE, flash_redirect, jpeg_response, render, security_headers
 
 log = logging.getLogger("drollery")
 
@@ -135,6 +136,16 @@ def impressum(request: Request):
     return render(request, "impressum.html", text=text)
 app.include_router(share_manage_router)
 app.include_router(share_api_router)
+
+
+@app.middleware("http")
+async def protective_headers(request: Request, call_next):
+    """A fresh nonce for every request (templates put it on their own inline scripts), and the security headers on the answer."""
+    request.state.nonce = secrets.token_urlsafe(16)
+    response = await call_next(request)
+    for name, value in security_headers(request.state.nonce).items():
+        response.headers.setdefault(name, value)
+    return response
 
 
 @app.middleware("http")

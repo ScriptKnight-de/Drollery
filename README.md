@@ -340,8 +340,12 @@ The name sent to the lookup services is just `Drollery/<version>`.
 
 - **Use HTTPS** if the site leaves your home network (a reverse proxy is fine), and set `DROLLERY_COOKIE_SECURE=1`.
   Otherwise passwords and keys travel unencrypted.
-- Passwords are hashed with scrypt, sign-in attempts are rate-limited, and you can turn on **two-factor authentication**
+- Passwords are hashed with scrypt, sign-in attempts are rate-limited (5 wrong passwords for one name, 30 from one address, then 15 minutes of waiting), and you can turn on **two-factor authentication**
   with backup codes under **Settings › Security**.
+- Every page carries protective headers: a **content security policy** (only Drollery's own scripts run, nothing is loaded
+  from another site), `X-Frame-Options`, `Referrer-Policy: same-origin`, `X-Content-Type-Options` and a permissions policy.
+  If your reverse proxy adds its own, keep these or make them at least as strict. `Strict-Transport-Security` is left to the
+  proxy, which knows whether the site is served over HTTPS.
 - Links to private or local addresses are refused when you add a link (see above).
 - A **share link** is a secret address: anyone who has it can open that one item until it expires or you revoke it. The
   public page shows only the title, description and, for movies, the type, year and original film, never your tags or

@@ -18,11 +18,11 @@
 <form class="toolbar" method="get" action="/people">
   <div class="field grow">{{ icon("search") }}<input type="search" name="q" value="{{ q }}" placeholder="{{ _('Find a person') }}" aria-label="{{ _('Find a person') }}" autocomplete="off"></div>
   <label class="sortpick"><span class="sr-only">{{ _("Sort by") }}</span>
-    <select name="sort" aria-label="{{ _('Sort by') }}" onchange="this.form.submit()">
+    <select name="sort" aria-label="{{ _('Sort by') }}" data-autosubmit>
       <option value="name" {{ "selected" if sort == "name" }}>{{ _("Name") }}</option>
       <option value="items" {{ "selected" if sort == "items" }}>{{ _("Most items first") }}</option>
       <option value="new" {{ "selected" if sort == "new" }}>{{ _("Newest first") }}</option></select></label>
-  {% if unused_total or unused %}<label class="check"><input type="checkbox" name="filter" value="unused" {{ "checked" if unused }} onchange="this.form.submit()"> {{ _n("On no item ({n})", "On no item ({n})", unused_total) }}</label>{% endif %}
+  {% if unused_total or unused %}<label class="check"><input type="checkbox" name="filter" value="unused" {{ "checked" if unused }} data-autosubmit> {{ _n("On no item ({n})", "On no item ({n})", unused_total) }}</label>{% endif %}
   <button class="btn" type="submit">{{ icon("search") }}{{ _("Find") }}</button>
 </form>
 <div class="listnote">{{ _n("{n} person", "{n} people", rows|length) }}{% if rows|length != total %} {{ _("of {total}", total=total) }}{% endif %}
