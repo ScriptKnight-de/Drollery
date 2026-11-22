@@ -80,6 +80,8 @@ async def lifespan(app: FastAPI):
         shutil.rmtree(old, ignore_errors=True) if old.is_dir() else old.unlink(missing_ok=True)
     if accounts.user_count() == 0:
         _announce_setup()
+    with db.tx() as c:
+        pipeline.plan_upkeep(c)
     stop = asyncio.Event()
     supervisor = asyncio.create_task(_supervise(stop))
     yield

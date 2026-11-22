@@ -89,7 +89,7 @@ def test_the_german_catalog_has_no_entries_that_nothing_uses():
     from drollery import i18n
     used = set(scan.collect())
     corpus = "\n".join(p.read_text() for p in (ROOT / "src/drollery").rglob("*") if p.suffix in {".py", ".html", ".js"} and "locales" not in p.parts)
-    by_name = {"Profile saved", "describe", "done", "failed", "fetch", "queued", "running", "transcribe", "transcribe_track"}      # built from variables
+    by_name = {"Profile saved", "describe", "done", "failed", "fetch", "queued", "running", "transcribe", "transcribe_track", "check_video_sizes"}      # built from variables
     stale = sorted(k for k in i18n.catalog("de") if k not in used and k not in by_name)
     assert not stale, f"entries nothing refers to: {stale[:5]}"
     for name in by_name:                                                      # and the names that are allowed really are still used

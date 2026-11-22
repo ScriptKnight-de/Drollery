@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 
 import httpx
 
-from . import aisettings, db, media, netguard, providers
+from . import accounts, aisettings, db, media, netguard, providers
 from .config import get_settings
 
 log = logging.getLogger("drollery")
@@ -332,7 +332,41 @@ def job_fetch(job: dict) -> None:
             raise providers.ProviderError(f"downloaded files were not recognised as images, video or audio: {names}")
 
 
-HANDLERS = {"fetch": job_fetch, "transcribe": job_transcribe, "describe": job_describe, "transcribe_track": job_transcribe_track}
+# ------------------------------------------------------------- upkeep
+
+VIDEO_SIZES_DONE = "maintenance.video_sizes"        # set once every stored video has been looked at again
+
+
+def plan_upkeep(c) -> None:
+    """Queue the one-time jobs a library may still need (called when the app starts)."""
+    if accounts.get_setting(VIDEO_SIZES_DONE) is not None:
+        return
+    pending = c.execute("SELECT 1 FROM jobs WHERE type='check_video_sizes' AND status IN ('queued','running')").fetchone()
+    if not pending and c.execute("SELECT 1 FROM items WHERE kind IN ('video','movie') LIMIT 1").fetchone():
+        db.enqueue(c, "check_video_sizes")
+
+
+def job_check_video_sizes(job: dict) -> None:
+    """Before 0.2.6 a video recorded on its side was stored with the size of its frames (1920x1080) and not the size people
+    see (1080x1920). Read every stored video again and correct the size. Nothing else about an item is touched."""
+    with db.tx() as c:
+        items = [dict(r) for r in c.execute("SELECT * FROM items WHERE kind IN ('video','movie')")]
+    fixed = 0
+    for item in items:
+        try:
+            info = media.probe(media_path(item))
+        except (media.MediaError, OSError, subprocess.SubprocessError):
+            continue                                                   # a file that is missing or unreadable is left alone
+        if info["width"] and info["height"] and (info["width"], info["height"]) != (item["width"], item["height"]):
+            with db.tx() as c:
+                c.execute("UPDATE items SET width=?, height=? WHERE id=?", (info["width"], info["height"], item["id"]))
+            fixed += 1
+    accounts.set_setting(VIDEO_SIZES_DONE, "1")
+    log.info("video sizes checked: %d of %d corrected", fixed, len(items))
+
+
+HANDLERS = {"fetch": job_fetch, "transcribe": job_transcribe, "describe": job_describe, "transcribe_track": job_transcribe_track,
+            "check_video_sizes": job_check_video_sizes}
 
 
 def run_job(job: dict) -> None:

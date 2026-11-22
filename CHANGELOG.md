@@ -3,6 +3,13 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Fixed
+- Videos added before 0.2.6 get the size people see too: once, in the background, Drollery reads every stored video again
+  (a job called *Check video sizes* on the jobs page) and corrects the size of those recorded on their side. Nothing else of
+  an item changes, a missing or unreadable file is skipped, and the job is not queued again afterwards.
+
 ## [0.2.6] - 2026-11-22
 
 ### Fixed

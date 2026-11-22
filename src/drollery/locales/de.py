@@ -591,6 +591,7 @@ MESSAGES = {
     "Transcribe all again": "Alle erneut transkribieren",
     "Runs one track at a time in the background and takes about as long as the audio itself. Everything said becomes searchable.": "Läuft Titel für Titel im Hintergrund und dauert etwa so lang wie das Audio selbst. Alles Gesprochene wird durchsuchbar.",
     "transcribe_track": "Titel transkribieren",
+    "check_video_sizes": "Videogrößen prüfen",
 
     # ---- transcript popup
     "Show transcript": "Transkript anzeigen",
