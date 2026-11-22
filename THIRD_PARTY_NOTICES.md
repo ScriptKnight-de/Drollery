@@ -65,6 +65,8 @@ These are fetched from PyPI or the operating system when you install or build it
 | Component | Used for | License |
 |---|---|---|
 | FastAPI, Starlette | web framework | MIT / BSD-3-Clause |
+| pydantic | settings and request models | MIT |
+| AnyIO | threads and cancellation in async code | MIT |
 | Uvicorn | server | BSD-3-Clause |
 | Jinja2, MarkupSafe | templates | BSD-3-Clause |
 | python-multipart | uploads | Apache-2.0 |

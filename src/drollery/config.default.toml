@@ -2,6 +2,7 @@
 # Restart the container after changes.
 
 max_upload_mb = 500       # per-file upload limit
+max_movie_mb = 16384      # one movie file (they are long)
 max_album_mb = 2048       # all tracks of one album together, and the unpacked size of a ZIP
 max_album_tracks = 500
 metadata_lookup = true    # the "look up online" option for albums (MusicBrainz + Cover Art Archive); nothing is sent unless you press it

@@ -15,6 +15,23 @@ def _boot(tmp_path, monkeypatch):
     shares.share_throttle.reset()
 
 
+def create_user(username: str, password: str, email: str = "", role: str = "admin") -> int:
+    """Make an account directly (the app itself only ever creates the first admin through the setup page)."""
+    import time
+    from drollery import db, security
+    now = time.time()
+    with db.tx() as c:
+        return c.execute("INSERT INTO users(username,email,password_hash,role,created_at,updated_at) VALUES (?,?,?,?,?,?)",
+                         (username.strip(), email.strip(), security.hash_password(password), role, now, now)).lastrowid
+
+
+def totp_now(secret: str, at: float | None = None) -> str:
+    """The code an authenticator app shows right now."""
+    import time
+    from drollery import security
+    return security._hotp(secret, int((at if at is not None else time.time()) // 30))
+
+
 @pytest.fixture()
 def anon(tmp_path, monkeypatch):
     """A fresh instance where first-run setup has NOT been done."""
@@ -37,7 +54,7 @@ def client(tmp_path, monkeypatch):
     from drollery import accounts
     from drollery.main import app
     with TestClient(app, follow_redirects=False) as c:
-        accounts.create_user("admin", PASSWORD)
+        create_user("admin", PASSWORD)
         r = c.post("/login", data={"username": "admin", "password": PASSWORD})
         assert r.status_code == 303 and "drollery_session" in c.cookies
         c.follow_redirects = True

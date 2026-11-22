@@ -491,6 +491,13 @@ def retry_job(job_id: int) -> bool:
                          (time.time(), job_id)).rowcount > 0
 
 
+def retry_failed_jobs() -> int:
+    """Put every failed job back in the queue with a fresh set of attempts. Returns how many."""
+    with tx() as c:
+        return c.execute("UPDATE jobs SET status='queued', attempts=0, error='', run_after=0, updated_at=? WHERE status='failed'",
+                         (time.time(),)).rowcount
+
+
 def delete_failed_jobs(job_id: int | None = None) -> int:
     """Remove failed jobs (one, or all when job_id is None) from the list. Only failed ones: queued and running jobs stay."""
     with tx() as c:

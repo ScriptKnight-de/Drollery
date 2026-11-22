@@ -1,19 +1,13 @@
 """Sharing: public pages and files behind unguessable links, plus the owner's tools to create, list and revoke them."""
 from __future__ import annotations
 
-import tempfile
-from pathlib import Path
-
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse
 
-from starlette.background import BackgroundTask
-
 from . import accounts, albums, db, movies, pipeline, shares
-from .config import get_settings
-from .deps import api_auth, client_ip, web_auth
+from .deps import api_auth, client_ip, item_or_404, web_auth
 from .i18n import t, tn
-from .web import flash_redirect, render
+from .web import flash_redirect, render, zip_response
 
 public = APIRouter()
 manage = APIRouter(dependencies=[Depends(web_auth)])
@@ -111,11 +105,7 @@ def share_download(request: Request, token: str):
         tracks = albums.tracks_of(c, item["id"])
     if _counts_as_view(request, token):
         shares.count_view(share["id"])
-    tmp = tempfile.NamedTemporaryFile(dir=get_settings().tmp_dir, suffix=".zip", delete=False)
-    tmp.close()
-    albums.build_zip(item, tracks, Path(tmp.name))
-    resp = FileResponse(tmp.name, media_type="application/zip", filename=f"{albums.safe_filename(item['title'])}.zip",
-                        background=BackgroundTask(lambda: Path(tmp.name).unlink(missing_ok=True)))
+    resp = zip_response(item, tracks)
     resp.headers.update(FILE_HEADERS)
     return resp
 
@@ -239,24 +229,16 @@ def _share_json(request: Request, share: dict, item: dict) -> dict:
             "status": share["state"]["kind"], "views": share["views"]}
 
 
-def _item_or_404(item_id: int) -> dict:
-    with db.tx() as c:
-        item = db.get_item(c, item_id)
-    if item is None:
-        raise HTTPException(404, "item not found")
-    return item
-
-
 @api.get("/items/{item_id}/shares")
 def api_list_shares(request: Request, item_id: int):
-    item = _item_or_404(item_id)
+    item = item_or_404(item_id)
     return {"shares": [_share_json(request, s, item) for s in shares.for_item(item_id)]}
 
 
 @api.post("/items/{item_id}/shares", status_code=201)
 async def api_create_share(request: Request, item_id: int):
     """Body: {"expires_in": seconds or null for a permanent link, "label": "optional", "track_id": for an album: one track, else the whole album}."""
-    item = _item_or_404(item_id)
+    item = item_or_404(item_id)
     body = await request.json() if request.headers.get("content-length", "0") != "0" else {}
     expires_in = body.get("expires_in")
     if expires_in is not None:

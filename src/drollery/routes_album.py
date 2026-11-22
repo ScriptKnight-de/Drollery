@@ -7,7 +7,6 @@ from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, Response
-from starlette.background import BackgroundTask
 
 from . import aisettings, albums, db, metadata, pipeline
 from .albums import AlbumError, Upload
@@ -15,7 +14,7 @@ from .config import get_settings
 from .deps import api_auth, web_auth
 from .i18n import t, tn
 from .metadata import MetadataError
-from .web import flash_redirect, render
+from .web import flash_redirect, jpeg_response, render, zip_response
 
 router = APIRouter(dependencies=[Depends(web_auth)])
 files = APIRouter(dependencies=[Depends(api_auth)])
@@ -282,7 +281,7 @@ def cover_file(item_id: int):
     path = albums.cover_path(item)
     if not path.exists():
         raise HTTPException(404, "no cover")
-    return FileResponse(path, media_type="image/jpeg", headers={"Cache-Control": "private, max-age=86400", "X-Content-Type-Options": "nosniff"})
+    return jpeg_response(path)
 
 
 @files.get("/albums/{item_id}/download")
@@ -290,11 +289,7 @@ def download(item_id: int):
     item = _album_or_404(item_id)
     with db.tx() as c:
         tr = albums.tracks_of(c, item_id)
-    tmp = tempfile.NamedTemporaryFile(dir=get_settings().tmp_dir, suffix=".zip", delete=False)
-    tmp.close()
-    albums.build_zip(item, tr, Path(tmp.name))
-    return FileResponse(tmp.name, media_type="application/zip", filename=f"{albums.safe_filename(item['title'])}.zip",
-                        background=BackgroundTask(lambda: Path(tmp.name).unlink(missing_ok=True)))
+    return zip_response(item, tr)
 
 
 # -------------------------------------------------------------------- API

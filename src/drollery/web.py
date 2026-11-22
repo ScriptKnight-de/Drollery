@@ -1,17 +1,20 @@
 """Shared template rendering and flash messages for the web UI."""
 from __future__ import annotations
 
+import tempfile
 from pathlib import Path
 from urllib.parse import quote, unquote
 
 from fastapi import Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
+from starlette.background import BackgroundTask
 
 from . import accounts, aisettings, i18n
 from .config import get_settings
 
 BASE = Path(__file__).parent
+IMAGE_HEADERS = {"Cache-Control": "private, max-age=86400", "X-Content-Type-Options": "nosniff"}
 templates = Jinja2Templates(directory=BASE / "templates")
 FLASH = "drollery_flash"
 
@@ -94,3 +97,18 @@ def render(request: Request, name: str, status_code: int = 200, **ctx):
     if raw:
         resp.delete_cookie(FLASH)
     return resp
+
+
+def jpeg_response(path: Path) -> FileResponse:
+    """A stored picture (thumbnail, cover, card, portrait): kept by the browser for a day, never sniffed as another type."""
+    return FileResponse(path, media_type="image/jpeg", headers=IMAGE_HEADERS)
+
+
+def zip_response(item: dict, tracks: list[dict]) -> FileResponse:
+    """The album as one ZIP, built in a temporary file that is removed once it has been sent."""
+    from . import albums
+    tmp = tempfile.NamedTemporaryFile(dir=get_settings().tmp_dir, suffix=".zip", delete=False)
+    tmp.close()
+    albums.build_zip(item, tracks, Path(tmp.name))
+    return FileResponse(tmp.name, media_type="application/zip", filename=f"{albums.safe_filename(item['title'])}.zip",
+                        background=BackgroundTask(lambda: Path(tmp.name).unlink(missing_ok=True)))

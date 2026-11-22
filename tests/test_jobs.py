@@ -371,3 +371,43 @@ def test_the_windows_close_on_the_backdrop_by_themselves_and_the_script_only_cov
         text = (root / "static" / js).read_text()
         assert '"closedBy" in HTMLDialogElement.prototype' in text and "!nativeLightDismiss && e.target === dlg" in text
     assert "e.isComposing" in (root / "static" / "uploader.js").read_text()                 # Enter that confirms an IME word does not add the link
+
+
+# --------------------------------------------- one source of truth for the defaults, and the shared helpers
+
+def test_every_setting_is_in_the_default_config_file_and_the_docs_with_the_same_default():
+    """config.py, config.default.toml and docs/configuration.md each list the settings: they must not drift apart."""
+    import re, tomllib
+    from pathlib import Path
+    from drollery.config import Settings
+    root = Path(__file__).resolve().parents[1]
+    shipped = tomllib.loads((root / "src" / "drollery" / "config.default.toml").read_text())
+    docs = (root / "docs" / "configuration.md").read_text()
+    own = {"transcribe", "describe", "data_dir", "cookie_secure"}              # providers have their own tables; the two others come from the environment
+    for name, field in Settings.model_fields.items():
+        if name in own:
+            continue
+        assert name in shipped, f"{name} is missing from config.default.toml"
+        assert shipped[name] == field.default, f"{name}: the shipped default differs from config.py"
+        assert re.search(r"^\| `%s` \|" % name, docs, re.M), f"{name} is missing from docs/configuration.md"
+
+
+def test_retrying_all_failed_jobs_leaves_the_others_and_stamps_the_time(client):
+    import time
+    with db.tx() as c:
+        c.execute("DELETE FROM jobs")
+        for status in ("failed", "failed", "done"):
+            c.execute("INSERT INTO jobs(type,item_id,payload,status,error,attempts,created_at,updated_at,run_after) VALUES ('describe',NULL,'{}',?,'x',3,1,1,4e9)", (status,))
+    assert db.retry_failed_jobs() == 2
+    with db.tx() as c:
+        rows = c.execute("SELECT status, error, attempts, updated_at FROM jobs ORDER BY id").fetchall()
+    assert [r["status"] for r in rows] == ["queued", "queued", "done"]
+    assert rows[0]["error"] == "" and rows[0]["attempts"] == 0 and rows[0]["updated_at"] > time.time() - 60 and rows[2]["updated_at"] == 1
+
+
+def test_stored_pictures_are_cached_for_a_day_and_never_sniffed(client, tmp_path):
+    """Thumbnails and covers share one response helper: the same two headers everywhere."""
+    from test_app import png
+    i = client.post("/api/v1/items", files={"file": ("a.png", png(7), "image/png")}).json()["id"]
+    r = client.get(f"/thumb/{i}")
+    assert r.status_code == 200 and r.headers["cache-control"] == "private, max-age=86400" and r.headers["x-content-type-options"] == "nosniff"

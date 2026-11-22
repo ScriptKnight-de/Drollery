@@ -7,13 +7,13 @@ import time
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, Response
+from fastapi.responses import Response
 
 from . import albums, db, media, pipeline
 from .config import get_settings
-from .deps import api_auth, web_auth
+from .deps import api_auth, item_or_404, web_auth
 from . import i18n
-from .web import flash_redirect, render
+from .web import flash_redirect, jpeg_response, render
 
 router = APIRouter(dependencies=[Depends(web_auth)])
 files = APIRouter(dependencies=[Depends(api_auth)])
@@ -154,11 +154,8 @@ def reset_card(item_id: int):
 
 @files.get("/card/{item_id}")
 def card_file(item_id: int):
-    with db.tx() as c:
-        item = db.get_item(c, item_id)
-    if item is None:
-        raise HTTPException(404, "item not found")
+    item = item_or_404(item_id)
     path = pipeline.card_path(item)
     if not item["has_card"] or not path.exists():
         raise HTTPException(404, "no custom card image")
-    return FileResponse(path, media_type="image/jpeg", headers={"Cache-Control": "private, max-age=86400", "X-Content-Type-Options": "nosniff"})
+    return jpeg_response(path)

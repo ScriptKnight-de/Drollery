@@ -1,4 +1,5 @@
 """Downloading a backup from Settings, and getting back into the library after losing the password."""
+from conftest import create_user
 import io
 import json
 import sqlite3
@@ -215,7 +216,7 @@ def test_each_reset_gives_a_different_password(client):
 
 
 def test_reset_admin_with_several_accounts_needs_a_name_and_touches_only_that_one(client):
-    other = accounts.create_user("second", "another-long-pass")
+    other = create_user("second", "another-long-pass")
     lines = []
     assert reset_admin(out=lines.append) == 1 and "--user" in lines[0] and "admin" in lines[0] and "second" in lines[0]
     before = accounts.get_user(other)["password_hash"]

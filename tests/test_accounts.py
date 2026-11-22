@@ -1,3 +1,4 @@
+from conftest import totp_now
 import re
 
 from conftest import PASSWORD
@@ -127,7 +128,7 @@ def _enable_2fa(client) -> tuple[str, list[str]]:
     secret = accounts.get_user_by_name("admin")["totp_pending"]
     page = client.get("/settings/security")
     assert "<svg" in page.text and secret in page.text                       # QR code and the manual key are shown
-    r = client.post("/settings/security/2fa/enable", data={"code": security.totp_now(secret)})
+    r = client.post("/settings/security/2fa/enable", data={"code": totp_now(secret)})
     assert r.status_code == 200 and "backup codes" in r.text
     codes = re.findall(r"<li>([0-9a-f]{6}-[0-9a-f]{6})</li>", r.text)
     assert len(codes) == 8
@@ -155,13 +156,13 @@ def test_two_factor_login_flow_and_code_reuse(client):
     step = int(time.time() // 30)
     with db.tx() as c:
         c.execute("UPDATE users SET totp_last_step=?", (step - 2,))
-    good = client.post("/login/2fa", data={"code": security.totp_now(secret)})
+    good = client.post("/login/2fa", data={"code": totp_now(secret)})
     assert good.status_code == 303 and good.headers["location"] == "/"
     assert client.get("/").status_code == 200
 
     client.post("/logout")
     client.post("/login", data={"username": "admin", "password": PASSWORD})
-    replay = client.post("/login/2fa", data={"code": security.totp_now(secret)})  # same 30s window: refused
+    replay = client.post("/login/2fa", data={"code": totp_now(secret)})  # same 30s window: refused
     assert replay.status_code == 401
 
 

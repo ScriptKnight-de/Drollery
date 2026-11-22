@@ -3,10 +3,19 @@ from __future__ import annotations
 
 from fastapi import HTTPException, Request
 
-from . import accounts
+from . import accounts, db
 
 SESSION_COOKIE = "drollery_session"
 PENDING_COOKIE = "drollery_pending"
+
+
+def item_or_404(item_id: int) -> dict:
+    """The item with this id (tags included), or a 404."""
+    with db.tx() as c:
+        item = db.get_item(c, item_id)
+    if item is None:
+        raise HTTPException(404, "item not found")
+    return item
 
 
 class LoginRequired(Exception):

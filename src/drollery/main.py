@@ -18,7 +18,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from . import __version__, accounts, albums, db, i18n, media, movies, netguard, people, pipeline, shares
 from .config import get_settings
-from .deps import LoginRequired, SetupRequired, api_auth, web_auth
+from .deps import LoginRequired, SetupRequired, api_auth, item_or_404, web_auth
 from .upload_redirect import UploadRedirects
 from .routes_auth import router as auth_router
 from .routes_movie import router as movie_router
@@ -29,7 +29,7 @@ from .routes_card import files as card_files_router, router as card_router
 from .routes_share import api as share_api_router, manage as share_manage_router, public as share_public_router, share_context, FILE_HEADERS
 from .routes_settings import router as settings_router
 from .i18n import t
-from .web import BASE, flash_redirect, render
+from .web import BASE, flash_redirect, jpeg_response, render
 
 log = logging.getLogger("drollery")
 PAGE = 40
@@ -182,14 +182,6 @@ def _parse_tags(raw: str) -> list[str]:
     return [t for t in raw.replace("#", " ").replace(",", " ").split() if t]
 
 
-def _get_or_404(item_id: int) -> dict:
-    with db.tx() as c:
-        item = db.get_item(c, item_id)
-    if item is None:
-        raise HTTPException(404, "item not found")
-    return item
-
-
 def _delete_item(item: dict) -> None:
     with db.tx() as c:
         c.execute("DELETE FROM items_fts WHERE rowid=?", (item["id"],))
@@ -207,7 +199,7 @@ def _delete_item(item: dict) -> None:
 
 @app.get("/media/{item_id}", dependencies=[Depends(api_auth)])
 def media_file(item_id: int):
-    item = _get_or_404(item_id)
+    item = item_or_404(item_id)
     path = pipeline.media_path(item)
     if not path.exists():
         raise HTTPException(404, "file missing on disk")
@@ -217,11 +209,11 @@ def media_file(item_id: int):
 
 @app.get("/thumb/{item_id}", dependencies=[Depends(api_auth)])
 def thumb_file(item_id: int):
-    item = _get_or_404(item_id)
+    item = item_or_404(item_id)
     path = pipeline.thumb_path(item)
     if not item["has_thumb"] or not path.exists():
         raise HTTPException(404, "no thumbnail")
-    return FileResponse(path, media_type="image/jpeg", headers={"Cache-Control": "private, max-age=86400"})
+    return jpeg_response(path)
 
 
 # -------------------------------------------------------------------- API
@@ -242,7 +234,7 @@ def api_list(q: str = "", kind: str = "", tag: str = "", tag_source: str = "", l
 
 @app.get("/api/v1/items/{item_id}", dependencies=[Depends(api_auth)])
 def api_get(item_id: int):
-    return _public(_get_or_404(item_id))
+    return _public(item_or_404(item_id))
 
 
 @app.post("/api/v1/items", dependencies=[Depends(api_auth)], status_code=201)
@@ -272,7 +264,7 @@ async def api_ingest(request: Request):
 @app.patch("/api/v1/items/{item_id}", dependencies=[Depends(api_auth)])
 async def api_patch(item_id: int, request: Request):
     body = await request.json()
-    _get_or_404(item_id)
+    item_or_404(item_id)
     with db.tx() as c:
         if "title" in body:
             c.execute("UPDATE items SET title=?, title_locked=1 WHERE id=?", (str(body["title"])[:120], item_id))
@@ -282,12 +274,12 @@ async def api_patch(item_id: int, request: Request):
             db.set_user_tags(c, item_id, [str(t) for t in body["tags"]])
         c.execute("UPDATE items SET updated_at=? WHERE id=?", (time.time(), item_id))
         db.reindex(c, item_id)
-    return _public(_get_or_404(item_id))
+    return _public(item_or_404(item_id))
 
 
 @app.delete("/api/v1/items/{item_id}", dependencies=[Depends(api_auth)], status_code=204)
 def api_delete(item_id: int):
-    _delete_item(_get_or_404(item_id))
+    _delete_item(item_or_404(item_id))
 
 
 @app.post("/api/v1/jobs/{job_id}/retry", dependencies=[Depends(api_auth)], status_code=202)
@@ -352,7 +344,7 @@ async def add(files: list[UploadFile] = File(default=[]), url: str = Form("")):
 
 @app.get("/items/{item_id}", dependencies=[Depends(web_auth)])
 def item_page(request: Request, item_id: int):
-    item = _get_or_404(item_id)
+    item = item_or_404(item_id)
     with db.tx() as c:
         jobs = [dict(r) for r in c.execute("SELECT * FROM jobs WHERE item_id=? ORDER BY id DESC", (item_id,))]
         if item["kind"] == "album":
@@ -369,7 +361,7 @@ def item_page(request: Request, item_id: int):
 @app.post("/items/{item_id}/edit", dependencies=[Depends(web_auth)])
 def item_edit(item_id: int, title: str = Form(""), description: str = Form(""), tags: str = Form(""), artist: str | None = Form(None),
               subtype: str | None = Form(None), original_title: str | None = Form(None)):
-    item = _get_or_404(item_id)
+    item = item_or_404(item_id)
     with db.tx() as c:
         if title.strip() != item["title"]:
             c.execute("UPDATE items SET title=?, title_locked=1 WHERE id=?", (title.strip()[:120], item_id))
@@ -386,7 +378,7 @@ def item_edit(item_id: int, title: str = Form(""), description: str = Form(""), 
 @app.post("/items/{item_id}/ai-tags/keep", dependencies=[Depends(web_auth)])
 def item_keep_ai_tags(item_id: int, tag: str = Form("")):
     """Promote one AI tag (or all of them) to the user's own tags."""
-    _get_or_404(item_id)
+    item_or_404(item_id)
     with db.tx() as c:
         db.keep_ai_tags(c, item_id, tag)
     return RedirectResponse(f"/items/{item_id}", status_code=303)
@@ -395,7 +387,7 @@ def item_keep_ai_tags(item_id: int, tag: str = Form("")):
 @app.post("/items/{item_id}/ai-tags/remove", dependencies=[Depends(web_auth)])
 def item_remove_ai_tags(item_id: int, tag: str = Form("")):
     """Remove one AI tag (or all of them); the AI will not suggest a removed tag again for this item."""
-    _get_or_404(item_id)
+    item_or_404(item_id)
     with db.tx() as c:
         db.dismiss_ai_tags(c, item_id, tag)
     return RedirectResponse(f"/items/{item_id}", status_code=303)
@@ -404,7 +396,7 @@ def item_remove_ai_tags(item_id: int, tag: str = Form("")):
 @app.post("/items/{item_id}/reprocess", dependencies=[Depends(web_auth)])
 def item_reprocess(item_id: int, step: str = Form("")):
     """Run the AI steps again: both (the default), or only "transcribe" or only "describe"."""
-    _get_or_404(item_id)
+    item_or_404(item_id)
     with db.tx() as c:
         pipeline.plan_jobs(c, item_id, step if step in ("transcribe", "describe") else "")
     return RedirectResponse(f"/items/{item_id}", status_code=303)
@@ -412,7 +404,7 @@ def item_reprocess(item_id: int, step: str = Form("")):
 
 @app.post("/items/{item_id}/delete", dependencies=[Depends(web_auth)])
 def item_delete(item_id: int):
-    _delete_item(_get_or_404(item_id))
+    _delete_item(item_or_404(item_id))
     return RedirectResponse("/", status_code=303)
 
 
@@ -433,8 +425,7 @@ def jobs_page(request: Request):
 
 @app.post("/jobs/retry-failed", dependencies=[Depends(web_auth)])
 def jobs_retry():
-    with db.tx() as c:
-        c.execute("UPDATE jobs SET status='queued', attempts=0, error='', run_after=0 WHERE status='failed'")
+    db.retry_failed_jobs()
     return RedirectResponse("/jobs", status_code=303)
 
 

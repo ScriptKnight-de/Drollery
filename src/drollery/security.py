@@ -81,10 +81,6 @@ def _hotp(secret: str, counter: int, digits: int = 6) -> str:
     return f"{code:0{digits}d}"
 
 
-def totp_now(secret: str, at: float | None = None) -> str:
-    return _hotp(secret, int((at if at is not None else time.time()) // 30))
-
-
 def totp_verify(secret: str, code: str, last_step: int = 0, window: int = 1) -> int | None:
     """Return the matched 30-second step, or None. Steps <= last_step are rejected (no code reuse)."""
     code = "".join(ch for ch in code if ch.isdigit())

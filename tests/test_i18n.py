@@ -1,3 +1,4 @@
+from conftest import create_user
 import importlib.util
 import re
 from pathlib import Path
@@ -72,7 +73,7 @@ def test_accept_language_picks_the_best_supported_language():
 # ------------------------------------------------------------ pages
 
 def test_anonymous_pages_follow_the_browser_language(anon):
-    accounts.create_user("boss", "a-long-enough-pass")
+    create_user("boss", "a-long-enough-pass")
     assert "Halt! Who goes there?" in anon.get("/login").text and 'lang="en"' in anon.get("/login").text
     page = anon.get("/login", headers=DE)
     assert "Halt! Wer da?" in page.text and "Benutzername" in page.text and 'lang="de"' in page.text
@@ -81,7 +82,7 @@ def test_anonymous_pages_follow_the_browser_language(anon):
 
 
 def test_the_language_cookie_beats_the_browser_header(anon):
-    accounts.create_user("boss", "a-long-enough-pass")
+    create_user("boss", "a-long-enough-pass")
     anon.cookies.set(i18n.COOKIE, "en")
     assert "Halt! Who goes there?" in anon.get("/login", headers=DE).text
     anon.cookies.set(i18n.COOKIE, "de")
@@ -168,7 +169,7 @@ def test_locales_ship_with_the_package():
 
 
 def test_language_menu_in_the_header_on_every_page(anon):
-    accounts.create_user("boss", "a-long-enough-pass")
+    create_user("boss", "a-long-enough-pass")
     page = anon.get("/login")
     assert 'id="lang-menu"' in page.text and 'action="/language"' in page.text and ">English<" in page.text and ">Deutsch<" in page.text
     assert page.text.index('id="theme-menu"') < page.text.index('id="lang-menu"')                    # the globe sits right of the palette
@@ -183,7 +184,7 @@ def test_language_menu_in_the_header_on_every_page(anon):
 
 
 def test_language_menu_returns_to_the_same_page_and_is_safe(anon):
-    accounts.create_user("boss", "a-long-enough-pass")
+    create_user("boss", "a-long-enough-pass")
     assert anon.post("/language", data={"language": "de", "next": "https://evil.example"}).headers["location"] == "/login"
     assert anon.post("/language", data={"language": "de", "next": "//evil.example"}).headers["location"] == "/login"
     assert "set-cookie" not in anon.post("/language", data={"language": "klingon"}).headers          # unknown codes are ignored
@@ -207,7 +208,7 @@ def test_every_language_has_a_flag_that_ships_and_shows_in_the_menu(anon):
     for code in i18n.languages():
         assert (root / f"src/drollery/templates/flags/{i18n.flag(code)}.svg").exists(), code
     assert i18n.flag("en") == "gb" and i18n.flag("de") == "de"
-    accounts.create_user("boss", "a-long-enough-pass")
+    create_user("boss", "a-long-enough-pass")
     menu = anon.get("/login").text.split('id="lang-menu"')[1].split("</details>")[0]
     assert menu.count('class="flag"') == len(i18n.languages())
 
@@ -293,7 +294,7 @@ def test_every_page_renders_in_every_language(client, code):
 
 
 def test_language_menu_lists_every_language_with_its_own_name(anon):
-    accounts.create_user("boss", "a-long-enough-pass")
+    create_user("boss", "a-long-enough-pass")
     menu = anon.get("/login").text.split('id="lang-menu"')[1].split("</details>")[0]
     for name in ("English", "Deutsch"):
         assert f"<span>{name}</span>" in menu, name

@@ -6,6 +6,11 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 ## [Unreleased]
 
 ### Changed
+- Internal tidy-up with the same behaviour: one helper each for "item or 404", the album ZIP download and stored pictures;
+  retrying all failed jobs shares its code with retrying one. Thumbnails now also carry `X-Content-Type-Options: nosniff`
+  like every other stored picture.
+- `max_movie_mb` is in the default `config.toml` (it was only in the code and the docs), a test keeps the code, the file
+  and the docs in step, and `pydantic` and `anyio`, which the code imports, are declared dependencies.
 - The pop-up windows (confirmation, transcript, the framed pages) close on a click outside them through the browser's own
   `closedby="any"`; the old script stays only for browsers that lack it.
 - Pressing Enter to confirm a word with an input method (Japanese, Chinese, Korean) in the link field no longer adds the

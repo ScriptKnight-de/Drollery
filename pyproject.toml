@@ -27,6 +27,8 @@ dependencies = [
   "yt-dlp",
   "gallery-dl",
   "segno>=1.6",
+  "pydantic>=2",       # imported directly (config.py); fastapi brings it, but the code should not rely on that
+  "anyio>=4",          # imported directly (backup download)
 ]
 
 [project.urls]

@@ -33,15 +33,6 @@ def get_user_by_name(username: str) -> dict | None:
     return dict(row) if row else None
 
 
-def create_user(username: str, password: str, email: str = "", role: str = "admin") -> int:
-    now = time.time()
-    with db.tx() as c:
-        cur = c.execute(
-            "INSERT INTO users(username,email,password_hash,role,created_at,updated_at) VALUES (?,?,?,?,?,?)",
-            (username.strip(), email.strip(), security.hash_password(password), role, now, now))
-        return cur.lastrowid
-
-
 def create_first_user(username: str, password: str) -> int | None:
     """Create the admin only if no user exists yet (a single statement, so two simultaneous setups can't both win)."""
     now = time.time()

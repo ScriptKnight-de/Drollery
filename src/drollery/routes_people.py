@@ -7,13 +7,13 @@ from datetime import date
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import JSONResponse
 
 from . import albums, db, movies, people
 from .config import get_settings
 from .deps import api_auth, web_auth
 from .i18n import N_, t
-from .web import flash_redirect, render
+from .web import flash_redirect, jpeg_response, render
 
 router = APIRouter(dependencies=[Depends(web_auth)])
 files = APIRouter(dependencies=[Depends(api_auth)])
@@ -180,7 +180,7 @@ def picture(person_id: int):
     path = people.picture_path(person_id)
     if not p["has_picture"] or not path.exists():
         raise HTTPException(404, "no picture")
-    return FileResponse(path, media_type="image/jpeg", headers={"Cache-Control": "private, max-age=86400", "X-Content-Type-Options": "nosniff"})
+    return jpeg_response(path)
 
 
 # --------------------------------------------------- linking people to an item
