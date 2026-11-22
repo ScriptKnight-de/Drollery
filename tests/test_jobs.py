@@ -453,3 +453,26 @@ def test_every_script_of_the_pages_parses(client, tmp_path):
     for f in files:
         r = subprocess.run([node, "--check", str(f)], capture_output=True, text=True)
         assert r.returncode == 0, f"{f.name}: {r.stderr[:300]}"
+
+
+def test_the_stylesheet_is_well_formed():
+    """A comment that is never closed silently switches off every rule up to the next one (it happened once): comments must close and braces must balance."""
+    from pathlib import Path
+    css = (Path(__file__).resolve().parents[1] / "src" / "drollery" / "static" / "style.css").read_text()
+    depth, i, in_comment = 0, 0, False
+    while i < len(css):
+        two = css[i:i + 2]
+        if not in_comment and two == "/*":
+            in_comment, i = True, i + 2
+            continue
+        if in_comment and two == "/*":
+            raise AssertionError(f"a comment is opened inside a comment near character {i}: the earlier one was never closed")
+        if in_comment and two == "*/":
+            in_comment, i = False, i + 2
+            continue
+        if not in_comment:
+            depth += (css[i] == "{") - (css[i] == "}")
+            assert depth >= 0, f"a closing brace without an opening one near character {i}"
+        i += 1
+    assert not in_comment, "a comment is never closed"
+    assert depth == 0, f"{depth} blocks are never closed"

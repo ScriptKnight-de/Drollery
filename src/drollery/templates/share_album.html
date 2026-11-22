@@ -14,9 +14,11 @@
 {% block content %}
 <article class="share">
   {% if item.has_thumb %}<div class="cover"><img src="/s/{{ share.token }}/thumb" alt="{{ item.title }}"></div>{% endif %}
-  <h1>{{ track.title if track else item.title }}</h1>
-  {% if track %}<p class="muted">{{ _("From the audiobook “{album}”", album=item.title) if isbook else _("From the album “{album}”", album=item.title) }}{% if album.artist %} · {{ album.artist }}{% endif %}</p>
-  {% else %}{% if album.artist %}<p class="muted">{{ album.artist }}</p>{% endif %}{% if item.description %}<p class="muted">{{ item.description }}</p>{% endif %}{% endif %}
+  <div class="panel stack">
+    <h1>{{ track.title if track else item.title }}</h1>
+    {% if track %}<p class="muted">{{ _("From the audiobook “{album}”", album=item.title) if isbook else _("From the album “{album}”", album=item.title) }}{% if album.artist %} · {{ album.artist }}{% endif %}</p>
+    {% else %}{% if album.artist %}<p class="muted">{{ album.artist }}</p>{% endif %}{% if item.description %}<p class="muted">{{ item.description }}</p>{% endif %}{% endif %}
+  </div>
 
   <div class="player">
     <p class="nowplaying" id="now" aria-live="polite" data-label="{{ _('Now playing') }}"></p>

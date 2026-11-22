@@ -3,6 +3,19 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Fixed
+- On a phone the library no longer scrolls sideways: the row of type filters (All, Images, GIFs ...) scrolls inside itself.
+  The person page puts the picture above the facts and wraps long links.
+
+### Changed
+- The title, artist and tags of an album, and the text of a shared link (title, description, small print), sit on a panel
+  or a label plate instead of straight on the stone wall, like the item page since 0.1.7. The same for the intro line of
+  the people list and the other pages.
+- On an album page the track list stays in view while you scroll the long forms next to it (a long list scrolls inside its
+  own column). A closed *Edit details* panel on a person is just its title line.
+
 ## [0.2.7] - 2026-11-22
 
 ### Fixed

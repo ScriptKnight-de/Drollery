@@ -58,9 +58,11 @@
 
   <div class="side" id="side">
     <div class="album-head">
-      <p class="folio">{{ _("fol.") }} {{ "%03d"|format(item.id) }}</p>
-      <h1>{{ item.title }}</h1>
-      {% if album.artist %}<p class="muted" style="margin:-8px 0 0">{{ album.artist }}</p>{% endif %}
+      <header class="panel itemhead">
+        <p class="folio">{{ _("fol.") }} {{ "%03d"|format(item.id) }}</p>
+        <h1>{{ item.title }}</h1>
+        {% if album.artist %}<p class="muted">{{ album.artist }}</p>{% endif %}
+      </header>
       <div class="cover">
         {% if item.has_thumb %}<img src="/albums/{{ item.id }}/cover?v={{ (item.updated_at * 1000)|int }}" alt="{{ item.title }}">
         {% else %}<div class="nocover">{{ icon("book" if isbook else "disc") }}</div>{% endif %}
@@ -68,7 +70,7 @@
       {% include "item_actions.html" %}
     </div>
 
-    <div class="tagset">
+    <div class="tagset panel">
       <h3>{{ _("Your tags") }}</h3>
       {% if item.tags %}<p class="chips">{% for t in item.tags %}<a href="/?tag={{ t|urlencode }}&src=user">#{{ t }}</a>{% endfor %}</p>
       {% else %}<p class="hint">{{ _("None yet. Add your own below") }}</p>{% endif %}
