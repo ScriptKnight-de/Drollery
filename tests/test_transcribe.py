@@ -4,7 +4,7 @@ import sqlite3
 
 import pytest
 
-from drollery import albums, db, pipeline, providers
+from drollery import accounts, albums, db, pipeline, providers
 from test_accounts import MODEL
 from test_album import album_id, make_audio, make_mp3, mp3s, upload  # noqa: F401  (mp3s is a fixture)
 from test_share import anon_client  # noqa: F401
@@ -161,6 +161,7 @@ def test_the_public_page_never_shows_transcripts(client, album, monkeypatch):
 
 def test_the_status_and_the_buttons_on_the_album_page(client, album, monkeypatch):
     aid, tracks = album
+    monkeypatch.setattr(accounts, "worker_limit", lambda: 0)                                # the app's own workers must not take the queued tracks under the test
     assert "transcribed" not in client.get(f"/items/{aid}").text                            # nothing is set up: no noise
     enable_transcription(client)
     page = client.get(f"/items/{aid}").text

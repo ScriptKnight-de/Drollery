@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.1.6] - 2026-11-22
 
 ### Changed
 - Internal tidy-up with the same behaviour: one helper each for "item or 404", the album ZIP download and stored pictures;
