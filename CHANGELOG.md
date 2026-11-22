@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.2.4] - 2026-11-22
 
 ### Fixed
 - The video player no longer changes its shape when the film loads: with a square card image as its preview it was
