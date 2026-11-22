@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.1.5] - 2026-11-22
 
 ### Fixed
 - A video added after another one was deleted could show the deleted video's preview picture on its page: the new item
