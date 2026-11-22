@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.1.7] - 2026-11-22
 
 ### Fixed
 - Adding a link (the "Paste a link" field in the upload zone) did nothing in 0.1.6: a comment in the Enter-key handler
