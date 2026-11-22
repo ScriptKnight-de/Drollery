@@ -234,7 +234,7 @@ def test_the_setting_beats_the_config_and_junk_falls_back_to_one(client):
 def test_only_as_many_workers_claim_jobs_as_the_limit_allows(tmp_path, monkeypatch):
     """Eight loops exist; slot n takes jobs only while the limit is above n, so raising or lowering it needs no restart.
     No app is started here (its own workers would take part): just the database and the loops."""
-    import asyncio, time
+    import asyncio, threading, time
     from conftest import _boot
     from drollery import accounts, db, main, pipeline
     _boot(tmp_path, monkeypatch)
@@ -242,13 +242,17 @@ def test_only_as_many_workers_claim_jobs_as_the_limit_allows(tmp_path, monkeypat
 
     async def run(limit):
         accounts.set_setting("jobs.concurrency", str(limit))
-        claimed, ran = [], []
+        claimed, ran, release = [], [], threading.Event()
         monkeypatch.setattr(db, "claim_job", lambda: claimed.append(1) or ({"id": len(claimed)} if len(claimed) <= 8 else None))
-        monkeypatch.setattr(pipeline, "run_job", lambda job: (ran.append(job["id"]), time.sleep(0.4)))
+        monkeypatch.setattr(pipeline, "run_job", lambda job: (ran.append(job["id"]), release.wait(10)))     # a job stays busy until released
         stop = asyncio.Event()
         tasks = [asyncio.create_task(main._worker_loop(stop, n)) for n in range(accounts.MAX_WORKERS)]
-        await asyncio.sleep(0.2)
-        running = len(ran)                                                               # these are all busy inside run_job now
+        deadline = time.monotonic() + 10
+        while len(ran) < limit and time.monotonic() < deadline:               # wait for the slots to fill (as long as a slow machine needs)
+            await asyncio.sleep(0.05)
+        await asyncio.sleep(0.5)                                              # and give a slot that must not start the time to (wrongly) do so
+        running = len(ran)
+        release.set()
         stop.set()
         await asyncio.gather(*tasks)
         return running
