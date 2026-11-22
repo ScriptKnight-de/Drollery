@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.2.8] - 2026-11-22
 
 ### Fixed
 - On a phone the library no longer scrolls sideways: the row of type filters (All, Images, GIFs ...) scrolls inside itself.
