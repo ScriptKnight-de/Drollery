@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.1.2] - 2026-11-22
 
 ### Fixed
 - The optional Whisper stack no longer fails with `Permission denied` (HTTP 500 from the model download) when the model
