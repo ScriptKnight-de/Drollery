@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.2.0] - 2026-11-22
 
 ### Changed
 - Databases made before Drollery 0.1.0 are no longer upgraded in place (the code for it is gone, about 70 lines). Such a
