@@ -85,19 +85,27 @@ def test_only_the_four_documented_secrets_are_used_and_never_written_out():
 
 
 def test_the_release_notes_come_from_the_changelog_section_of_the_tag(tmp_path):
+    import json
     body = workflow().split("python3 - <<'PY'\n", 1)[1].split("\n          PY", 1)[0]
     version = re.search(r'^version = "([^"]+)"', (ROOT / "pyproject.toml").read_text(), re.M).group(1)
-    (tmp_path / "CHANGELOG.md").write_text((ROOT / "CHANGELOG.md").read_text())
-    run = lambda tag: subprocess.run([sys.executable, "-c", textwrap.dedent(body)], cwd=tmp_path, env={**os.environ, "TAG": tag}, capture_output=True, text=True)  # noqa: E731
-    r = run(f"v{version}")
-    assert r.returncode == 0, r.stderr
-    import json
-    notes = json.loads((tmp_path / "release.json").read_text())
-    assert notes["tag_name"] == f"v{version}" and notes["name"] == f"Drollery {version}"
-    assert "First public release" in notes["body"] and f"docker pull ghcr.io/scriptknight-de/drollery:{version}" in notes["body"]
-    assert "## [" not in notes["body"]                                                      # only this version's section
-    run("v99.0.0")
-    assert "See CHANGELOG.md." in json.loads((tmp_path / "release.json").read_text())["body"]      # an unknown version still releases
+    changelog = (ROOT / "CHANGELOG.md").read_text()
+    (tmp_path / "CHANGELOG.md").write_text(changelog)
+
+    def notes_for(tag):
+        r = subprocess.run([sys.executable, "-c", textwrap.dedent(body)], cwd=tmp_path, env={**os.environ, "TAG": tag}, capture_output=True, text=True)
+        assert r.returncode == 0, r.stderr
+        return json.loads((tmp_path / "release.json").read_text())
+
+    current = notes_for(f"v{version}")
+    assert current["tag_name"] == f"v{version}" and current["name"] == f"Drollery {version}"
+    expected = re.search(r"^## \[%s\][^\n]*\n(.*?)(?=^## \[|\Z)" % re.escape(version), changelog, re.M | re.S).group(1).strip()
+    assert current["body"].startswith(expected) and expected                              # exactly this version's section ...
+    assert f"docker pull ghcr.io/scriptknight-de/drollery:{version}" in current["body"]
+    assert "## [" not in current["body"]                                                  # ... and nothing of the other versions
+    first = notes_for("v0.1.0")                                                           # an older release still gets its own notes
+    assert "First public release" in first["body"] and "docker pull ghcr.io/scriptknight-de/drollery:0.1.0" in first["body"]
+    assert "## [" not in first["body"] and "ready-made image by default" not in first["body"]
+    assert "See CHANGELOG.md." in notes_for("v99.0.0")["body"]                            # an unknown version still releases
 
 
 def test_the_github_release_is_skipped_quietly_when_that_repository_does_not_exist():
@@ -121,7 +129,9 @@ def test_the_dockerfile_carries_the_labels_of_the_other_projects_and_stays_safe(
 def test_the_readme_tells_people_to_pull_the_image_the_workflow_publishes():
     readme = (ROOT / "README.md").read_text()
     ghcr = re.search(r"^  GHCR_IMAGE: (\S+)$", workflow(), re.M).group(1)
-    assert f"docker run -d --name drollery" in readme and f"{ghcr}:latest" in readme and f"{ghcr}:0.1.0" in readme
+    version = re.search(r'^version = "([^"]+)"', (ROOT / "pyproject.toml").read_text(), re.M).group(1)
+    assert "docker run -d --name drollery" in readme and f"{ghcr}:latest" in readme and f"{ghcr}:{version}" in readme   # the example names the current release
+    assert f"`{version[:version.rfind('.')]}`" in readme and "forgejo.scriptknight.de/scriptknight/drollery" in readme    # and the tags are explained
     docker = (ROOT / "Dockerfile").read_text()
     port = re.search(r"^EXPOSE (\d+)", docker, re.M).group(1)
     volume = re.search(r"^VOLUME (\S+)", docker, re.M).group(1)

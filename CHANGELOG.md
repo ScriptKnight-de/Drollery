@@ -3,6 +3,20 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [0.1.1] - 2026-11-22
+
+### Changed
+- `docker-compose.yml` now pulls the ready-made image by default (`ghcr.io/scriptknight-de/drollery:latest`);
+  `DROLLERY_IMAGE` in `.env` pins a version, and `docker compose up -d --build` still builds from the source folder.
+
+### Fixed
+- The optional Whisper model helper no longer hides why a download failed: it prints the HTTP code, what the Whisper
+  server answered and the usual cause (for example that the server cannot reach `huggingface.co`), and retries when the
+  problem might pass.
+
+### Documentation
+- How to run the ready-made image with `docker run` or Compose, and what to do when the Whisper model does not download.
+
 ## [0.1.0] - 2026-11-21
 
 First public release.
@@ -29,7 +43,6 @@ First public release.
 ### Distribution
 - A ready-made Docker image for `linux/amd64` and `linux/arm64` is built by CI and published to
   `ghcr.io/scriptknight-de/drollery` (and the Forgejo registry): `latest`, the version (`0.1.0`) and the minor (`0.1`).
-  The project's `docker-compose.yml` pulls it by default (`DROLLERY_IMAGE` pins a version); `--build` builds from source.
 
 ### Hardening
 - Links to private, loopback and link-local addresses are not fetched by default (checked when a link is added, when the
