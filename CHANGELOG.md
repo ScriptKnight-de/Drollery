@@ -3,6 +3,15 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Changed
+- Polish of the look, the character stays (stone wall, gold, folio numbers): the muted grey text now reaches 4.5:1 contrast
+  in both themes (it was 3.6:1 in the light one); headings and the back link that sat straight on the wall get a label
+  plate; radii follow size (controls 12, cards 16, panels 20) instead of nearly everything being a pill; weights are 400
+  to 500 (600 only for headings); the small type sizes are 12 and 14; colour swatches and tag crosses no longer grow on
+  hover. On an item page the title and tags are one panel and the picture stays in view while you scroll the forms.
+
 ## [0.1.5] - 2026-11-22
 
 ### Fixed

@@ -15,6 +15,7 @@
   </div>
 
   <div class="side" id="side">
+    <header class="panel itemhead">
     <p class="folio">{{ _("fol.") }} {{ "%03d"|format(item.id) }}</p>
     <h1>{{ item.title }}</h1>
 
@@ -42,6 +43,7 @@
         {% else %}<p class="hint">{% if providers.describe %}{{ _("None yet") }}{% else %}{{ _("No AI model is set up for naming and tagging") }}{% endif %}</p>{% endif %}
       </div>
     </div>
+    </header>
 
     <section class="panel stack facts" id="details">
       <h2>{{ _("Details") }}</h2>
