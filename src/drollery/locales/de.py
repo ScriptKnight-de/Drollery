@@ -396,6 +396,20 @@ MESSAGES = {
     "Impressum saved. It is switched off, so the page and the footer link are hidden":
         "Impressum gespeichert. Es ist ausgeschaltet, daher sind Seite und Link in der Fußzeile verborgen",
 
+    # ---- settings: privacy notice
+    "Privacy notice": "Datenschutzhinweis",
+    "Tells visitors of your share links what happens to their data (the information duties of the GDPR). When it is switched on and has text, it is shown at {path}, readable without signing in, and linked at the bottom of every page. Otherwise both are hidden":
+        "Sagt den Besuchern deiner Freigabe-Links, was mit ihren Daten geschieht (die Informationspflichten der DSGVO). Ist er eingeschaltet und hat Text, erscheint er unter {path}, ist ohne Anmeldung lesbar und unten auf jeder Seite verlinkt. Sonst sind beide verborgen",
+    "What Drollery itself keeps about a visitor of a share link: a view counter and the time of the last view, no address. The server log of the container does contain the visitor's IP address. For you, the sign-in keeps the IP address and the browser name of each session until it expires":
+        "Was Drollery selbst über einen Besucher eines Freigabe-Links speichert: einen Aufrufzähler und die Zeit des letzten Aufrufs, keine Adresse. Das Serverprotokoll des Containers enthält allerdings die IP-Adresse des Besuchers. Für dich speichert die Anmeldung die IP-Adresse und den Browsernamen jeder Sitzung, bis sie abläuft",
+    "Show the privacy notice and footer link": "Datenschutzhinweis und Link in der Fußzeile anzeigen",
+    "Save privacy notice": "Datenschutzhinweis speichern",
+    "Privacy notice saved and published. It is linked in the footer of every page":
+        "Datenschutzhinweis gespeichert und veröffentlicht. Er ist in der Fußzeile jeder Seite verlinkt",
+    "Privacy notice saved. It is switched off, so the page and the footer link are hidden":
+        "Datenschutzhinweis gespeichert. Er ist ausgeschaltet, daher sind Seite und Link in der Fußzeile verborgen",
+    "What the castle does with your data": "Was die Burg mit deinen Daten macht",
+
     # ---- settings: security
     "Current password": "Aktuelles Passwort",
     "New password": "Neues Passwort",
@@ -440,6 +454,7 @@ MESSAGES = {
     "Use at least {n} characters": "Verwende mindestens {n} Zeichen",
     "The password must not be the same as the username": "Das Passwort darf nicht mit dem Benutzernamen übereinstimmen",
     "That password is too repetitive": "Dieses Passwort ist zu eintönig",
+    "That password is on every list of common passwords. Pick another one": "Dieses Passwort steht auf jeder Liste gängiger Passwörter. Wähle ein anderes",
     "Admin account created. Next, tell Drollery which AI models to use, or skip this for now":
         "Admin-Konto angelegt. Sag Drollery als Nächstes, welche KI-Modelle es nutzen soll, oder überspringe das vorerst",
     "That code is not valid": "Dieser Code ist ungültig",

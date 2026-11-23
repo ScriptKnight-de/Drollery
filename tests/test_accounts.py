@@ -440,6 +440,38 @@ def test_impressum_page_has_a_way_back_to_the_library(client):
     assert 'class="back" href="/"' in html
 
 
+def _privacy_foot(html: str) -> bool:
+    return 'href="/privacy"' in html
+
+
+def test_privacy_notice_is_hidden_until_it_is_set_and_switched_on(client, anon):
+    assert not _privacy_foot(client.get("/").text) and anon.get("/privacy").status_code == 404
+    client.post("/settings/privacy", data={"text": "Invented controller, invented rules", "enabled": "1"})
+    assert _privacy_foot(client.get("/").text) and _privacy_foot(anon.get("/login").text)
+    assert not _foot(client.get("/").text)                                                       # the Impressum link stays its own switch
+    off = client.post("/settings/privacy", data={"text": "Invented controller, invented rules"})
+    assert "switched off" in off.text and not _privacy_foot(client.get("/").text) and anon.get("/privacy").status_code == 404
+    empty = client.post("/settings/privacy", data={"text": "  ", "enabled": "1"})
+    assert "stays hidden" in empty.text and anon.get("/privacy").status_code == 404
+
+
+def test_privacy_notice_is_public_escaped_and_needs_login_to_edit(client, anon):
+    client.post("/settings/privacy", data={"text": "Hello\n\n<script>alert(1)</script>", "enabled": "1"})
+    page = anon.get("/privacy")
+    assert page.status_code == 200 and "Hello" in page.text and "<script>alert(1)" not in page.text and "&lt;script&gt;" in page.text
+    assert anon.post("/settings/privacy", data={"text": "x"}, follow_redirects=False).status_code in (303, 401, 403)
+    assert anon.get("/settings/privacy", follow_redirects=False).status_code in (303, 401, 403)
+    big = client.post("/settings/privacy", data={"text": "a" * 20001, "enabled": "1"})
+    assert big.status_code == 422 and "too long" in big.text
+
+
+def test_both_legal_links_can_share_the_footer(client, anon):
+    client.post("/settings/impressum", data={"text": "Invented", "enabled": "1"})
+    client.post("/settings/privacy", data={"text": "Invented", "enabled": "1"})
+    html = anon.get("/login").text
+    assert _foot(html) and _privacy_foot(html)
+
+
 def test_about_tab_links_to_kofi_and_github(client):
     html = client.get("/settings/about").text
     assert 'href="https://ko-fi.com/scriptknight"' in html and 'href="https://github.com/ScriptKnight-de"' in html

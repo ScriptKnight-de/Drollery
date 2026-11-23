@@ -42,6 +42,20 @@ def verify_password(password: str, stored: str) -> bool:
         return False
 
 
+# Passwords that appear at the top of every leaked-password list and are at least MIN_PASSWORD long. A small built-in list is
+# the offline stand-in for a breached-password lookup: asking a service about the password would send it somewhere.
+COMMON_PASSWORDS = frozenset("""
+1234567890 12345678910 0123456789 123456789a 1q2w3e4r5t 1qaz2wsx3edc 1qazxsw23edc qwertyuiop qwertyuiop123 qwerty1234
+qwerty12345 qwertyuiop1 qwerty123456 asdfghjkl asdfghjkl1 asdfghjkl123 zxcvbnm123 abcdefghij abcd123456 abc1234567
+password12 password123 password1234 password12345 password123456 passw0rd123 p@ssw0rd123 p@ssword123 password1! password!1
+password01 password11 password2024 password2025 password2026 letmein123 letmein1234 welcome123 welcome1234 welcome12345
+iloveyou12 iloveyou123 iloveyou1234 admin12345 admin123456 administrator changeme123 changeme1234 trustno1234 superman123
+football123 baseball123 starwars123 monkey1234 dragon1234 master1234 shadow1234 sunshine123 princess123 michael1234
+111111111 1111111111 0000000000 9876543210 987654321 1234512345 123123123 1231231234 123321123 1234554321 qazwsxedc123
+correcthorsebatterystaple
+""".split())
+
+
 def password_problem(password: str, username: str = "") -> str:
     """Return a human-readable reason the password is unacceptable, or '' if fine."""
     if len(password) < MIN_PASSWORD:
@@ -50,6 +64,8 @@ def password_problem(password: str, username: str = "") -> str:
         return t("The password must not be the same as the username")
     if len(set(password)) < 4:
         return t("That password is too repetitive")
+    if password.lower() in COMMON_PASSWORDS:
+        return t("That password is on every list of common passwords. Pick another one")
     return ""
 
 

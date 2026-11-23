@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.exception_handlers import http_exception_handler
-from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -114,6 +114,12 @@ app = FastAPI(title="Drollery", version=__version__, lifespan=lifespan, docs_url
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
 
 
+@app.get("/robots.txt", include_in_schema=False)
+def robots_txt():
+    """Crawlers are asked to stay away from everything: this is a private library (share pages also say noindex themselves)."""
+    return PlainTextResponse("User-agent: *\nDisallow: /\n")
+
+
 @app.get("/favicon.ico", include_in_schema=False)
 def favicon_ico():
     """Browsers ask for this path by habit, whatever the page says: answer with the same icon the pages name."""
@@ -142,6 +148,15 @@ def impressum(request: Request):
     if not live:
         raise HTTPException(status_code=404)
     return render(request, "impressum.html", text=text)
+
+
+@app.get("/privacy")
+def privacy_notice(request: Request):
+    """Public on purpose: a visitor of a share link must be able to read how their data is treated without an account."""
+    text, live = accounts.privacy()
+    if not live:
+        raise HTTPException(status_code=404)
+    return render(request, "privacy.html", text=text)
 app.include_router(share_manage_router)
 app.include_router(share_api_router)
 
@@ -151,6 +166,7 @@ async def protective_headers(request: Request, call_next):
     """A fresh nonce for every request (templates put it on their own inline scripts), and the security headers on the answer."""
     request.state.nonce = secrets.token_urlsafe(16)
     response = await call_next(request)
+    response.headers.setdefault("X-Robots-Tag", "noindex, nofollow")       # a private library: nothing here is meant for a search engine
     for name, value in security_headers(request.state.nonce).items():
         response.headers.setdefault(name, value)
     if request.url.path.startswith("/static/"):

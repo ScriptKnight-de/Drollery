@@ -28,6 +28,7 @@ def test_only_the_health_check_the_assets_and_a_switched_on_impressum_are_open(g
     assert guest.get("/healthz").status_code == 200
     assert guest.get("/static/style.css").status_code == 200
     assert guest.get("/impressum").status_code == 404                                  # off until the owner switches it on
+    assert guest.get("/privacy").status_code == 404                                    # likewise
     assert guest.get("/login").status_code == 200
 
 

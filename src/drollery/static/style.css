@@ -233,6 +233,7 @@ kbd { color: var(--tx3); border: 2px solid var(--ln); border-radius: 6px; paddin
 .foot-bar .orn { margin: 0; height: 44px; align-self: flex-end; }
 .foot-bar a { flex: none; }
 .foot-bar a { display: inline-flex; align-items: baseline; gap: 12px; flex-wrap: wrap; justify-content: center; color: var(--tx3); text-decoration: none; }
+.foot-bar a + a { margin-left: 24px; }
 .foot-bar b { font-weight: 500; color: var(--tx2); border-bottom: 1px dotted currentColor; }
 .foot-bar a:hover, .foot-bar a:focus-visible { color: var(--tx); text-decoration: none; }
 .foot-bar a:hover b { color: var(--ac-ink); border-bottom-style: solid; }
@@ -727,3 +728,15 @@ form.uploading { opacity: .55; pointer-events: none; }
 .toolbar .check input { width: auto; padding: 0; }
 .redirect-list li { display: flex; align-items: center; gap: 12px; }
 .redirect-list form { margin: 0; }
+
+/* Headlines break evenly, paragraphs avoid a lone last word. */
+h1, h2, h3 { text-wrap: balance; }
+p, li, .muted { text-wrap: pretty; }
+
+/* A finger needs about 44 px: on touch screens the small controls grow to that, and the round tile badge gets an invisible margin. */
+@media (pointer: coarse) {
+  .nav-link, .icon-btn, .btn, .btn.small { min-height: 44px; }
+  .icon-btn { min-width: 44px; }
+  .chip::before { content: ""; position: absolute; inset: -9px; }
+  .modes button { min-height: 44px; }
+}

@@ -88,6 +88,12 @@ def impressum() -> tuple[str, bool]:
     return text, bool(text) and get_setting("impressum_on") == "1"
 
 
+def privacy() -> tuple[str, bool]:
+    """(text, published) of the optional privacy notice, switched on and off like the Impressum."""
+    text = get_setting("privacy") or ""
+    return text, bool(text) and get_setting("privacy_on") == "1"
+
+
 def clear_setup_code() -> None:
     setup_code_path().unlink(missing_ok=True)
 

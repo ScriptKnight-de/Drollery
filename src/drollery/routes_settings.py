@@ -235,6 +235,31 @@ def impressum_save(request: Request, text: str = Form(""), enabled: str = Form("
     return flash_redirect("/settings/impressum", msg)
 
 
+# ----------------------------------------------------------- privacy notice
+
+@router.get("/privacy")
+def privacy_page(request: Request):
+    text, live = accounts.privacy()
+    return render(request, "settings_privacy.html", tab="privacy", text=text, on=accounts.get_setting("privacy_on") == "1", live=live)
+
+
+@router.post("/privacy")
+def privacy_save(request: Request, text: str = Form(""), enabled: str = Form("")):
+    text = text.replace("\r\n", "\n").strip()
+    if len(text) > IMPRESSUM_MAX:
+        return render(request, "settings_privacy.html", status_code=422, tab="privacy", text=text[:IMPRESSUM_MAX], on=bool(enabled), live=False,
+                      error=t("That is too long. The limit is {max} characters", max=IMPRESSUM_MAX))
+    accounts.set_setting("privacy", text or None)
+    accounts.set_setting("privacy_on", "1" if enabled else None)
+    if enabled and not text:
+        msg = t("Saved, but the page stays hidden until you write some text")
+    elif enabled:
+        msg = t("Privacy notice saved and published. It is linked in the footer of every page")
+    else:
+        msg = t("Privacy notice saved. It is switched off, so the page and the footer link are hidden")
+    return flash_redirect("/settings/privacy", msg)
+
+
 # --------------------------------------------------------------- security
 
 def qr_matrix(uri: str) -> list[list[int]]:

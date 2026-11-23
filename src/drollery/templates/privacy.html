@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ _("Privacy notice") }} · Drollery{% endblock %}
+{% from "icons.html" import icon %}
+{% block content %}
+<a class="back" href="/">{{ icon("arrow-left") }}{{ _("Back to library") }}</a>
+<article class="panel legal">
+  <h1>{{ _("Privacy notice") }}</h1>
+  <div class="pre">{{ text }}</div>
+</article>
+{% endblock %}

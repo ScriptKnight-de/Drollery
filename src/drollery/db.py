@@ -223,6 +223,7 @@ def tx():
         conn.close()
 
 
+JOB_KEEP_DAYS = 30
 FTS_COLUMNS = ["title", "description", "tags", "ai_tags", "transcript", "source"]
 
 # What a database from before Drollery 0.1.0 may lack. Those databases are no longer upgraded in place.
@@ -272,6 +273,7 @@ def init() -> None:
         # jobs left 'running' by a crash/restart go back to the queue
         c.execute("UPDATE jobs SET status='queued' WHERE status='running'")
         c.execute("DELETE FROM sessions WHERE expires_at < ?", (time.time(),))
+        c.execute("DELETE FROM jobs WHERE status='done' AND updated_at < ?", (time.time() - JOB_KEEP_DAYS * 86400,))     # the list of finished work is not kept for ever
 
 
 # ---------------------------------------------------------------- items

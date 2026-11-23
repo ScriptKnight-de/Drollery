@@ -25,6 +25,7 @@
   <script src="/static/htmx.min.js?v={{ asset_v }}" defer></script>
   <script type="application/json" id="busy-text">{{ {"loading": _("Loading…"), "hint": _("This can take a few seconds"), "slow": _("Still working. The service is slow right now"), "sec": _("{n} s")}|tojson }}</script>
   <script src="/static/busy.js?v={{ asset_v }}" defer></script>
+  <script src="/static/once.js?v={{ asset_v }}" defer></script>
 </head>
 <body{% if embed %} class="embed"{% endif %}>
 {% macro orn() %}<div class="orn" style="--sw: {{ orn_sheet }}" aria-hidden="true">{% for p in orn_row() %}<i class="pc" style="--x: {{ p.x }}; --w: {{ p.w }}; --g: {{ p.g }}"></i>{% endfor %}</div>{% endmacro %}
@@ -86,11 +87,12 @@
     <button type="button" class="btn small danger" data-cf="yes">{{ _("Confirm") }}</button>
   </div>
 </dialog>
-{% if impressum_live %}
+{% if impressum_live or privacy_live %}
 <footer class="foot" id="foot">
   <div class="foot-bar">
     {{ orn() }}
-    <a href="/impressum"><b>Impressum</b><span>{{ _("Here is written who lives in this castle") }}</span></a>
+    {% if impressum_live %}<a href="/impressum"><b>Impressum</b><span>{{ _("Here is written who lives in this castle") }}</span></a>{% endif %}
+    {% if privacy_live %}<a href="/privacy"><b>{{ _("Privacy notice") }}</b><span>{{ _("What the castle does with your data") }}</span></a>{% endif %}
     {{ orn() }}
   </div>
 </footer>

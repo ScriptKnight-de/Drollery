@@ -131,7 +131,7 @@ def test_every_page_renders_in_german_without_stray_placeholders(client):
     item = make_item(client)
     token = link_token(client, item)
     pages = ["/", f"/items/{item}", f"/items/{item}/card", "/jobs", "/settings/profile", "/settings/security", "/settings/keys",
-             "/settings/ai", "/settings/ai/models/new", "/settings/shares", "/settings/impressum"]
+             "/settings/ai", "/settings/ai/models/new", "/settings/shares", "/settings/impressum", "/settings/privacy"]
     for url in pages:
         r = client.get(url)
         assert r.status_code == 200, url

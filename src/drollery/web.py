@@ -142,7 +142,7 @@ def render(request: Request, name: str, status_code: int = 200, **ctx):
     if raw:
         kind, _, text = unquote(raw).partition("|")
         flash = {"kind": kind if kind in ("ok", "error") else "ok", "text": text}
-    base = {"embed": embed, "user": getattr(request.state, "user", None), "flash": flash, "impressum_live": accounts.impressum()[1], "metadata_lookup": get_settings().metadata_lookup, "max_upload_mb": get_settings().max_upload_mb, "max_movie_mb": get_settings().max_movie_mb,
+    base = {"embed": embed, "user": getattr(request.state, "user", None), "flash": flash, "impressum_live": accounts.impressum()[1], "privacy_live": accounts.privacy()[1], "metadata_lookup": get_settings().metadata_lookup, "max_upload_mb": get_settings().max_upload_mb, "max_movie_mb": get_settings().max_movie_mb,
             "providers": {cap: aisettings.enabled(cap) for cap in aisettings.CAPS}}
     resp = templates.TemplateResponse(request, name, {**base, **ctx}, status_code=status_code)
     if raw:
