@@ -5,6 +5,8 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+## [0.12.3] - 2026-11-23
+
 ### Fixed
 - **The Pixel ornaments were missing from the Docker image.** The ten header and footer strips live in `static/pixel-orn/`, which was not
   listed in the package data, so a pip-installed copy (the image) had none of them while a source checkout showed them. A test now
