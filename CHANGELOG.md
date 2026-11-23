@@ -5,6 +5,12 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+## [0.12.6] - 2026-11-23
+
+### Fixed
+- **A flaky test.** The two-factor replay test read the real clock and failed now and then when the 30-second code window changed between
+  two logins; it now runs on a frozen clock. Nothing in the app itself changed.
+
 ## [0.12.5] - 2026-11-23
 
 ### Changed
