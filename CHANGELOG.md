@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.12.1] - 2026-11-23
 
 ### Fixed
 - **The Playful style was slow and cards vanished when the pointer left them.** The dark edges of the wall were a *fixed*
