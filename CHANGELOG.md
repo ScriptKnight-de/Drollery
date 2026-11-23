@@ -5,6 +5,29 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-11-23
+
+### Added
+- **An optional privacy notice.** Write it under Settings › Privacy notice and switch it on: it is shown at `/privacy`, readable without
+  signing in, and linked in the footer next to the Impressum. Visitors of your share links can now see who is responsible and what
+  happens to their data. It is off until you fill it in.
+- **`/robots.txt`** asks every crawler to stay away, and every answer carries `X-Robots-Tag: noindex, nofollow`.
+- **Common passwords are refused** when you choose one (a short built-in list; the password is never sent anywhere).
+- **`DROLLERY_BIND`** chooses the host address the port is published on, for example `127.0.0.1` behind a reverse proxy on the same machine.
+
+### Changed
+- **Finished background jobs are deleted after 30 days** (at the next start). Failed jobs stay until you remove them.
+- **A form that is already on its way is not sent twice.** A second click or Enter within five seconds is ignored.
+- **Small controls are 44 px high on touch screens**, and the round badge on a card has a larger touch area.
+- **Headings break evenly and paragraphs avoid a lone last word.**
+- **The playful style is calmer.** Menu links and icon buttons no longer wiggle on every hover, and cards pop in a little faster.
+- **The Compose file drops all Linux capabilities** and sets `no-new-privileges` for the app container.
+- **The weekly image scan fails on HIGH as well as CRITICAL** vulnerabilities that have a fix.
+
+### Documentation
+- The README lists what Drollery stores and for how long, says the container's web server log holds visitor IP addresses, explains what to
+  check when using an outside AI service (processor agreement, transfers to other countries), and states that you are responsible for what you share.
+
 ## [0.12.6] - 2026-11-23
 
 ### Fixed
