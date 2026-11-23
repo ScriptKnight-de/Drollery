@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.10.2] - 2026-11-23
 
 ### Changed
 - **A new app icon, a pixelated jester:** drawn on a 16 by 16 grid in fixed colours (it ignores the highlight colour and the theme),
