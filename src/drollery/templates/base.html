@@ -27,10 +27,11 @@
   <script src="/static/busy.js?v={{ asset_v }}" defer></script>
 </head>
 <body{% if embed %} class="embed"{% endif %}>
+{% macro orn() %}<div class="orn" style="--sw: {{ orn_sheet }}" aria-hidden="true">{% for p in orn_row() %}<i class="pc" style="--x: {{ p.x }}; --w: {{ p.w }}; --g: {{ p.g }}"></i>{% endfor %}</div>{% endmacro %}
 <header class="top">
   <div class="top-in">
     <a class="brand" href="/"><img class="mark" src="/static/favicon.svg" width="32" height="32" alt=""><span>Drollery</span></a>
-    <div class="orn" data-v="{{ range(1, 6)|random }}" aria-hidden="true"></div>
+    {{ orn() }}
     <nav>
       {% if user %}
       <a class="nav-link" href="/jobs">{{ icon("list") }}<span>{{ _("Jobs") }}</span></a>
@@ -88,9 +89,9 @@
 {% if impressum_live %}
 <footer class="foot" id="foot">
   <div class="foot-bar">
-    {% set foot_v = range(1, 6)|random %}<div class="orn" data-v="{{ foot_v }}" aria-hidden="true"></div>
+    {{ orn() }}
     <a href="/impressum"><b>Impressum</b><span>{{ _("Here is written who lives in this castle") }}</span></a>
-    <div class="orn" data-v="{{ foot_v % 5 + 1 }}" aria-hidden="true"></div>
+    {{ orn() }}
   </div>
 </footer>
 {% endif %}

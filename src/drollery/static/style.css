@@ -91,6 +91,7 @@ main { max-width: 1280px; width: 100%; margin: 0 auto; padding: 24px; flex: 1; }
   -webkit-mask-size: auto 46px, 100% 100%; -webkit-mask-repeat: repeat-x, no-repeat; -webkit-mask-position: center bottom, 0 0; -webkit-mask-composite: source-in;
   mask-image: url("/static/skyline.svg"), linear-gradient(90deg, transparent, #000 14%, #000 86%, transparent);
   mask-size: auto 46px, 100% 100%; mask-repeat: repeat-x, no-repeat; mask-position: center bottom, 0 0; mask-composite: intersect; }
+.orn .pc { display: none; }                                      /* the single pieces are for the Pixel style only */
 @media (max-width: 760px) { .orn { display: none; } }
 
 /* appearance menu */

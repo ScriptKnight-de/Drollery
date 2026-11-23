@@ -88,10 +88,10 @@ def test_the_assets_are_what_the_generator_draws():
     for name, build in gen.SCENES.items():
         assert (DOODLES / "pixel" / f"{name}.svg").read_text() == build().svg(gen.TITLES[name]), name
     made = gen.strips()
-    assert len(made) == 20                                                       # five strips for the header, five for the footer, two layers each
+    assert sorted(made) == ["pieces.json", "sheet-a.svg", "sheet-s.svg"]            # every piece on one sheet, in two layers, and where each one sits
     for name, text in made.items():
         assert (STATIC / "pixel-orn" / name).read_text() == text, name
-    assert sorted(p.name for p in (STATIC / "pixel-orn").glob("*.svg")) == sorted(made)
+    assert sorted(p.name for p in (STATIC / "pixel-orn").iterdir()) == sorted(made)
     assert (STATIC / "pixel-stone-dark.svg").read_text() == gen.stone(True) and (STATIC / "pixel-stone-light.svg").read_text() == gen.stone(False)
 
 
@@ -101,23 +101,45 @@ def test_the_pixel_scenes_ship_in_the_package():
     assert "templates/doodles/pixel/*" in meta["tool"]["setuptools"]["package-data"]["drollery"]
 
 
-def test_each_page_picks_ornaments_and_the_style_has_a_rule_for_each():
+def _pieces(html):
+    return re.findall(r'<i class="pc" style="--x: (\d+); --w: (\d+); --g: (\d+)">', html)
+
+
+def test_the_style_cuts_the_pieces_out_of_one_sheet_for_header_and_footer_alike():
     css = (STATIC / "style-pixel.css").read_text()
-    for place in ("top", "foot"):
-        for n in range(1, 6):
-            assert f'.{place} .orn[data-v="{n}"]' in css and f"pixel-orn/{place}-{n}-s.svg" in css and f"pixel-orn/{place}-{n}-a.svg" in css
+    assert "pixel-orn/sheet-s.svg" in css and "pixel-orn/sheet-a.svg" in css
+    assert ".foot-bar .orn { height: 46px; }" in css and "mask-position: calc(var(--x) * -2px) 0" in css      # same height, same 2 px dots
+    assert '.orn { display: none; }' in css                                                                   # still hidden on small screens
 
 
-def test_the_header_and_footer_ornaments_vary(client):
+def test_the_header_and_footer_ornaments_are_mixed_anew_on_every_page(client):
     client.post("/settings/impressum", data={"text": "An invented notice", "enabled": "1"})     # the footer only exists with an Impressum
-    seen_top, seen_foot = set(), set()
-    for _ in range(40):
+    import json
+    pool = json.loads((STATIC / "pixel-orn" / "pieces.json").read_text())
+    known = {(str(p["x"]), str(p["w"])) for p in pool["pieces"]}
+    orders, used = set(), set()
+    for _ in range(30):
         html = client.get("/").text
-        seen_top.add(re.search(r'<header class="top">.*?<div class="orn" data-v="(\d)"', html, re.S).group(1))
-        foot = re.findall(r'<div class="orn" data-v="(\d)"', html.split('<footer')[1])
-        assert len(foot) == 2 and foot[0] != foot[1]                              # the two footer strips differ
-        seen_foot |= set(foot)
-    assert len(seen_top) >= 3 and len(seen_foot) >= 3 and seen_top | seen_foot <= set("12345")
+        head, foot = html.split("<footer")[0], html.split("<footer")[1]
+        rows = [_pieces(head), *[_pieces(part) for part in foot.split('class="orn"')[1:]]]
+        assert len(rows) == 3 and all(len(r) >= 12 for r in rows)                         # a strip for the header and one at each end of the footer
+        for r in rows:
+            assert all((x, w) in known for x, w, _ in r)
+            assert all(r[i][:2] != r[i + 1][:2] for i in range(len(r) - 1))                # never the same piece twice in a row
+            assert all(1 <= int(g) <= 3 for _, _, g in r)
+            used |= {(x, w) for x, w, _ in r}
+        orders.add(tuple(x for x, _, _ in rows[0]))
+        assert rows[1] != rows[2]
+    assert len(orders) >= 25                                                                # the header looks different almost every time
+    assert len(used) >= 30                                                                  # and most of the 40 pieces turn up
+
+
+def test_a_strip_does_not_repeat_a_piece_before_the_pool_is_used_up():
+    from drollery import web
+    for _ in range(20):
+        row = web.orn_row(300)
+        names = [p["n"] for p in row]
+        assert len(names) == len(set(names))
 
 
 def test_the_playful_style_has_its_own_assets_and_follows_the_highlight_colour():

@@ -1,6 +1,8 @@
 """Shared template rendering and flash messages for the web UI."""
 from __future__ import annotations
 
+import json
+import random
 import tempfile
 from pathlib import Path
 from urllib.parse import quote, unquote
@@ -90,7 +92,29 @@ def _kind_label(kind: str) -> str:
     return i18n.t(KIND_NAMES.get(kind, kind))
 
 
-templates.env.globals.update({"asset_v": __version__, "_": i18n.t, "job_type": _job_type, "kind_label": _kind_label, "_n": i18n.tn, "lang": i18n.current, "available_languages": i18n.languages, "flag_of": i18n.flag, "subtype_names": _SUBTYPES})
+_ORN = json.loads((Path(__file__).parent / "static" / "pixel-orn" / "pieces.json").read_text())
+
+
+def orn_row(cells: int = 450) -> list[dict]:
+    """The pieces of one ornament strip of the Pixel style, mixed anew for every page: a shuffled walk through the pool (no piece
+    twice before every piece has been used, never the same one twice in a row), each with a small random gap, enough to fill
+    `cells` dots (2 px each). The strip clips what does not fit, so a wide screen is simply filled further."""
+    row, total, last = [], 0, None
+    while total < cells:
+        deck = random.sample(_ORN["pieces"], len(_ORN["pieces"]))
+        if deck[0]["n"] == last:
+            deck.append(deck.pop(0))
+        for piece in deck:
+            gap = random.randint(1, 3)
+            row.append({"x": piece["x"], "w": piece["w"], "g": gap, "n": piece["n"]})
+            total += piece["w"] + gap
+            last = piece["n"]
+            if total >= cells:
+                break
+    return row
+
+
+templates.env.globals.update({"asset_v": __version__, "orn_row": orn_row, "orn_sheet": _ORN["width"], "_": i18n.t, "job_type": _job_type, "kind_label": _kind_label, "_n": i18n.tn, "lang": i18n.current, "available_languages": i18n.languages, "flag_of": i18n.flag, "subtype_names": _SUBTYPES})
 
 
 def flash_redirect(url: str, text: str, kind: str = "ok") -> RedirectResponse:

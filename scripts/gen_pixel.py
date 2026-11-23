@@ -3,8 +3,8 @@
 
     python scripts/gen_pixel.py
 
-Writes templates/doodles/pixel/*.svg (eight 20 by 20 scenes), static/pixel-orn/*.svg (five strips for the header and five for the footer,
-each in two layers that the page uses as masks: stone, and the highlight colour) and
+Writes templates/doodles/pixel/*.svg (eight 20 by 20 scenes), static/pixel-orn/ (one sheet with every border piece in two layers
+that the page uses as masks, stone and the highlight colour, plus pieces.json; the server mixes the pieces anew for each page) and
 static/pixel-stone-dark.svg / pixel-stone-light.svg (see-through brick tiles over the page colour, which carries the highlight colour).
 
 A dot of a scene has a letter; the letter is a CSS class (p<letter>, see static/style-pixel.css). Most are fixed colours, but
@@ -13,6 +13,7 @@ dark outline and stands on a grass block. Drawn in code, so the output is reprod
 """
 from __future__ import annotations
 
+import json
 import random
 from pathlib import Path
 
@@ -512,48 +513,45 @@ def grass(s, x):
     return 6
 
 
-TOP_H, FOOT_H = 23, 22
-TOP = {
-    "town": [(tower, {}), (tree, {}), (house, {}), (tree, {}), (keep, {}), (tree, {}), (tower, {}), (house, {}), (pine, {"hh": 14}), (house, {}), (tree, {})],
-    "ramparts": [(rampart, {"length": 40}), (tower, {"hh": 15}), (rampart, {"length": 28}), (keep, {}), (rampart, {"length": 30}), (tower, {"hh": 12}), (rampart, {"length": 34})],
-    "mountains": [(mountain, {"w": 26, "hh": 17}), (pine, {"hh": 9}), (mountain, {"w": 30, "hh": 21}), (pine, {"hh": 11}), (pine, {"hh": 8}), (mountain, {"w": 22, "hh": 14}), (tower, {"hh": 8}), (mountain, {"w": 28, "hh": 19}), (pine, {"hh": 10})],
-    "camp": [(pine, {"hh": 17}), (pine, {"hh": 13}), (tent, {}), (campfire, {}), (tent, {}), (pine, {"hh": 16}), (pine, {"hh": 12}), (pine, {"hh": 18}), (tent, {}), (campfire, {}), (pine, {"hh": 14})],
-    "windmills": [(windmill, {}), (haystack, {}), (house, {}), (tree, {}), (windmill, {}), (house, {}), (haystack, {}), (tree, {}), (house, {}), (windmill, {})],
-}
-FOOT = {
-    "meadow": [(flower, {"hh": 5}), (grass, {}), (mushroom, {}), (flower, {"hh": 7}), (sheep, {}), (grass, {}), (flower, {"hh": 4}), (mushroom, {}), (bush, {}), (flower, {"hh": 6}), (grass, {}), (sheep, {})],
-    "treasury": [(chest, {}), (barrel, {}), (torch, {}), (barrel, {}), (chest, {}), (sword_stone, {}), (torch, {"hh": 7}), (barrel, {}), (chest, {})],
-    "march": [(knight, {}), (knight, {}), (knight, {}), (signpost, {}), (knight, {}), (knight, {}), (lantern, {}), (knight, {})],
-    "village": [(lantern, {}), (fence, {"n": 5}), (signpost, {}), (bush, {}), (lantern, {}), (fence, {"n": 4}), (barrel, {}), (bush, {}), (signpost, {}), (fence, {"n": 5})],
-    "pond": [(reed, {"hh": 10}), (reed, {"hh": 8}), (duck, {}), (lilypad, {}), (reed, {"hh": 11}), (duck, {}), (lilypad, {}), (lilypad, {}), (reed, {"hh": 9}), (reed, {"hh": 12}), (duck, {})],
-}
+ORN_H = 23                       # every ornament is 23 dots (46 px) tall and stands on the same base line, in the header and in the footer
+GAP = 2                          # empty dots between two pieces on the sheet, so that no piece shows a piece of its neighbour
+
+# the pool: (name, drawing function, its arguments). Header and footer draw from the same pool, so they are equally big.
+PIECES = [
+    ("tower", tower, {}), ("tower-low", tower, {"hh": 9}), ("tower-tall", tower, {"hh": 16}), ("house", house, {}), ("tree", tree, {}),
+    ("pine", pine, {"hh": 17}), ("pine-mid", pine, {"hh": 13}), ("pine-small", pine, {"hh": 9}), ("keep", keep, {}),
+    ("rampart", rampart, {"length": 30}), ("rampart-long", rampart, {"length": 40}),
+    ("mountain", mountain, {"w": 26, "hh": 17}), ("mountain-big", mountain, {"w": 30, "hh": 21}), ("mountain-small", mountain, {"w": 20, "hh": 12}),
+    ("dragon", dragon_flying, {"up": 15}), ("dragon-low", dragon_flying, {"up": 9}), ("moon", moon, {"up": 13}),
+    ("tent", tent, {}), ("campfire", campfire, {}), ("windmill", windmill, {}), ("haystack", haystack, {}),
+    ("flower", flower, {"hh": 5}), ("flower-tall", flower, {"hh": 8}), ("mushroom", mushroom, {}), ("sheep", sheep, {}),
+    ("chest", chest, {}), ("barrel", barrel, {}), ("torch", torch, {}), ("torch-low", torch, {"hh": 6}), ("knight", knight, {}),
+    ("signpost", signpost, {}), ("lantern", lantern, {}), ("bush", bush, {}), ("reed", reed, {"hh": 10}), ("reed-tall", reed, {"hh": 13}),
+    ("duck", duck, {}), ("lilypad", lilypad, {}), ("fence", fence, {"n": 4}), ("sword-stone", sword_stone, {}), ("grass", grass, {}),
+]
 
 
-def build_strip(pieces, h: int, target: int, seed: int) -> Strip:
-    """Place the things left to right with small gaps, and repeat the row until it is about `target` dots wide."""
-    rng = random.Random(seed)
-    s = Strip(h)
-    x = 2
-    while x < target:
-        for fn, kw in pieces:
-            x += fn(s, x, **kw) + rng.randrange(1, 4)
-    return s
+def sheet() -> tuple[Strip, list[dict]]:
+    """All pieces side by side on one strip (two layers), and where each one sits: [{"n": name, "x": first dot, "w": width in dots}]."""
+    out, manifest, cursor = Strip(ORN_H), [], 0
+    for name, fn, kw in PIECES:
+        one = Strip(ORN_H)
+        fn(one, 4, **kw)                                                               # drawn away from the edge: a knight reaches to the left of x
+        cells = [(i, j) for layer in one.layer.values() for i, j in layer]
+        lo, hi = min(i for i, _ in cells), max(i for i, _ in cells)
+        for layer, dots in one.layer.items():
+            out.layer[layer] |= {(i - lo + cursor, j) for i, j in dots}
+        manifest.append({"n": name, "x": cursor, "w": hi - lo + 1})
+        cursor += hi - lo + 1 + GAP
+    return out, manifest
 
 
 def strips() -> dict[str, str]:
-    """name -> svg text: pixel-orn/<place>-<name>-s.svg (stone) and -a.svg (highlight colour)."""
-    out: dict[str, str] = {}
-    for place, table, h, target in (("top", TOP, TOP_H, 300), ("foot", FOOT, FOOT_H, 230)):
-        for n, (name, pieces) in enumerate(table.items(), 1):
-            st = build_strip(pieces, h, target, 40 + n + (0 if place == "top" else 20))
-            width = st.width() + 3
-            if name == "mountains":
-                for k, up in ((0, 15), (1, 16)):
-                    dragon_flying(st, 36 + k * 130, up)
-                width = st.width() + 3
-            for layer in ("S", "A"):
-                out[f"{place}-{n}-{layer.lower()}.svg"] = st.svg(layer, width)
-    return out
+    """file name -> text: pixel-orn/sheet-s.svg (stone), sheet-a.svg (highlight colour) and pieces.json (where each piece is)."""
+    st, manifest = sheet()
+    width = max(m["x"] + m["w"] for m in manifest)
+    return {"sheet-s.svg": st.svg("S", width), "sheet-a.svg": st.svg("A", width),
+            "pieces.json": json.dumps({"width": width, "height": ORN_H, "pieces": manifest}, indent=1) + "\n"}
 
 
 def stone(dark: bool) -> str:
@@ -585,13 +583,13 @@ def main() -> None:
     static = ROOT / "src" / "drollery" / "static"
     orn = static / "pixel-orn"
     orn.mkdir(exist_ok=True)
-    for old in orn.glob("*.svg"):
+    for old in (*orn.glob("*.svg"), *orn.glob("*.json")):
         old.unlink()
     for name, text in strips().items():
         (orn / name).write_text(text)
     (static / "pixel-stone-dark.svg").write_text(stone(True))
     (static / "pixel-stone-light.svg").write_text(stone(False))
-    print("wrote", len(SCENES), "scenes,", len(strips()) // 2, "border strips and two stone tiles")
+    print("wrote", len(SCENES), "scenes,", len(PIECES), "border pieces on one sheet and two stone tiles")
 
 
 if __name__ == "__main__":
