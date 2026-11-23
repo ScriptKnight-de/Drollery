@@ -3,6 +3,13 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Changed
+- **One fixed app icon:** a gold tile with a dark castle, drawn bold so it reads at 16 pixels. It no longer follows the highlight
+  colour (the castle in the page header still does). It is now the favicon (SVG, `favicon.ico`, a 192 px PNG) and the iPhone/iPad
+  home-screen icon, and the browser extension uses the same picture.
+
 ## [0.10.0] - 2026-11-23
 
 ### Added

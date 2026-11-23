@@ -112,6 +112,14 @@ async def lifespan(app: FastAPI):
 # the interactive API docs are off: they would list every endpoint to anyone who can reach the port (the API is documented in the README)
 app = FastAPI(title="Drollery", version=__version__, lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 app.mount("/static", StaticFiles(directory=BASE / "static"), name="static")
+
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon_ico():
+    """Browsers ask for this path by habit, whatever the page says: answer with the same icon the pages name."""
+    return FileResponse(BASE / "static" / "favicon.ico", media_type="image/vnd.microsoft.icon", headers={"Cache-Control": "public, max-age=86400"})
+
+
 app.add_middleware(UploadRedirects)
 app.include_router(auth_router)
 app.include_router(settings_router)
