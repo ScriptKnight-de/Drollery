@@ -3,6 +3,15 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Fixed
+- **The Playful style was slow and cards vanished when the pointer left them.** The dark edges of the wall were a *fixed*
+  background, which makes the browser repaint the whole wall on every scroll step; together with the new colour wash over the wall
+  that made scrolling and hovering several times slower (5.1 s instead of 1.0 s for the same scripted scroll and six hovers on 40
+  cards, measured in headless Chromium). They are now a fixed layer of their own. And the hover rule of a card switched its entrance
+  animation off, so every time the pointer left, the fade-in started again from invisible.
+
 ## [0.12.0] - 2026-11-23
 
 ### Changed

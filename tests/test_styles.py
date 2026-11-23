@@ -135,3 +135,20 @@ def test_the_playful_look_reaches_the_pages(client):
     html = client.get("/").text
     assert 'href="/static/style-playful.css"' in html and client.get("/static/style-playful.css").status_code == 200
     assert html.index("style-playful.css") < html.index("style-plain.css") < html.index("style-pixel.css")
+
+
+def test_no_style_uses_a_fixed_background_which_makes_every_scroll_step_repaint_the_wall():
+    for name in ("style.css", "style-playful.css", "style-plain.css", "style-pixel.css"):
+        css = re.sub(r"/\*.*?\*/", "", (STATIC / name).read_text(), flags=re.S)
+        assert not re.search(r"background-attachment:[^;}]*fixed", css), name
+    base = (STATIC / "style.css").read_text()
+    assert re.search(r"body::before \{[^}]*position: fixed[^}]*var\(--tex-vig\)", base)           # the dark edges are a layer of their own
+    for name, style in (("style-plain.css", "plain"), ("style-pixel.css", "pixel")):
+        assert f':root[data-style="{style}"] body::before {{ display: none; }}' in (STATIC / name).read_text()      # they have their own wall
+
+
+def test_a_card_does_not_start_its_entrance_animation_again_when_the_pointer_leaves_it():
+    css = (STATIC / "style-playful.css").read_text()
+    hover = re.search(r"\.tile:hover \{[^}]*\}", css).group(0)
+    assert "animation" not in hover            # `animation: none` on :hover restarted the fade-in on every mouse-out, so the card vanished
+    assert re.search(r"\.tile \{[^}]*animation: pl-pop-in[^}]*backwards", css, re.S)

@@ -20,9 +20,8 @@
 
 /* the wall wears the highlight colour */
 :root:not([data-style]) body {
-  background-image: linear-gradient(color-mix(in srgb, var(--ac) 13%, transparent), color-mix(in srgb, var(--ac) 13%, transparent)), var(--tex-vig), var(--tex-grain), var(--tex-blocks), var(--tex-mottle);
-  background-size: auto, auto, 200px 200px, 960px 480px, 600px 600px;
-  background-attachment: scroll, fixed, scroll, scroll, scroll;
+  background-image: linear-gradient(color-mix(in srgb, var(--ac) 13%, transparent), color-mix(in srgb, var(--ac) 13%, transparent)), var(--tex-grain), var(--tex-blocks), var(--tex-mottle);
+  background-size: auto, 200px 200px, 960px 480px, 600px 600px;
 }
 :root:not([data-style]) ::selection { background: var(--ac); color: var(--ac-on); }
 
@@ -76,7 +75,7 @@
 :root:not([data-style]) .tile:nth-child(3n + 2) { --tilt: 1.3deg; }
 :root:not([data-style]) .tile:nth-child(4n) { --tilt: -.5deg; }
 :root:not([data-style]) .tile:nth-child(5n + 3) { --tilt: 2deg; }
-:root:not([data-style]) .tile:hover { transform: translateY(-7px) rotate(0deg) scale(1.035); border-color: var(--pl-ink); box-shadow: 8px 12px 0 var(--ac); animation: none; z-index: 3; }
+:root:not([data-style]) .tile:hover { transform: translateY(-7px) rotate(0deg) scale(1.035); border-color: var(--pl-ink); box-shadow: 8px 12px 0 var(--ac); z-index: 3; }
 :root:not([data-style]) .tile::before { content: ""; position: absolute; z-index: 4; top: -13px; left: 50%; width: 68px; height: 22px; margin-left: -34px; transform: rotate(-4deg);
   background: var(--pl-tape); opacity: .9;
   clip-path: polygon(0 0, 5% 25%, 0 50%, 5% 75%, 0 100%, 100% 100%, 95% 75%, 100% 50%, 95% 25%, 100% 0); }

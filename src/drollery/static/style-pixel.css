@@ -31,6 +31,7 @@
   background-image: var(--px-stone); background-size: 96px 96px; background-attachment: scroll; background-repeat: repeat;
   image-rendering: pixelated; font-size: 17px; font-variant-ligatures: none; scrollbar-color: var(--ac) var(--s2);
 }
+:root[data-style="pixel"] body::before { display: none; }
 :root[data-style="pixel"] ::selection { background: var(--ac); color: var(--ac-on); }
 :root[data-style="pixel"] :where(h1, h2) { letter-spacing: 0; }
 :root[data-style="pixel"] :focus-visible { outline: 3px solid var(--ac); outline-offset: 2px; border-radius: 0; }

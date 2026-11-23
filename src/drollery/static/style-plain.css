@@ -1,6 +1,7 @@
 /* The "Plain" style: the same pages without the doodles, the stone wall and the sticker tilt. Colours, mode and highlight work as usual.
    Everything here is under :root[data-style="plain"], so the other styles are untouched. */
 :root[data-style="plain"] body { background-image: none; }
+:root[data-style="plain"] body::before { display: none; }
 
 /* no doodles, no skyline ornament */
 :root[data-style="plain"] :is(.doodle, .empty > svg, .orn) { display: none; }
