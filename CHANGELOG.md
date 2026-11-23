@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.11.0] - 2026-11-23
 
 ### Added
 - **A style switch in the palette menu**, next to mode and highlight colour (kept in the browser):
@@ -14,6 +14,10 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
     pixel scenes (castle, knight and snail, dragon, wizard, tower, king and queen, burglar, forest) in place of the line doodles.
   - All three follow the highlight colour and light or dark mode: the pixel wall, buttons, scenes and skyline take its colour.
   - `scripts/gen_pixel.py` draws the pixel assets.
+
+### Changed
+- The jester icon has a transparent background (favicon, `favicon.ico`, the 192 and 512 pixel PNGs and the browser extension's
+  icons). Only the iPhone/iPad home-screen icon keeps a dark square, because iOS paints transparent icons black.
 
 ## [0.10.2] - 2026-11-23
 
