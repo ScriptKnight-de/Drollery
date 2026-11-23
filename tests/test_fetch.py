@@ -71,6 +71,16 @@ def test_ytdlp_is_asked_for_browser_friendly_mp4(client, monkeypatch, tmp_path):
     assert "h264" in cmd[cmd.index("-S") + 1] and "aac" in cmd[cmd.index("-S") + 1]
 
 
+def test_the_codec_is_ranked_before_the_resolution(client, monkeypatch, tmp_path):
+    """-S only ranks: with 'res' first, a 1080p HEVC stream beat a lower-resolution H.264 one (TikTok offers both) and Firefox
+    on Linux could not play the result ('no video with supported format and MIME type found')."""
+    seen = []
+    fake_downloader(monkeypatch, {"Clip [abc].mp4": make_video(tmp_path, "x.mp4")}, seen)
+    pipeline.job_fetch(fetch_job())
+    keys = [k.split(":")[0] for k in seen[0][seen[0].index("-S") + 1].split(",")]
+    assert keys.index("vcodec") < keys.index("res")
+
+
 def test_unusable_download_error_names_the_files(client, monkeypatch):
     fake_downloader(monkeypatch, {"weird thing.xyz": "not media", "another.dat": "nope"}, [])
     with pytest.raises(providers.ProviderError) as e:

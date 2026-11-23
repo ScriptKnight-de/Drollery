@@ -5,6 +5,14 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+### Fixed
+- **The Pixel ornaments were missing from the Docker image.** The ten header and footer strips live in `static/pixel-orn/`, which was not
+  listed in the package data, so a pip-installed copy (the image) had none of them while a source checkout showed them. A test now
+  checks that every data file is shipped.
+- **Downloaded TikTok videos could not be played in Firefox** ("no video with supported format and MIME type found"). The download
+  ranked resolution before codec, so a 1080p HEVC stream won over a lower-resolution H.264 one. The codec now comes first. Videos
+  imported before this stay as they are: delete them and fetch the link again.
+
 ## [0.12.2] - 2026-11-23
 
 ### Changed

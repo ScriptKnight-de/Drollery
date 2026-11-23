@@ -304,10 +304,12 @@ def job_fetch(job: dict) -> None:
         files = _direct_download(url, td)
         if not files:
             netguard.check_redirects(url)             # yt-dlp and gallery-dl follow redirects themselves: make sure the way is clean first
-            # Prefer H.264/AAC up to 1080p and always merge to .mp4: it plays in every browser. Without this, YouTube
-            # pairs like H.264 video + Opus audio are merged into .mkv, which many browsers cannot play.
+            # Prefer H.264/AAC and always merge to .mp4: it plays in every browser. Without this, YouTube pairs like H.264 video
+            # + Opus audio are merged into .mkv, which many browsers cannot play. The codec comes BEFORE the resolution: -S is only a
+            # ranking, so with the resolution first a 1080p HEVC stream (TikTok offers one) beat a lower-resolution H.264 one, and
+            # Firefox on Linux then said "no video with supported format and MIME type found".
             r = _run_tool(["yt-dlp", "--no-playlist", "--no-warnings", "--write-info-json",
-                           "-S", "res:1080,vcodec:h264,acodec:aac", "--merge-output-format", "mp4",
+                           "-S", "vcodec:h264,res:1080,acodec:aac", "--merge-output-format", "mp4",
                            "--max-filesize", f"{s.max_upload_mb}M",
                            "-o", str(td / "%(title).80B [%(id)s].%(ext)s"), url], s.fetch_timeout)
             err1 = r.stderr.strip()[-1500:]
