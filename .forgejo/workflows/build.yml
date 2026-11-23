@@ -4,7 +4,7 @@
 #
 # Weekly (and on demand with rebuild=true) it rebuilds the newest release tag from scratch so the base image and the
 # Debian packages (ffmpeg!) are current; this re-publishes its version tags and then scans the result with Trivy (fails
-# on CRITICAL vulnerabilities that have a fix).
+# on HIGH or CRITICAL vulnerabilities that have a fix).
 #
 # Required repository secrets (Settings > Actions > Secrets):
 #   REGISTRY_USER   Forgejo username that owns the package (scriptknight)
@@ -164,7 +164,7 @@ jobs:
           echo "both registries OK"
 
       # Weekly rebuild only: scan the freshly published image for vulnerabilities.
-      # Report HIGH+CRITICAL in the log, fail the run on CRITICAL issues that already have a fix.
+      # Report HIGH+CRITICAL in the log, fail the run on HIGH or CRITICAL issues that already have a fix.
       - name: Trivy scan (weekly rebuild)
         if: env.REBUILD == 'true'
         run: |
@@ -175,11 +175,11 @@ jobs:
           for platform in linux/amd64 linux/arm64; do
             echo "=== $img ($platform): HIGH and CRITICAL (report) ==="
             trivy image --quiet --platform "$platform" --severity HIGH,CRITICAL --ignore-unfixed --exit-code 0 "$img"
-            echo "=== $img ($platform): CRITICAL with a fix available (gate) ==="
-            trivy image --quiet --platform "$platform" --severity CRITICAL --ignore-unfixed --exit-code 10 "$img" || status=$?
+            echo "=== $img ($platform): HIGH and CRITICAL with a fix available (gate) ==="
+            trivy image --quiet --platform "$platform" --severity HIGH,CRITICAL --ignore-unfixed --exit-code 10 "$img" || status=$?
           done
           if [ "$status" -ne 0 ]; then echo "trivy gate failed (exit $status)"; exit 1; fi
-          echo "no fixable CRITICAL vulnerabilities"
+          echo "no fixable HIGH or CRITICAL vulnerabilities"
 
   release:
     needs: image

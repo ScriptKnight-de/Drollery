@@ -70,7 +70,7 @@ def test_the_image_is_built_for_amd64_and_arm64_and_published_to_both_registries
 def test_the_weekly_rebuild_uses_the_newest_release_without_cache_and_scans_it():
     job = job_text("image")
     assert "git tag --list 'v[0-9]*' --sort=-v:refname" in job and "no-cache: ${{ env.REBUILD == 'true' }}" in job
-    assert "aquasec/trivy" in job and "--severity CRITICAL --ignore-unfixed --exit-code 10" in job
+    assert "aquasec/trivy" in job and "--severity HIGH,CRITICAL --ignore-unfixed --exit-code 10" in job
     assert "github.event_name == 'schedule' || github.event.inputs.rebuild == 'true'" in job
 
 

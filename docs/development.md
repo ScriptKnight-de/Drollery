@@ -61,7 +61,7 @@ A provider type is one function plus one line in the registry dict at the bottom
 
 Every Monday (and on demand: *Actions › build-image › Run workflow › rebuild*) it **rebuilds the newest release tag from
 scratch**, so the base image and the Debian packages (ffmpeg) stay current, and scans the result with Trivy; the run fails
-on a CRITICAL vulnerability that already has a fix.
+on a HIGH or CRITICAL vulnerability that already has a fix.
 
 ### One-time setup
 
