@@ -20,6 +20,15 @@ def test_the_svg_icon_is_a_fixed_picture_with_no_theme_variables():
     svg = (STATIC / "favicon.svg").read_text()
     assert "var(" not in svg and "currentColor" not in svg and "light-dark" not in svg
     assert 'viewBox="0 0 16 16"' in svg and "crispEdges" in svg and "#e5383b" in svg and "#2f6bff" in svg
+    assert 'width="16" height="16"' not in svg and "#1b1822" not in svg.split("<rect", 1)[1].split("/>")[0]     # no background square: the icon is transparent
+
+
+def test_the_icons_are_transparent_except_the_one_ios_paints_black():
+    colour_type = lambda name: (STATIC / name).read_bytes()[25]                    # 6 = with a transparency channel, 2 = without
+    assert colour_type("icon-192.png") == 6 and colour_type("icon-512.png") == 6
+    assert colour_type("apple-touch-icon.png") == 2
+    ico = (STATIC / "favicon.ico").read_bytes()
+    assert ico[ico.index(b"\x89PNG") + 25] == 6                                    # the 16 pixel image inside the .ico
 
 
 def test_png_sizes_are_what_their_names_say():
