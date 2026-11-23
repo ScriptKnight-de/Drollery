@@ -10,7 +10,7 @@ from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.background import BackgroundTask
 
-from . import accounts, aisettings, i18n
+from . import __version__, accounts, aisettings, i18n
 from .config import get_settings
 
 BASE = Path(__file__).parent
@@ -90,7 +90,7 @@ def _kind_label(kind: str) -> str:
     return i18n.t(KIND_NAMES.get(kind, kind))
 
 
-templates.env.globals.update({"_": i18n.t, "job_type": _job_type, "kind_label": _kind_label, "_n": i18n.tn, "lang": i18n.current, "available_languages": i18n.languages, "flag_of": i18n.flag, "subtype_names": _SUBTYPES})
+templates.env.globals.update({"asset_v": __version__, "_": i18n.t, "job_type": _job_type, "kind_label": _kind_label, "_n": i18n.tn, "lang": i18n.current, "available_languages": i18n.languages, "flag_of": i18n.flag, "subtype_names": _SUBTYPES})
 
 
 def flash_redirect(url: str, text: str, kind: str = "ok") -> RedirectResponse:

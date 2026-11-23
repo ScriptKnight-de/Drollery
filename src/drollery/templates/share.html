@@ -26,5 +26,5 @@
   </div>
   <p class="hint">{% if share.expires_at %}{{ _("This link works until {when}.", when=share.expires_at|int|timestamp) }} {% endif %}{{ _("Shared with Drollery") }}</p>
 </article>
-{% if item.kind in ("video", "movie") %}<script src="/static/videoframe.js" defer></script>{% endif %}
+{% if item.kind in ("video", "movie") %}<script src="/static/videoframe.js?v={{ asset_v }}" defer></script>{% endif %}
 {% endblock %}

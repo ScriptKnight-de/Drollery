@@ -29,11 +29,10 @@ The typeface of the Pixel style. Copyright 2021 The Pixelify Sans Project Author
 licensed under the SIL Open Font License 1.1. The full licence is in `src/drollery/static/PixelifySans-OFL.txt`. The font is
 used unchanged.
 
-### Pirata One — `src/drollery/static/PirataOne-Regular.ttf`
+### Almendra — `src/drollery/static/Almendra-Bold.ttf`
 
-The heading typeface of the Playful style. Copyright (c) 2012, Rodrigo Fuenzalida and Nicolas Massi (<https://www.taip.com.ar>),
-with Reserved Font Name "Pirata". Licensed under the SIL Open Font License 1.1; the full licence is in
-`src/drollery/static/PirataOne-OFL.txt`. The font is used unchanged.
+The heading typeface of the Playful style. Copyright (c) 2011-2012, Ana Sanfelippo, with Reserved Font Name "Almendra". Licensed under
+the SIL Open Font License 1.1; the full licence is in `src/drollery/static/Almendra-OFL.txt`. The font is used unchanged.
 
 ### Interface icons — `src/drollery/templates/icons.html`
 

@@ -95,12 +95,12 @@
   </div>
 </div>
 {% include "popup_dialog.html" %}
-<script src="/static/popup.js" defer></script>
-<script src="/static/people.js" defer></script>
-<script src="/static/videoframe.js" defer></script>
-<script src="/static/toolbar.js" defer></script>
-{% if item.kind == "audio" %}<script src="/static/soundboard.js" defer></script>{% endif %}
-<script src="/static/tagfield.js" defer></script>
-<script src="/static/sharepanel.js" defer></script>
-<script src="/static/keepplaying.js" defer></script>
+<script src="/static/popup.js?v={{ asset_v }}" defer></script>
+<script src="/static/people.js?v={{ asset_v }}" defer></script>
+<script src="/static/videoframe.js?v={{ asset_v }}" defer></script>
+<script src="/static/toolbar.js?v={{ asset_v }}" defer></script>
+{% if item.kind == "audio" %}<script src="/static/soundboard.js?v={{ asset_v }}" defer></script>{% endif %}
+<script src="/static/tagfield.js?v={{ asset_v }}" defer></script>
+<script src="/static/sharepanel.js?v={{ asset_v }}" defer></script>
+<script src="/static/keepplaying.js?v={{ asset_v }}" defer></script>
 {% endblock %}

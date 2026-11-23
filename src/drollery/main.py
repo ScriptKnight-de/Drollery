@@ -153,6 +153,10 @@ async def protective_headers(request: Request, call_next):
     response = await call_next(request)
     for name, value in security_headers(request.state.nonce).items():
         response.headers.setdefault(name, value)
+    if request.url.path.startswith("/static/"):
+        # Without this a browser decides for itself how long to keep a stylesheet, and after an update it can keep an old one that
+        # points at files the new version no longer has. "no-cache" means: ask first (the ETag makes that a tiny "not modified").
+        response.headers.setdefault("Cache-Control", "no-cache")
     return response
 
 

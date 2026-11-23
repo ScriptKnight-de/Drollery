@@ -3,6 +3,21 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Changed
+- **The Playful style's headings use Almendra instead of a blackletter face.** Blackletter carries associations that were not wanted
+  here; Almendra (SIL OFL, 37 KB) is a calligraphic, medieval-looking hand. The name, headings, banners and folio numbers use it.
+
+### Fixed
+- **The Playful style still scrolled much more slowly than the others.** The colour wash over the wall was a layer of the scrolling
+  background, so the browser repainted it as new parts came into view (up to 217 ms for one frame). It now lies on the fixed layer in
+  front of the wall; scrolling is as smooth as in Plain and Pixel in the same measurement (no frame over 34 ms).
+- **The Pixel ornaments could be missing after an update**, most clearly in Firefox. Static files had no caching instruction, so a
+  browser could keep an old stylesheet that points at a file the new version no longer has. Static files are now always checked
+  for changes (`Cache-Control: no-cache`, which costs only a "not modified" answer), and every stylesheet and script link carries the
+  version, so a new version can never meet an old file. After updating, one hard reload (Ctrl+Shift+R) clears what the browser kept.
+
 ## [0.12.1] - 2026-11-23
 
 ### Fixed
@@ -26,7 +41,7 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
     highlight colour, and they straighten, lift and pop in when you point at them or when they arrive.
   - Buttons, fields, tabs and panels have a thick outline, corners that are not quite square and a hard coloured shadow; buttons
     wiggle on hover and squish when pressed.
-  - Headings and the name are in blackletter (Pirata One, SIL OFL), titles have a wavy underline, empty states show a banner, and
+  - Headings and the name are in a calligraphic hand (Almendra, SIL OFL; it was blackletter at first, see 0.12.2), titles have a wavy underline, empty states show a banner, and
     the wall is washed with the highlight colour.
   - The wobbling stops with "reduce motion".
 

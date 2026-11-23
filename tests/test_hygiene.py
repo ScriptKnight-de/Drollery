@@ -58,6 +58,8 @@ def test_no_personal_addresses_or_paths_are_in_the_project():
     for p in text_files():
         text = p.read_text(errors="ignore")
         for what, pat in bad.items():
+            if p.name.endswith("-OFL.txt") and what == "a real e-mail address":
+                continue                                     # a font's licence is kept word for word, with the notice of its author
             for m in re.finditer(pat, text):
                 if what == "a real e-mail address" and m.group(0).startswith("noreply@"):
                     continue

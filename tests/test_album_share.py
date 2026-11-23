@@ -34,7 +34,7 @@ def test_the_album_page_offers_whole_or_single_track_sharing(client, album):
     assert 'id="share"' in html and 'name="track"' in html and "The whole album" in html
     assert all(f'<option value="{t["id"]}">' in html for t in tracks)                  # every track can be picked
     assert html.count("data-share-track=") == 3                                         # and has its own share button
-    assert "sharepanel.js" in html and 'src="/static/player.js"' in html
+    assert "sharepanel.js" in html and 'src="/static/player.js?v=' in html
 
 
 def test_share_the_whole_album(client, album):

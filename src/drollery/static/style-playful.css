@@ -1,11 +1,11 @@
 /* The "Playful" style (the default, so no data-style attribute): a medieval fair. Bunting hangs from the header, cards are taped
-   to the wall like snapshots and wobble when you touch them, buttons are chunky and squish, headings are in blackletter. The
+   to the wall like snapshots and wobble when you touch them, buttons are chunky and squish, headings are in a calligraphic hand. The
    colours of the bunting, the tape, the shadows and the wash over the wall all come from the highlight colour.
-   Everything is under :root:not([data-style]), so Plain and Pixel are untouched. Font: Pirata One (SIL OFL 1.1). */
-@font-face { font-family: "Pirata One"; src: url("/static/PirataOne-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+   Everything is under :root:not([data-style]), so Plain and Pixel are untouched. Font: Almendra Bold (SIL OFL 1.1). */
+@font-face { font-family: "Almendra"; src: url("/static/Almendra-Bold.ttf") format("truetype"); font-weight: 700; font-display: swap; }
 
 :root:not([data-style]) {
-  --display: "Pirata One", "Luminari", "Palatino Linotype", Georgia, serif;
+  --display: "Almendra", "Palatino Linotype", "Book Antiqua", Georgia, serif;
   --pl-ink: light-dark(#33261a, #0b090f);
   --pl-shadow: color-mix(in srgb, var(--ac) 52%, #000);                          /* the hard, coloured shadow under things */
   --pl-tape: color-mix(in srgb, var(--ac) 70%, #fff);
@@ -18,18 +18,18 @@
   :root:not([data-style]) { --pl-b2: oklch(from var(--ac) l c calc(h + 130)); --pl-b3: oklch(from var(--ac) calc(l - .08) c calc(h + 250)); }
 }
 
-/* the wall wears the highlight colour */
-:root:not([data-style]) body {
-  background-image: linear-gradient(color-mix(in srgb, var(--ac) 13%, transparent), color-mix(in srgb, var(--ac) 13%, transparent)), var(--tex-grain), var(--tex-blocks), var(--tex-mottle);
-  background-size: auto, 200px 200px, 960px 480px, 600px 600px;
+/* the wall wears the highlight colour: a wash on the fixed layer in front of it (as a layer of the scrolling wall it made every scroll
+   step repaint, 4 times slower than the other styles) */
+:root:not([data-style]) body::before {
+  background: linear-gradient(color-mix(in srgb, var(--ac) 13%, transparent), color-mix(in srgb, var(--ac) 13%, transparent)), var(--tex-vig);
 }
 :root:not([data-style]) ::selection { background: var(--ac); color: var(--ac-on); }
 
-/* blackletter headings */
-:root:not([data-style]) :is(h1, h2, .brand span, .modal-head h2) { font-family: var(--display); font-weight: 400; letter-spacing: .015em; }
-:root:not([data-style]) h1 { font-size: 40px; line-height: 44px; }
-:root:not([data-style]) h2 { font-size: 28px; line-height: 32px; }
-:root:not([data-style]) .brand { font-size: 32px; line-height: 36px; letter-spacing: .02em; }
+/* calligraphic headings */
+:root:not([data-style]) :is(h1, h2, .brand span, .modal-head h2) { font-family: var(--display); font-weight: 700; letter-spacing: .01em; }
+:root:not([data-style]) h1 { font-size: 34px; line-height: 40px; }
+:root:not([data-style]) h2 { font-size: 24px; line-height: 30px; }
+:root:not([data-style]) .brand { font-size: 28px; line-height: 34px; letter-spacing: .01em; }
 :root:not([data-style]) .page-head > h1::after { content: ""; display: block; height: 9px; width: 132px; max-width: 100%; margin-top: 2px; background: var(--ac);
   -webkit-mask: url("/static/squiggle.svg") 0 0 / 24px 9px repeat-x; mask: url("/static/squiggle.svg") 0 0 / 24px 9px repeat-x; }
 
@@ -83,7 +83,7 @@
 :root:not([data-style]) .tile:nth-child(3n)::before { transform: rotate(-9deg); margin-left: -48px; background: var(--pl-b3); }
 :root:not([data-style]) .thumb { overflow: hidden; border-radius: 12px 17px 0 0 / 16px 11px 0 0; }
 :root:not([data-style]) .cap { border-top: 3px solid var(--pl-ink); }
-:root:not([data-style]) .meta { font-family: var(--display); font-size: 15px; letter-spacing: .03em; }
+:root:not([data-style]) .meta { font-family: var(--display); font-size: 14px; letter-spacing: .02em; }
 :root:not([data-style]) .tile:nth-child(1) { animation-delay: 0ms; } :root:not([data-style]) .tile:nth-child(2) { animation-delay: 45ms; }
 :root:not([data-style]) .tile:nth-child(3) { animation-delay: 90ms; } :root:not([data-style]) .tile:nth-child(4) { animation-delay: 135ms; }
 :root:not([data-style]) .tile:nth-child(5) { animation-delay: 180ms; } :root:not([data-style]) .tile:nth-child(6) { animation-delay: 225ms; }
@@ -93,7 +93,7 @@
 
 /* empty states: the doodle bobs, the title is a banner */
 :root:not([data-style]) :is(.empty, .doodle) > svg { animation: pl-bob 3.4s ease-in-out infinite; stroke-width: 3; opacity: .9; }
-:root:not([data-style]) .empty h2 { font-size: 36px; line-height: 40px; border: 3px solid var(--pl-ink); border-radius: 14px 20px 12px 18px / 18px 12px 20px 14px;
+:root:not([data-style]) .empty h2 { font-size: 30px; line-height: 36px; border: 3px solid var(--pl-ink); border-radius: 14px 20px 12px 18px / 18px 12px 20px 14px;
   background: var(--pl-tape); color: #1b1822; box-shadow: 4px 5px 0 var(--pl-shadow); transform: rotate(-1.5deg); padding: 6px 22px; }
 
 @keyframes pl-pop-in { from { opacity: 0; transform: translateY(18px) rotate(calc(var(--tilt, 0deg) * 3)) scale(.9); } }

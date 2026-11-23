@@ -85,11 +85,11 @@
     </div>
   </form>
 </div>
-<script src="/static/searchsuggest.js" defer></script>
-<script src="/static/searchstate.js" defer></script>
-<script src="/static/tagfield.js" defer></script>
-<script src="/static/bulk.js" defer></script>
-<script src="/static/gifhover.js" defer></script>
+<script src="/static/searchsuggest.js?v={{ asset_v }}" defer></script>
+<script src="/static/searchstate.js?v={{ asset_v }}" defer></script>
+<script src="/static/tagfield.js?v={{ asset_v }}" defer></script>
+<script src="/static/bulk.js?v={{ asset_v }}" defer></script>
+<script src="/static/gifhover.js?v={{ asset_v }}" defer></script>
 <script nonce="{{ request.state.nonce }}">
   var drop = document.querySelector(".drop");
   if (drop) {
@@ -97,5 +97,5 @@
     ["dragleave", "drop"].forEach(function (n) { drop.addEventListener(n, function () { drop.classList.remove("over"); }); });
   }
 </script>
-<script src="/static/soundboard.js" defer></script>
+<script src="/static/soundboard.js?v={{ asset_v }}" defer></script>
 {% endblock %}

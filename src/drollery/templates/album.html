@@ -123,12 +123,12 @@
   <div class="modal-foot"><button type="button" class="btn small" id="tr-copy" data-copy="">{{ icon("copy") }}{{ _("Copy transcript") }}</button></div>
 </dialog>
 {% include "popup_dialog.html" %}
-<script src="/static/popup.js" defer></script>
-<script src="/static/people.js" defer></script>
-<script src="/static/toolbar.js" defer></script>
-<script src="/static/transcript.js" defer></script>
-<script src="/static/tagfield.js" defer></script>
-<script src="/static/player.js" defer></script>
-<script src="/static/sharepanel.js" defer></script>
-<script src="/static/keepplaying.js" defer></script>
+<script src="/static/popup.js?v={{ asset_v }}" defer></script>
+<script src="/static/people.js?v={{ asset_v }}" defer></script>
+<script src="/static/toolbar.js?v={{ asset_v }}" defer></script>
+<script src="/static/transcript.js?v={{ asset_v }}" defer></script>
+<script src="/static/tagfield.js?v={{ asset_v }}" defer></script>
+<script src="/static/player.js?v={{ asset_v }}" defer></script>
+<script src="/static/sharepanel.js?v={{ asset_v }}" defer></script>
+<script src="/static/keepplaying.js?v={{ asset_v }}" defer></script>
 {% endblock %}

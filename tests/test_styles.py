@@ -14,7 +14,7 @@ def test_the_appearance_menu_offers_the_three_styles(client):
     assert re.findall(r'data-style-set="(\w+)"', html) == ["doodle", "plain", "pixel"]
     assert "data-theme-set" in html and "data-accent-set" in html                 # mode and highlight are still there
     for name in ("style-plain.css", "style-pixel.css"):
-        assert f'href="/static/{name}"' in html and client.get(f"/static/{name}").status_code == 200
+        assert f'href="/static/{name}?v=' in html and client.get(f"/static/{name}").status_code == 200
 
 
 def test_the_saved_style_is_applied_before_the_first_paint(client):
@@ -124,7 +124,7 @@ def test_the_playful_style_has_its_own_assets_and_follows_the_highlight_colour()
     css = (STATIC / "style-playful.css").read_text()
     for path in re.findall(r'url\("/static/([^"]+)"\)', css):
         assert (STATIC / path).is_file(), path
-    assert (STATIC / "PirataOne-OFL.txt").read_text().startswith("Copyright")
+    assert (STATIC / "Almendra-OFL.txt").read_text().startswith("Copyright")
     bunting = re.search(r"\.top::after[^{]*\{[^}]*\}", css).group(0)
     assert "var(--ac)" in bunting and "var(--pl-b2)" in bunting                       # the bunting is made of the highlight colour and its relatives
     assert "--pl-tape: color-mix(in srgb, var(--ac)" in css and "--pl-shadow: color-mix(in srgb, var(--ac)" in css
@@ -133,7 +133,7 @@ def test_the_playful_style_has_its_own_assets_and_follows_the_highlight_colour()
 
 def test_the_playful_look_reaches_the_pages(client):
     html = client.get("/").text
-    assert 'href="/static/style-playful.css"' in html and client.get("/static/style-playful.css").status_code == 200
+    assert 'href="/static/style-playful.css?v=' in html and client.get("/static/style-playful.css").status_code == 200
     assert html.index("style-playful.css") < html.index("style-plain.css") < html.index("style-pixel.css")
 
 
@@ -152,3 +152,10 @@ def test_a_card_does_not_start_its_entrance_animation_again_when_the_pointer_lea
     hover = re.search(r"\.tile:hover \{[^}]*\}", css).group(0)
     assert "animation" not in hover            # `animation: none` on :hover restarted the fade-in on every mouse-out, so the card vanished
     assert re.search(r"\.tile \{[^}]*animation: pl-pop-in[^}]*backwards", css, re.S)
+
+
+def test_every_script_and_stylesheet_link_carries_the_version_so_an_update_cannot_meet_an_old_cached_file(client, anon):
+    from drollery import __version__
+    for html in (client.get("/").text, anon.get("/login").text, client.get("/settings").text):
+        links = re.findall(r'(?:src|href)="(/static/[\w.-]+\.(?:js|css))([^"]*)"', html)
+        assert links and all(q == f"?v={__version__}" for _, q in links), links

@@ -69,3 +69,12 @@ def test_the_headers_are_the_same_function_for_every_route():
 def test_an_answer_that_sets_its_own_header_keeps_it(client):
     i = client.post("/api/v1/items", files={"file": ("a.png", png(1), "image/png")}).json()["id"]
     assert client.get(f"/thumb/{i}").headers["x-content-type-options"] == "nosniff"
+
+
+def test_static_files_are_always_revalidated_so_an_update_never_leaves_an_old_stylesheet_behind(client, anon):
+    for path in ("/static/style.css", "/static/style-pixel.css", "/static/bulk.js", "/static/favicon.svg"):
+        r = anon.get(path)
+        assert r.status_code == 200 and r.headers["cache-control"] == "no-cache" and r.headers.get("etag"), path
+        again = anon.get(path, headers={"if-none-match": r.headers["etag"]})
+        assert again.status_code == 304                                       # asking again is cheap
+    assert "no-cache" not in client.get("/").headers.get("cache-control", "")     # pages keep whatever they said before
