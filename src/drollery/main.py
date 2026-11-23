@@ -302,9 +302,48 @@ async def api_ingest(request: Request):
         await asyncio.to_thread(netguard.check_url, url)          # refuse private and local addresses up front
     except netguard.BlockedAddress as e:
         raise HTTPException(422, str(e)) from None
+    payload: dict = {"url": url}
+    clip = _clip_fields(body)
+    if clip:
+        payload["clip"] = clip
     with db.tx() as c:
-        job_id = db.enqueue(c, "fetch", None, json.dumps({"url": url}))
+        job_id = db.enqueue(c, "fetch", None, json.dumps(payload))
     return {"job_id": job_id}
+
+
+def _clip_fields(body: dict) -> dict:
+    """The optional title, description, tags and people a clipper sends with a link (cleaned, and capped)."""
+    out: dict = {}
+    if str(body.get("title") or "").strip():
+        out["title"] = str(body["title"]).strip()[:120]
+    if str(body.get("description") or "").strip():
+        out["description"] = str(body["description"]).strip()[:2000]
+    if isinstance(body.get("tags"), list):
+        out["tags"] = [str(t)[:60] for t in body["tags"][:50] if str(t).strip()]
+    if isinstance(body.get("people"), list):
+        out["people"] = [p for p in body["people"][:50] if isinstance(p, int) and not isinstance(p, bool)]
+    return out
+
+
+@app.get("/api/v1/tags", dependencies=[Depends(api_auth)])
+def api_tags(q: str = "", limit: int = 12):
+    """Tags to offer while typing: those that contain q, or your most used ones when q is empty. Each comes with how many items carry it."""
+    limit = max(1, min(limit, 50))
+    with db.tx() as c:
+        if q.strip():
+            return db.suggest_tags(c, q, limit)
+        rows = c.execute("SELECT tag, COUNT(DISTINCT item_id) AS n FROM tags WHERE source='user' GROUP BY tag ORDER BY n DESC, tag LIMIT ?", (limit,)).fetchall()
+    return [{"tag": r["tag"], "n": r["n"]} for r in rows]
+
+
+@app.get("/api/v1/people", dependencies=[Depends(api_auth)])
+def api_people(q: str = "", limit: int = 12):
+    """People to pick while typing: those whose alias or real name contains q, or the ones on the most items when q is empty."""
+    limit = max(1, min(limit, 50))
+    with db.tx() as c:
+        found = people.search(c, q, limit) if q.strip() else people.everyone(c, sort="items")[:limit]
+    return [{"id": p["id"], "name": p["name"], "first_name": p["first_name"], "surname": p["surname"],
+             "picture_url": f"/people/{p['id']}/picture" if p["has_picture"] else None} for p in found]
 
 
 @app.patch("/api/v1/items/{item_id}", dependencies=[Depends(api_auth)])
@@ -318,6 +357,14 @@ async def api_patch(item_id: int, request: Request):
             c.execute("UPDATE items SET description=? WHERE id=?", (str(body["description"])[:2000], item_id))
         if "tags" in body:
             db.set_user_tags(c, item_id, [str(t) for t in body["tags"]])
+        if isinstance(body.get("people"), list):                  # exactly these people, by id (ids that do not exist are ignored)
+            want = [p for p in body["people"] if isinstance(p, int) and not isinstance(p, bool)]
+            for p in people.of_item(c, item_id):
+                if p["id"] not in want:
+                    people.unlink(c, item_id, p["id"])
+            for pid in want:
+                if c.execute("SELECT 1 FROM people WHERE id=?", (pid,)).fetchone():
+                    people.link(c, item_id, pid)
         c.execute("UPDATE items SET updated_at=? WHERE id=?", (time.time(), item_id))
         db.reindex(c, item_id)
     return _public(item_or_404(item_id))

@@ -13,7 +13,7 @@ from urllib.parse import urlparse
 
 import httpx
 
-from . import accounts, aisettings, db, media, netguard, providers
+from . import accounts, aisettings, db, media, netguard, people, providers
 from .config import get_settings
 
 log = logging.getLogger("drollery")
@@ -273,9 +273,28 @@ def _run_tool(cmd: list[str], timeout: int) -> subprocess.CompletedProcess:
     return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
 
 
+def apply_clip(item_id: int, created: bool, clip: dict) -> None:
+    """What a clipper sent along with a link: tags and people are added to the item (an item that was already there keeps its own
+    title and description, and keeps everything it has)."""
+    with db.tx() as c:
+        if created:
+            if clip.get("title"):
+                c.execute("UPDATE items SET title=?, title_locked=1 WHERE id=?", (str(clip["title"])[:120], item_id))
+            if clip.get("description"):
+                c.execute("UPDATE items SET description=? WHERE id=?", (str(clip["description"])[:2000], item_id))
+        if clip.get("tags"):
+            have = [r["tag"] for r in c.execute("SELECT tag FROM tags WHERE item_id=? AND source='user'", (item_id,))]
+            db.set_user_tags(c, item_id, have + [str(t) for t in clip["tags"]])
+        for pid in clip.get("people") or []:
+            if isinstance(pid, int) and c.execute("SELECT 1 FROM people WHERE id=?", (pid,)).fetchone():
+                people.link(c, item_id, pid)
+        db.reindex(c, item_id)
+
+
 def job_fetch(job: dict) -> None:
     s = get_settings()
-    url = json.loads(job["payload"])["url"]
+    payload = json.loads(job["payload"])
+    url, clip = payload["url"], payload.get("clip") or {}
     if urlparse(url).scheme not in ("http", "https"):
         raise providers.ProviderError("only http(s) URLs are supported")
     netguard.check_url(url)                           # also here: a job may have been queued before the check existed, or the address may have changed
@@ -326,6 +345,8 @@ def job_fetch(job: dict) -> None:
                     c.execute("UPDATE items SET title=? WHERE id=? AND title_locked=0",
                               (str(d["title"])[:120], item_id))
                     db.reindex(c, item_id)
+            if clip:
+                apply_clip(item_id, created, clip)
             imported += 1
         if not imported:
             names = ", ".join(skipped[:5]) or "(no files)"

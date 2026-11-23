@@ -3,6 +3,12 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Added
+- **API for clippers:** `GET /api/v1/tags` and `GET /api/v1/people` (to pick from while typing), `PATCH /api/v1/items/{id}` accepts
+  `people`, and `POST /api/v1/ingest` takes an optional title, description, tags and people for the item that arrives.
+
 ## [0.9.0] - 2026-11-23
 
 ### Added
