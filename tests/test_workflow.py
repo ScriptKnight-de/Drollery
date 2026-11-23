@@ -35,6 +35,11 @@ def test_it_runs_on_main_on_version_tags_weekly_and_on_demand():
     assert re.search(r'- cron: "0 3 \* \* 1"', text) and "workflow_dispatch:" in text and "rebuild:" in text
 
 
+def test_a_commit_and_its_tag_do_not_build_at_the_same_time():
+    wf = WORKFLOW.read_text()
+    assert re.search(r"^concurrency:\n  group: build-image-\$\{\{ github\.sha \}\}\n  cancel-in-progress: false$", wf, re.M)
+
+
 def test_the_jobs_run_in_order_test_then_image_then_release():
     text = workflow()
     assert re.search(r"^jobs:\n  test:\n", text, re.M)

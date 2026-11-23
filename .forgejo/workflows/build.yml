@@ -37,6 +37,12 @@ env:
   GHCR_IMAGE: ghcr.io/scriptknight-de/drollery
   GH_REPO: ScriptKnight-de/drollery
 
+# A commit and the tag on it start two runs at once. Both write the same image tags and the same registry build cache, and
+# then one of them failed with "error writing layer blob". One run per commit at a time; the second waits instead of being cancelled.
+concurrency:
+  group: build-image-${{ github.sha }}
+  cancel-in-progress: false
+
 jobs:
   test:
     runs-on: docker
