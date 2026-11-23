@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.12.0] - 2026-11-23
 
 ### Changed
 - **Editing tags and people for a selection works like on an item page:** tags are typed as chips (every word becomes a chip with a
