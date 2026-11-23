@@ -95,9 +95,12 @@ def _kind_label(kind: str) -> str:
 _ORN = json.loads((Path(__file__).parent / "static" / "pixel-orn" / "pieces.json").read_text())
 
 
+GAP_MIN, GAP_MAX = 4, 10            # empty dots between two pieces (2 px each)
+
+
 def orn_row(cells: int = 450) -> list[dict]:
     """The pieces of one ornament strip of the Pixel style, mixed anew for every page: a shuffled walk through the pool (no piece
-    twice before every piece has been used, never the same one twice in a row), each with a small random gap, enough to fill
+    twice before every piece has been used, never the same one twice in a row), each with a random gap of 4 to 10 dots (8 to 20 px), enough to fill
     `cells` dots (2 px each). The strip clips what does not fit, so a wide screen is simply filled further."""
     row, total, last = [], 0, None
     while total < cells:
@@ -105,7 +108,7 @@ def orn_row(cells: int = 450) -> list[dict]:
         if deck[0]["n"] == last:
             deck.append(deck.pop(0))
         for piece in deck:
-            gap = random.randint(1, 3)
+            gap = random.randint(GAP_MIN, GAP_MAX)
             row.append({"x": piece["x"], "w": piece["w"], "g": gap, "n": piece["n"]})
             total += piece["w"] + gap
             last = piece["n"]

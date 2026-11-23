@@ -126,7 +126,7 @@ def test_the_header_and_footer_ornaments_are_mixed_anew_on_every_page(client):
         for r in rows:
             assert all((x, w) in known for x, w, _ in r)
             assert all(r[i][:2] != r[i + 1][:2] for i in range(len(r) - 1))                # never the same piece twice in a row
-            assert all(1 <= int(g) <= 3 for _, _, g in r)
+            assert all(4 <= int(g) <= 10 for _, _, g in r)                                       # room to breathe between the pieces
             used |= {(x, w) for x, w, _ in r}
         orders.add(tuple(x for x, _, _ in rows[0]))
         assert rows[1] != rows[2]

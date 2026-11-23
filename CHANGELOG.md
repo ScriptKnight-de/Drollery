@@ -5,13 +5,16 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+### Changed
+- **The Pixel ornaments have more room between them** (8 to 20 px instead of 2 to 6 px).
+
 ## [0.12.4] - 2026-11-23
 
 ### Changed
 - **The Pixel style's header and footer ornaments are mixed anew on every page.** Before, each strip was a fixed row of scenery that
   simply repeated, and there were only five of them. Now 40 single pieces (towers, a dragon, tents, a windmill, sheep, a duck,
   a knight ...) are picked and ordered at random for each page load: none twice before all have been used, never the same one next to
-  itself, with small random gaps. Pieces still take the highlight colour.
+  itself, with random gaps. Pieces still take the highlight colour.
 - **The footer ornaments are as big as the header's.** Header and footer now draw from the same pool, with the same dot size and the
   same height (46 px). The footer used to have its own set of small things (flowers, barrels, ducks).
 
