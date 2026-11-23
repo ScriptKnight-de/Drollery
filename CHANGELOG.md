@@ -5,6 +5,8 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+## [0.12.5] - 2026-11-23
+
 ### Changed
 - **The Pixel ornaments have more room between them** (8 to 20 px instead of 2 to 6 px).
 
