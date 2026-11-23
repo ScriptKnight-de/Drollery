@@ -123,12 +123,12 @@ def test_password_change_signs_out_other_devices(client):
 
 # ------------------------------------------------------------------- 2FA
 
-def _enable_2fa(client) -> tuple[str, list[str]]:
+def _enable_2fa(client, at: float | None = None) -> tuple[str, list[str]]:
     client.post("/settings/security/2fa/start")
     secret = accounts.get_user_by_name("admin")["totp_pending"]
     page = client.get("/settings/security")
     assert "<svg" in page.text and secret in page.text                       # QR code and the manual key are shown
-    r = client.post("/settings/security/2fa/enable", data={"code": totp_now(secret)})
+    r = client.post("/settings/security/2fa/enable", data={"code": totp_now(secret, at)})
     assert r.status_code == 200 and "backup codes" in r.text
     codes = re.findall(r"<li>([0-9a-f]{6}-[0-9a-f]{6})</li>", r.text)
     assert len(codes) == 8
@@ -141,8 +141,14 @@ def test_enable_2fa_rejects_a_wrong_code(client):
     assert r.status_code == 422 and not accounts.get_user_by_name("admin")["totp_enabled"]
 
 
-def test_two_factor_login_flow_and_code_reuse(client):
-    secret, codes = _enable_2fa(client)
+def test_two_factor_login_flow_and_code_reuse(client, monkeypatch):
+    # The clock is frozen ten seconds into a 30-second window: with the real clock the window could change between the login and
+    # the replay, the second code would then be a new one, and the test failed now and then on a slow machine.
+    import time
+    import types
+    now = int(time.time() // 30) * 30 + 10
+    monkeypatch.setattr(security, "time", types.SimpleNamespace(time=lambda: now))
+    secret, codes = _enable_2fa(client, now)
     client.follow_redirects = False
     client.post("/logout")
 
@@ -152,17 +158,16 @@ def test_two_factor_login_flow_and_code_reuse(client):
     assert client.post("/login/2fa", data={"code": "123456"}).status_code == 401
 
     # the code used to switch 2FA on is "spent", so the next one is needed (move the clock a step by faking last_step)
-    import time
-    step = int(time.time() // 30)
+    step = int(now // 30)
     with db.tx() as c:
         c.execute("UPDATE users SET totp_last_step=?", (step - 2,))
-    good = client.post("/login/2fa", data={"code": totp_now(secret)})
+    good = client.post("/login/2fa", data={"code": totp_now(secret, now)})
     assert good.status_code == 303 and good.headers["location"] == "/"
     assert client.get("/").status_code == 200
 
     client.post("/logout")
     client.post("/login", data={"username": "admin", "password": PASSWORD})
-    replay = client.post("/login/2fa", data={"code": totp_now(secret)})  # same 30s window: refused
+    replay = client.post("/login/2fa", data={"code": totp_now(secret, now)})  # same 30s window: refused
     assert replay.status_code == 401
 
 
