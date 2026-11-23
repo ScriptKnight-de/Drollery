@@ -3,6 +3,19 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Changed
+- **The Playful style is now a medieval fair** (it was close to Plain with a stone wall):
+  - Bunting hangs from the header and the footer, in the highlight colour and two relatives of it.
+  - Cards are snapshots taped to the wall: a little crooked, with a piece of tape in a different colour each, a hard shadow in the
+    highlight colour, and they straighten, lift and pop in when you point at them or when they arrive.
+  - Buttons, fields, tabs and panels have a thick outline, corners that are not quite square and a hard coloured shadow; buttons
+    wiggle on hover and squish when pressed.
+  - Headings and the name are in blackletter (Pirata One, SIL OFL), titles have a wavy underline, empty states show a banner, and
+    the wall is washed with the highlight colour.
+  - The wobbling stops with "reduce motion".
+
 ## [0.11.1] - 2026-11-23
 
 ### Changed

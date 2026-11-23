@@ -194,7 +194,7 @@ people outside it, put it behind HTTPS and set the public address under **Settin
 ### Change the look and the language
 
 The **palette** button in the header switches between light, dark and automatic, picks one of ten highlight colours and
-chooses a **style**: *Playful* (the castle wall with doodles), *Plain* (no doodles and no wall, just the pages) or *Pixel*
+chooses a **style**: *Playful* (a medieval fair: bunting, taped-up cards, blackletter, a castle wall with doodles), *Plain* (no doodles and no wall, just the pages) or *Pixel*
 (block-built medieval scenery with a brick wall and a pixel typeface). All three follow the highlight colour. The choice is
 kept in your browser. The **globe** switches between English and German. Under **Settings › Profile** you can save your language. If you
 publish your library to the public, **Settings › Impressum** lets you write the legal notice that German law asks for,

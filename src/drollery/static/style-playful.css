@@ -1,0 +1,105 @@
+/* The "Playful" style (the default, so no data-style attribute): a medieval fair. Bunting hangs from the header, cards are taped
+   to the wall like snapshots and wobble when you touch them, buttons are chunky and squish, headings are in blackletter. The
+   colours of the bunting, the tape, the shadows and the wash over the wall all come from the highlight colour.
+   Everything is under :root:not([data-style]), so Plain and Pixel are untouched. Font: Pirata One (SIL OFL 1.1). */
+@font-face { font-family: "Pirata One"; src: url("/static/PirataOne-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+
+:root:not([data-style]) {
+  --display: "Pirata One", "Luminari", "Palatino Linotype", Georgia, serif;
+  --pl-ink: light-dark(#33261a, #0b090f);
+  --pl-shadow: color-mix(in srgb, var(--ac) 52%, #000);                          /* the hard, coloured shadow under things */
+  --pl-tape: color-mix(in srgb, var(--ac) 70%, #fff);
+  --pl-b2: color-mix(in srgb, var(--ac) 40%, #fff6dc);                          /* the bunting's other colours */
+  --pl-b3: color-mix(in srgb, var(--ac) 60%, #000);
+  --pl-b4: #fff6dc;
+  --pl-spring: cubic-bezier(.34, 1.56, .64, 1);
+}
+@supports (color: oklch(from red l c h)) {
+  :root:not([data-style]) { --pl-b2: oklch(from var(--ac) l c calc(h + 130)); --pl-b3: oklch(from var(--ac) calc(l - .08) c calc(h + 250)); }
+}
+
+/* the wall wears the highlight colour */
+:root:not([data-style]) body {
+  background-image: linear-gradient(color-mix(in srgb, var(--ac) 13%, transparent), color-mix(in srgb, var(--ac) 13%, transparent)), var(--tex-vig), var(--tex-grain), var(--tex-blocks), var(--tex-mottle);
+  background-size: auto, auto, 200px 200px, 960px 480px, 600px 600px;
+  background-attachment: scroll, fixed, scroll, scroll, scroll;
+}
+:root:not([data-style]) ::selection { background: var(--ac); color: var(--ac-on); }
+
+/* blackletter headings */
+:root:not([data-style]) :is(h1, h2, .brand span, .modal-head h2) { font-family: var(--display); font-weight: 400; letter-spacing: .015em; }
+:root:not([data-style]) h1 { font-size: 40px; line-height: 44px; }
+:root:not([data-style]) h2 { font-size: 28px; line-height: 32px; }
+:root:not([data-style]) .brand { font-size: 32px; line-height: 36px; letter-spacing: .02em; }
+:root:not([data-style]) .page-head > h1::after { content: ""; display: block; height: 9px; width: 132px; max-width: 100%; margin-top: 2px; background: var(--ac);
+  -webkit-mask: url("/static/squiggle.svg") 0 0 / 24px 9px repeat-x; mask: url("/static/squiggle.svg") 0 0 / 24px 9px repeat-x; }
+
+/* header and footer: a painted banner, with bunting hanging from it */
+:root:not([data-style]) .top { background: color-mix(in srgb, var(--ac) 12%, var(--s1)); backdrop-filter: none; border-bottom: 3px solid var(--pl-ink); }
+:root:not([data-style]) .foot-bar { background: color-mix(in srgb, var(--ac) 12%, var(--s1)); backdrop-filter: none; border-top: 3px solid var(--pl-ink); }
+:root:not([data-style]) .top::after, :root:not([data-style]) .foot-bar::before { content: ""; position: absolute; left: 0; right: 0; height: 22px; pointer-events: none; z-index: 2;
+  background: repeating-linear-gradient(90deg, var(--ac) 0 32px, var(--pl-b2) 32px 64px, var(--pl-b3) 64px 96px, var(--pl-b4) 96px 128px);
+  -webkit-mask: url("/static/bunting-flag.svg") 0 0 / 32px 22px repeat-x; mask: url("/static/bunting-flag.svg") 0 0 / 32px 22px repeat-x;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, .3)); }
+:root:not([data-style]) .top::after { top: 100%; margin-top: 3px; }
+:root:not([data-style]) .foot-bar { position: relative; height: 88px; padding-top: 28px; }
+:root:not([data-style]) .foot-bar::before { top: 3px; }
+:root:not([data-style]) .brand:hover .mark { animation: pl-wiggle .5s var(--pl-spring); }
+:root:not([data-style]) .nav-link:hover, :root:not([data-style]) .icon-btn:hover { animation: pl-wiggle .45s var(--pl-spring); }
+
+/* things with an outline and a hard coloured shadow, and corners that are not quite square */
+:root:not([data-style]) :is(.btn, .seg, .add .field, .panel, .pop, .modal, .side details, .stage, .previewcard, .person-card, .note, .tagfield) {
+  border: 3px solid var(--pl-ink); border-radius: 18px 12px 20px 14px / 14px 20px 12px 18px; box-shadow: 4px 5px 0 var(--pl-shadow); }
+:root:not([data-style]) :is(input, textarea, select) { border: 3px solid var(--pl-ink); border-radius: 14px 18px 12px 16px / 16px 12px 18px 14px; box-shadow: 3px 3px 0 var(--pl-shadow); }
+:root:not([data-style]) :is(input, textarea, select):focus-visible { border-color: var(--ac); box-shadow: 3px 3px 0 var(--ac); }
+:root:not([data-style]) .drop { border: 3px dashed var(--ac); border-radius: 20px 14px 22px 16px / 16px 22px 14px 20px; }
+:root:not([data-style]) .btn { font-weight: 700; }
+:root:not([data-style]) .btn:hover { transform: translate(-1px, -2px) rotate(-1.2deg); box-shadow: 5px 7px 0 var(--pl-shadow); }
+:root:not([data-style]) .btn:active { transform: translate(3px, 4px); box-shadow: 0 0 0 var(--pl-shadow); }
+:root:not([data-style]) .btn.primary { border-color: var(--pl-ink); box-shadow: 4px 5px 0 var(--pl-ink); }
+:root:not([data-style]) .btn.primary:hover { box-shadow: 6px 8px 0 var(--pl-ink); }
+:root:not([data-style]) .btn.primary:active { box-shadow: 0 0 0 var(--pl-ink); }
+:root:not([data-style]) .btn.danger { border-color: var(--bad); box-shadow: 4px 5px 0 color-mix(in srgb, var(--bad) 45%, #000); }
+:root:not([data-style]) :is(.seg input:checked + span, .modes button[aria-pressed="true"]) { box-shadow: 0 3px 0 var(--pl-shadow); }
+:root:not([data-style]) .tabs a { border: 3px solid var(--pl-ink); border-radius: 14px 10px 16px 11px / 11px 16px 10px 14px; box-shadow: 3px 3px 0 var(--pl-shadow); font-weight: 700; }
+:root:not([data-style]) .tabs a:hover { transform: translateY(-2px) rotate(-1.5deg); border-color: var(--pl-ink); }
+:root:not([data-style]) .tabs a.on { border-color: var(--pl-ink); box-shadow: 3px 3px 0 var(--pl-ink); }
+:root:not([data-style]) :is(.chip, .pill) { border: 2px solid var(--pl-ink); }
+:root:not([data-style]) .pop { animation: pl-pop-in .34s var(--pl-spring); }
+
+/* cards: snapshots taped to the wall, a little crooked, straightening up when you point at them */
+:root:not([data-style]) .grid { gap: 32px 26px; padding-top: 14px; }
+:root:not([data-style]) .tile { --tilt: -1.5deg; position: relative; overflow: visible; border: 3px solid var(--pl-ink);
+  border-radius: 16px 20px 14px 22px / 20px 14px 22px 16px; box-shadow: 5px 7px 0 var(--pl-shadow); transform: rotate(var(--tilt));
+  animation: pl-pop-in .55s var(--pl-spring) backwards; }
+:root:not([data-style]) .tile:nth-child(3n + 2) { --tilt: 1.3deg; }
+:root:not([data-style]) .tile:nth-child(4n) { --tilt: -.5deg; }
+:root:not([data-style]) .tile:nth-child(5n + 3) { --tilt: 2deg; }
+:root:not([data-style]) .tile:hover { transform: translateY(-7px) rotate(0deg) scale(1.035); border-color: var(--pl-ink); box-shadow: 8px 12px 0 var(--ac); animation: none; z-index: 3; }
+:root:not([data-style]) .tile::before { content: ""; position: absolute; z-index: 4; top: -13px; left: 50%; width: 68px; height: 22px; margin-left: -34px; transform: rotate(-4deg);
+  background: var(--pl-tape); opacity: .9;
+  clip-path: polygon(0 0, 5% 25%, 0 50%, 5% 75%, 0 100%, 100% 100%, 95% 75%, 100% 50%, 95% 25%, 100% 0); }
+:root:not([data-style]) .tile:nth-child(even)::before { transform: rotate(5deg); margin-left: -20px; background: var(--pl-b2); }
+:root:not([data-style]) .tile:nth-child(3n)::before { transform: rotate(-9deg); margin-left: -48px; background: var(--pl-b3); }
+:root:not([data-style]) .thumb { overflow: hidden; border-radius: 12px 17px 0 0 / 16px 11px 0 0; }
+:root:not([data-style]) .cap { border-top: 3px solid var(--pl-ink); }
+:root:not([data-style]) .meta { font-family: var(--display); font-size: 15px; letter-spacing: .03em; }
+:root:not([data-style]) .tile:nth-child(1) { animation-delay: 0ms; } :root:not([data-style]) .tile:nth-child(2) { animation-delay: 45ms; }
+:root:not([data-style]) .tile:nth-child(3) { animation-delay: 90ms; } :root:not([data-style]) .tile:nth-child(4) { animation-delay: 135ms; }
+:root:not([data-style]) .tile:nth-child(5) { animation-delay: 180ms; } :root:not([data-style]) .tile:nth-child(6) { animation-delay: 225ms; }
+:root:not([data-style]) .tile:nth-child(7) { animation-delay: 270ms; } :root:not([data-style]) .tile:nth-child(8) { animation-delay: 315ms; }
+:root:not([data-style]) .tile:nth-child(9) { animation-delay: 360ms; } :root:not([data-style]) .tile:nth-child(10) { animation-delay: 405ms; }
+:root:not([data-style]) .tile:nth-child(11) { animation-delay: 450ms; } :root:not([data-style]) .tile:nth-child(12) { animation-delay: 495ms; }
+
+/* empty states: the doodle bobs, the title is a banner */
+:root:not([data-style]) :is(.empty, .doodle) > svg { animation: pl-bob 3.4s ease-in-out infinite; stroke-width: 3; opacity: .9; }
+:root:not([data-style]) .empty h2 { font-size: 36px; line-height: 40px; border: 3px solid var(--pl-ink); border-radius: 14px 20px 12px 18px / 18px 12px 20px 14px;
+  background: var(--pl-tape); color: #1b1822; box-shadow: 4px 5px 0 var(--pl-shadow); transform: rotate(-1.5deg); padding: 6px 22px; }
+
+@keyframes pl-pop-in { from { opacity: 0; transform: translateY(18px) rotate(calc(var(--tilt, 0deg) * 3)) scale(.9); } }
+@keyframes pl-wiggle { 0%, 100% { rotate: 0deg; } 25% { rotate: -7deg; } 75% { rotate: 7deg; } }
+@keyframes pl-bob { 0%, 100% { translate: 0 0; } 50% { translate: 0 -9px; } }
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-style]) :is(.tile, .pop, .brand .mark, .nav-link, .icon-btn, .empty > svg, .doodle > svg) { animation: none !important; }
+  :root:not([data-style]) :is(.btn:hover, .tile:hover) { transform: none; }
+}

@@ -36,14 +36,16 @@ def test_the_style_names_are_translated(client):
 
 
 def test_each_style_rule_is_scoped_to_its_own_style():
-    for name, style in (("style-plain.css", "plain"), ("style-pixel.css", "pixel")):
+    for name, style in (("style-playful.css", None), ("style-plain.css", "plain"), ("style-pixel.css", "pixel")):
         css = (STATIC / name).read_text()
         css = re.sub(r"/\*.*?\*/", "", css, flags=re.S)
+        css = re.sub(r"@keyframes[^{]+\{(?:[^{}]*\{[^{}]*\})*[^{}]*\}", "", css)          # the steps of an animation are not selectors
         for selector in re.findall(r"(?:^|\})\s*([^{}@]+?)\s*\{", css):
             flat = re.sub(r":(?:is|where)\([^)]*\)", ":is()", selector)                    # commas inside :is() do not separate selectors
             for part in flat.split(","):
                 part = part.strip()
-                assert (f'[data-style="{style}"]' in part) or part in (":root svg.px", ".pK", ".pS", ".ps", ".pd", ".pW", ".pw", ".pG", ".pg", ".pF", ".pY",
+                scope = ":root:not([data-style])" if style is None else f'[data-style="{style}"]'
+                assert (scope in part) or part in (":root svg.px", ".pK", ".pS", ".ps", ".pd", ".pW", ".pw", ".pG", ".pg", ".pF", ".pY",
                                                                        ".py", ".pR", ".pB", ".pb", ".pE", ".pM", ".pm", ".pO", ".pA", ".pa", ".pq"), (name, part)
 
 
@@ -116,3 +118,20 @@ def test_the_header_and_footer_ornaments_vary(client):
         assert len(foot) == 2 and foot[0] != foot[1]                              # the two footer strips differ
         seen_foot |= set(foot)
     assert len(seen_top) >= 3 and len(seen_foot) >= 3 and seen_top | seen_foot <= set("12345")
+
+
+def test_the_playful_style_has_its_own_assets_and_follows_the_highlight_colour():
+    css = (STATIC / "style-playful.css").read_text()
+    for path in re.findall(r'url\("/static/([^"]+)"\)', css):
+        assert (STATIC / path).is_file(), path
+    assert (STATIC / "PirataOne-OFL.txt").read_text().startswith("Copyright")
+    bunting = re.search(r"\.top::after[^{]*\{[^}]*\}", css).group(0)
+    assert "var(--ac)" in bunting and "var(--pl-b2)" in bunting                       # the bunting is made of the highlight colour and its relatives
+    assert "--pl-tape: color-mix(in srgb, var(--ac)" in css and "--pl-shadow: color-mix(in srgb, var(--ac)" in css
+    assert "prefers-reduced-motion" in css and "animation: none" in css               # the wobbling stops for people who ask for calm
+
+
+def test_the_playful_look_reaches_the_pages(client):
+    html = client.get("/").text
+    assert 'href="/static/style-playful.css"' in html and client.get("/static/style-playful.css").status_code == 200
+    assert html.index("style-playful.css") < html.index("style-plain.css") < html.index("style-pixel.css")
