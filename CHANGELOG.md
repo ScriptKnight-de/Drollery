@@ -5,6 +5,8 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+## [0.12.4] - 2026-11-23
+
 ### Changed
 - **The Pixel style's header and footer ornaments are mixed anew on every page.** Before, each strip was a fixed row of scenery that
   simply repeated, and there were only five of them. Now 40 single pieces (towers, a dragon, tents, a windmill, sheep, a duck,
