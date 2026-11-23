@@ -338,6 +338,34 @@ as possible:
 
 The name sent to the lookup services is just `Drollery/<version>`.
 
+### What Drollery stores
+
+Everything stays in your data folder (`/data`). Nothing is sent to the project or to anyone else.
+
+| Data | Why | How long |
+|---|---|---|
+| Your account: user name, password (as a scrypt hash), the optional email, two-factor secret and backup-code hashes | to sign you in | until you delete the library |
+| One entry per sign-in: a hash of the session token, the **IP address** and the **browser name** (user agent), when it was made and last used | to keep you signed in and let you see and end your sessions | until the session expires (30 days without use), then it is deleted at the next start |
+| Your files, titles, tags, descriptions, transcripts and the people you add | the library itself | until you delete the item (its files go with it) |
+| Your AI provider keys and lookup keys | so Drollery can call those services for you | until you remove them (they are also in every backup) |
+| Share links: the secret address, an optional label, how many times it was opened and when last | so you can see what is still shared | until it expires or you revoke it, and you can clear ended ones in Settings › Shares. **No visitor address is stored.** |
+| Finished background jobs (the list under Jobs) | to show what was done | 30 days, deleted at the next start. Failed jobs stay until you remove them |
+| Backups you make or let Drollery make | your safety copy | the newest few, older automatic ones are deleted |
+| The container's web server log | not Drollery's, but Docker's: it holds the **IP address** of every request, **including visitors of a share link** | until the container is replaced; see `docker logs` and your log settings |
+
+If you publish share links to other people, you are the one who decides what happens to their data. Under **Settings ›
+Privacy notice** you can write a notice (who you are, why the log holds their address, their rights). It is then shown at
+`/privacy` and linked at the bottom of every page, like the Impressum.
+
+**Using an AI service from another company (for example OpenAI).** The picture or transcript you send leaves your
+server. That makes the company a processor of that data for you. If GDPR applies to you, sign their data processing
+agreement and check that the transfer to their country is covered (an adequacy decision such as the EU-US Data Privacy
+Framework, or standard contractual clauses). A model on your own machine (Ollama, the Whisper container) sends nothing out.
+
+**You are responsible for what you share.** Drollery is a tool for your own library. If you put files on a public
+address or send share links to other people, the copyright and the legal duties for that content are yours, not the
+project's.
+
 ## Security
 
 - **Use HTTPS** if the site leaves your home network (a reverse proxy is fine), and set `DROLLERY_COOKIE_SECURE=1`.
