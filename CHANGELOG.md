@@ -5,6 +5,8 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+## [0.12.2] - 2026-11-23
+
 ### Changed
 - **The Playful style's headings use Almendra instead of a blackletter face.** Blackletter carries associations that were not wanted
   here; Almendra (SIL OFL, 37 KB) is a calligraphic, medieval-looking hand. The name, headings, banners and folio numbers use it.
