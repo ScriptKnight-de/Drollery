@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.11.1] - 2026-11-23
 
 ### Changed
 - **Pixel style, more ornaments:** the header and the footer each have five different strips (header: a town, ramparts with
