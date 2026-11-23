@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.9.0] - 2026-11-23
 
 ### Added
 - **Protective headers on every answer:** a content security policy (own scripts only, each inline script carries a nonce that is

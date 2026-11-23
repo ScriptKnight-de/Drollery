@@ -80,8 +80,8 @@ should be able to pull it.
 
 1. Raise the version in `pyproject.toml` and in `src/drollery/__init__.py` (they must match), and add the section
    `## [x.y.z] - date` to `CHANGELOG.md`. The tests check all three.
-2. Commit, push, and tag: `git tag v0.8.0 && git push origin v0.8.0`.
-3. The workflow tests, publishes `0.8.0` and `0.8`, and creates the releases.
+2. Commit, push, and tag: `git tag v0.9.0 && git push origin v0.9.0`.
+3. The workflow tests, publishes `0.9.0` and `0.9`, and creates the releases.
 
 To run a published image instead of building it, pull it and point the compose service at it
 (`image: ghcr.io/scriptknight-de/drollery:latest`).
