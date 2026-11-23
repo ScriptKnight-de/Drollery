@@ -71,7 +71,7 @@ code, .mono, kbd { font-family: inherit; font-size: 14px; }
 .brand { position: relative; font: 600 22px/28px var(--sans); color: var(--tx); letter-spacing: -.01em; }
 .brand { display: inline-flex; align-items: center; gap: 10px; }
 .brand:hover { text-decoration: none; }
-.brand .ic { width: 34px; height: 34px; color: var(--ac); stroke-width: 1.5; }
+.brand .mark { width: 34px; height: 34px; }          /* the fixed app icon: it does not follow the highlight colour */
 nav { display: flex; align-items: center; gap: 4px; }
 nav form { margin: 0; }
 .nav-link, .icon-btn { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 12px; border-radius: 12px; color: var(--tx2);

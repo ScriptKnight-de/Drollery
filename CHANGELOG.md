@@ -3,6 +3,11 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Changed
+- The castle in the page header is the fixed app icon too, so it no longer changes with the highlight colour.
+
 ## [0.10.1] - 2026-11-23
 
 ### Changed

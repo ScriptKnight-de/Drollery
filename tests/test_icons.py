@@ -33,3 +33,8 @@ def test_favicon_ico_is_served_without_signing_in(anon):
     r = anon.get("/favicon.ico")
     assert r.status_code == 200 and r.headers["content-type"] == "image/vnd.microsoft.icon"
     assert r.content[:4] == b"\x00\x00\x01\x00" and struct.unpack("<H", r.content[4:6])[0] == 3
+
+
+def test_the_header_shows_the_fixed_icon_not_a_themed_drawing(client):
+    brand = re.search(r'<a class="brand".*?</a>', client.get("/").text, re.S).group(0)
+    assert 'src="/static/favicon.svg"' in brand and "<svg" not in brand
