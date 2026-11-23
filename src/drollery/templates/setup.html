@@ -3,7 +3,7 @@
 {% block title %}{{ _('Set up') }} · Drollery{% endblock %}
 {% block content %}
 <div class="login-wrap wide">
-<div class="doodle">{% include "doodles/castle.svg" %}</div>
+<div class="doodle">{% include "doodles/castle.svg" %}{% include "doodles/pixel/castle.svg" %}</div>
 <form class="panel login" method="post" action="/setup">
   <h1>{{ _("Welcome to Drollery") }}</h1>
   <p class="muted">{{ _("Create the admin account for this library. You can turn on two-factor authentication afterwards in Settings") }}</p>

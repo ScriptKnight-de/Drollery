@@ -37,6 +37,7 @@ The English text in the code is the key. A language is one file, `src/drollery/l
   `plural(n)` function.
 - `python scripts/i18n_scan.py` lists what a catalog still lacks, and the tests fail when a string is missing or a
   placeholder differs.
+- `python scripts/gen_pixel.py` draws the assets of the Pixel style (the eight scenes in `templates/doodles/pixel`, the skyline and the two brick tiles); a test checks that the committed files are what it draws.
 - `python scripts/make_icons.py` draws the app icon (the jester) in every size into `src/drollery/static` (needs `rsvg-convert`); `--also <folder>` writes the browser extension's copy.
 - Titles, tags and the Impressum text are your own content and are never translated.
 

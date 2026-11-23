@@ -23,6 +23,12 @@ TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 ```
 
+### Pixelify Sans — `src/drollery/static/PixelifySans.ttf`
+
+The typeface of the Pixel style. Copyright 2021 The Pixelify Sans Project Authors (<https://github.com/eifetx/Pixelify-Sans>),
+licensed under the SIL Open Font License 1.1. The full licence is in `src/drollery/static/PixelifySans-OFL.txt`. The font is
+used unchanged.
+
 ### Interface icons — `src/drollery/templates/icons.html`
 
 The line icons are paths from [Lucide](https://lucide.dev) (ISC License). Lucide contains portions of

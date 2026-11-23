@@ -1,0 +1,22 @@
+/* The "Plain" style: the same pages without the doodles, the stone wall and the sticker tilt. Colours, mode and highlight work as usual.
+   Everything here is under :root[data-style="plain"], so the other styles are untouched. */
+:root[data-style="plain"] body { background-image: none; }
+
+/* no doodles, no skyline ornament */
+:root[data-style="plain"] :is(.doodle, .empty > svg, .orn) { display: none; }
+:root[data-style="plain"] .empty { padding: 48px 16px; }
+:root[data-style="plain"] .login-wrap { padding-top: 24px; }
+
+/* text sits on the plain page colour, so it needs no label plate */
+:root[data-style="plain"] :is(.empty h2, .empty p, .back, .page-head > h1, .page-head > h2, .lead, .share > .hint, .stage + .hint) {
+  background: none; padding-inline: 0; }
+:root[data-style="plain"] :is(.empty h2, .empty p) { margin-inline: auto; }
+
+/* calm instead of sticker-like: a flat lift, no tilt, no hard shadow */
+:root[data-style="plain"] .top { background: var(--bg); backdrop-filter: none; }
+:root[data-style="plain"] .foot-bar { background: var(--bg); backdrop-filter: none; }
+:root[data-style="plain"] .tile:hover { transform: none; box-shadow: 0 0 0 2px var(--ac); }
+:root[data-style="plain"] .btn.primary, :root[data-style="plain"] .btn.primary:hover, :root[data-style="plain"] .btn.primary:active { box-shadow: none; transform: none; }
+:root[data-style="plain"] .btn.primary:hover { filter: brightness(1.06); }
+:root[data-style="plain"] .btn.primary:active { filter: brightness(.94); }
+:root[data-style="plain"] .chip { box-shadow: none; }

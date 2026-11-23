@@ -3,6 +3,18 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Added
+- **A style switch in the palette menu**, next to mode and highlight colour (kept in the browser):
+  - **Playful** is the look as before: the castle wall, the doodles and the skyline.
+  - **Plain** has no doodles, no wall and no tilting stickers: just the pages.
+  - **Pixel** is block-built medieval scenery in the spirit of a sandbox game: a brick wall, a pixel typeface (Pixelify Sans,
+    SIL OFL), bevelled square frames with hard shadows, buttons that sink when pressed, a pixel skyline in the header and eight
+    pixel scenes (castle, knight and snail, dragon, wizard, tower, king and queen, burglar, forest) in place of the line doodles.
+  - All three follow the highlight colour and light or dark mode: the pixel wall, buttons, scenes and skyline take its colour.
+  - `scripts/gen_pixel.py` draws the pixel assets.
+
 ## [0.10.2] - 2026-11-23
 
 ### Changed

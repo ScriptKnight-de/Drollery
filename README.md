@@ -85,7 +85,7 @@ when you started it from the cloned project's Compose file (the first part is th
 **The library page** is your home. At the top is the **upload zone**: drop files anywhere on the page, choose them, or
 paste a link. Below it is the **search box** (press `/` to jump to it) and the **filters**: *All, Images, GIFs, Clips,
 Sounds, Albums* and *Movies*. Each thing in your library is a card. In the header you find **Jobs** (what is running in
-the background), **Settings**, the **palette** button (light, dark or automatic, plus ten highlight colours) and the
+the background), **Settings**, the **palette** button (light, dark or automatic, three styles, plus ten highlight colours) and the
 **globe** (English or Deutsch).
 
 **An item's page** shows the picture, player or soundboard button on the left, with a row of buttons under it:
@@ -193,8 +193,10 @@ people outside it, put it behind HTTPS and set the public address under **Settin
 
 ### Change the look and the language
 
-The **palette** button in the header switches between light, dark and automatic and picks one of ten highlight colours;
-the **globe** switches between English and German. Under **Settings › Profile** you can save your language. If you
+The **palette** button in the header switches between light, dark and automatic, picks one of ten highlight colours and
+chooses a **style**: *Playful* (the castle wall with doodles), *Plain* (no doodles and no wall, just the pages) or *Pixel*
+(block-built medieval scenery with a brick wall and a pixel typeface). All three follow the highlight colour. The choice is
+kept in your browser. The **globe** switches between English and German. Under **Settings › Profile** you can save your language. If you
 publish your library to the public, **Settings › Impressum** lets you write the legal notice that German law asks for,
 with a link in the footer.
 

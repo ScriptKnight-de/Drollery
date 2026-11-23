@@ -1,0 +1,90 @@
+/* The "Pixel" style: block-built medieval scenery in the spirit of a sandbox game. Square corners, bevelled frames with hard shadows,
+   a brick wall, a pixel typeface and pixel scenes. Mode and highlight work as usual: the wall, the buttons, the scenes and the
+   ornament all take the highlight colour. Everything is under :root[data-style="pixel"]; the other styles are untouched.
+   Assets: scripts/gen_pixel.py draws the scenes, the skyline and the brick tile. The typeface is Pixelify Sans (SIL OFL 1.1). */
+@font-face { font-family: "Pixelify Sans"; src: url("/static/PixelifySans.ttf") format("truetype"); font-weight: 400 700; font-display: swap; }
+
+/* the pixel scenes are in every page, but only this style shows them; their colours are classes (A, a, q follow the highlight) */
+:root svg.px { display: none; }
+.pK { fill: #1b1822; } .pS { fill: #a3a9b0; } .ps { fill: #737a82; } .pd { fill: #4d5259; } .pW { fill: #8a5a2b; } .pw { fill: #5c3a1a; }
+.pG { fill: #5ea83b; } .pg { fill: #3c7a28; } .pF { fill: #f0b88a; } .pY { fill: #ffc233; } .py { fill: #c98a10; } .pR { fill: #d63a3a; }
+.pB { fill: #3a6fd6; } .pb { fill: #24448a; } .pE { fill: #ffffff; } .pM { fill: #cfd6dd; } .pm { fill: #8d96a0; } .pO { fill: #ff8a1f; }
+.pA { fill: var(--ac); } .pa { fill: color-mix(in srgb, var(--ac), black 38%); } .pq { fill: color-mix(in srgb, var(--ac), white 40%); }
+
+:root[data-style="pixel"] {
+  --sans: "Pixelify Sans", ui-monospace, "Cascadia Mono", Menlo, Consolas, monospace;
+  --ease: steps(3, end);
+  --px-ink: light-dark(#2a2118, #07060a);
+  --px-hi: light-dark(rgba(255,255,255,.8), rgba(255,255,255,.2));        /* the lit top-left edge of a block */
+  --px-lo: light-dark(rgba(60,40,10,.3), rgba(0,0,0,.55));                /* the shaded bottom-right edge */
+  --px-stone: url("/static/pixel-stone-dark.svg");
+  --ln: var(--px-ink); --ln2: var(--px-ink);
+  --px-bevel: inset 2px 2px 0 var(--px-hi), inset -2px -2px 0 var(--px-lo);
+  --px-drop: 3px 3px 0 var(--px-lo);
+}
+@media (prefers-color-scheme: light) { :root[data-style="pixel"]:not([data-theme="dark"]) { --px-stone: url("/static/pixel-stone-light.svg"); } }
+:root[data-style="pixel"][data-theme="light"] { --px-stone: url("/static/pixel-stone-light.svg"); }
+
+/* the wall: bricks over the page colour, which carries the highlight colour */
+:root[data-style="pixel"] body {
+  background-color: color-mix(in srgb, var(--ac) 22%, var(--bg));
+  background-image: var(--px-stone); background-size: 96px 96px; background-attachment: scroll; background-repeat: repeat;
+  image-rendering: pixelated; font-size: 17px; font-variant-ligatures: none; scrollbar-color: var(--ac) var(--s2);
+}
+:root[data-style="pixel"] ::selection { background: var(--ac); color: var(--ac-on); }
+:root[data-style="pixel"] :where(h1, h2) { letter-spacing: 0; }
+:root[data-style="pixel"] :focus-visible { outline: 3px solid var(--ac); outline-offset: 2px; border-radius: 0; }
+
+/* square corners everywhere */
+:root[data-style="pixel"] *, :root[data-style="pixel"] *::before, :root[data-style="pixel"] *::after { border-radius: 0 !important; }
+
+/* header and footer: a stone slab with a thick dark edge and a bar of highlight colour */
+:root[data-style="pixel"] .top { background: var(--s1); backdrop-filter: none; border-bottom: 4px solid var(--px-ink); box-shadow: inset 0 -4px 0 var(--px-lo), 0 4px 0 var(--ac); }
+:root[data-style="pixel"] .foot-bar { background: var(--s1); backdrop-filter: none; border-top: 4px solid var(--px-ink); box-shadow: inset 0 4px 0 var(--px-hi), 0 -4px 0 var(--ac); }
+:root[data-style="pixel"] .brand .mark { border-radius: 0; box-shadow: 0 0 0 2px var(--px-ink); }
+:root[data-style="pixel"] .orn { opacity: .9;
+  -webkit-mask-image: url("/static/pixel-skyline.svg"), linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  mask-image: url("/static/pixel-skyline.svg"), linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
+
+/* framed things: a dark outline, a lit and a shaded edge, a hard shadow */
+:root[data-style="pixel"] :is(.btn, .tile, .panel, .pop, .modal, .seg, .modes, .add .field, .drop, .tagfield, .side details, .stage, .previewcard, .note,
+  .person-card, .busy-card, .frame, .cover, .assign, .snippet, .lookup-pick, .backup-choices form, .restore-code, .errbox pre, .uz-types label) {
+  border-width: 3px; box-shadow: var(--px-bevel); }
+:root[data-style="pixel"] :is(.pop, .modal, .panel, .tile, .person-card) { box-shadow: var(--px-bevel), var(--px-drop); }
+:root[data-style="pixel"] :is(input, textarea, select) { border-width: 3px; box-shadow: inset 3px 3px 0 var(--px-lo); }
+:root[data-style="pixel"] :is(input, textarea, select):focus-visible { outline: none; border-color: var(--ac); }
+:root[data-style="pixel"] .drop { border-style: dashed; }
+
+/* buttons: the primary one is a block of the highlight colour that sinks when pressed */
+:root[data-style="pixel"] .btn { height: 42px; font-weight: 600; }
+:root[data-style="pixel"] .btn:hover { background: color-mix(in srgb, var(--s2) 82%, var(--ac)); }
+:root[data-style="pixel"] .btn.primary { border-color: var(--px-ink); background: var(--ac); color: var(--ac-on);
+  box-shadow: inset 3px 3px 0 color-mix(in srgb, var(--ac), white 45%), inset -3px -3px 0 color-mix(in srgb, var(--ac), black 40%), 0 4px 0 var(--px-ink); }
+:root[data-style="pixel"] .btn.primary:hover { transform: none; filter: brightness(1.08); }
+:root[data-style="pixel"] .btn.primary:active { transform: translateY(3px);
+  box-shadow: inset 3px 3px 0 color-mix(in srgb, var(--ac), black 40%), inset -3px -3px 0 color-mix(in srgb, var(--ac), white 45%), 0 1px 0 var(--px-ink); }
+:root[data-style="pixel"] .btn.danger { border-color: var(--bad); }
+:root[data-style="pixel"] :is(.nav-link, .icon-btn):hover, :root[data-style="pixel"] .menu[open] > .icon-btn { background: var(--ac); color: var(--ac-on); }
+:root[data-style="pixel"] :is(.nav-link, .icon-btn):hover .ic { color: var(--ac-on); }
+
+/* the appearance menu */
+:root[data-style="pixel"] .modes { gap: 3px; padding: 3px; }
+:root[data-style="pixel"] .modes button { font-weight: 600; }
+:root[data-style="pixel"] .sw { border: 3px solid var(--px-ink); box-shadow: inset 2px 2px 0 rgba(255,255,255,.45), inset -2px -2px 0 rgba(0,0,0,.35); }
+:root[data-style="pixel"] .sw:hover { border-color: var(--tx); }
+:root[data-style="pixel"] .sw[aria-pressed="true"] { border-color: var(--tx); box-shadow: inset 0 0 0 2px var(--px-ink); }
+
+/* the tile grid: blocks that pop forward on hover instead of tilting */
+:root[data-style="pixel"] .tile:hover { transform: translate(-3px, -3px); border-color: var(--px-ink); box-shadow: var(--px-bevel), 6px 6px 0 var(--ac); }
+:root[data-style="pixel"] .thumb img { image-rendering: auto; }
+:root[data-style="pixel"] .chip { border: 2px solid var(--px-ink); box-shadow: none; }
+:root[data-style="pixel"] .pill { border: 2px solid var(--px-ink); box-shadow: var(--px-bevel); }
+:root[data-style="pixel"] .seg input:checked + span { box-shadow: inset 2px 2px 0 color-mix(in srgb, var(--ac), white 45%), inset -2px -2px 0 color-mix(in srgb, var(--ac), black 40%); }
+
+/* the pixel scenes replace the line doodles */
+:root[data-style="pixel"] :is(.empty, .doodle) > svg:not(.px) { display: none; }
+:root[data-style="pixel"] :is(.empty, .doodle) > svg.px { display: block; width: 280px; max-width: 80%; height: auto; margin: 0 auto 24px; opacity: 1; stroke: none; }
+:root[data-style="pixel"] .empty h2, :root[data-style="pixel"] .empty p { border: 3px solid var(--px-ink); box-shadow: var(--px-bevel); background: var(--s1); padding: 6px 14px; }
+:root[data-style="pixel"] :is(.back, .page-head > h1, .page-head > h2, .lead) { background: var(--s1); border: 3px solid var(--px-ink); box-shadow: var(--px-bevel); padding: 4px 12px; }
+
+@media (prefers-reduced-motion: reduce) { :root[data-style="pixel"] .tile:hover { transform: none; } }

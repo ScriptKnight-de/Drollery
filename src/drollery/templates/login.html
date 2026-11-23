@@ -2,7 +2,7 @@
 {% block title %}{{ _('Sign in') }} · Drollery{% endblock %}
 {% block content %}
 <div class="login-wrap">
-<div class="doodle">{% include "doodles/castle.svg" %}</div>
+<div class="doodle">{% include "doodles/castle.svg" %}{% include "doodles/pixel/castle.svg" %}</div>
 <form class="panel login" method="post" action="/login">
   <h1>{{ _("Halt! Who goes there?") }}</h1>
   {% if error %}<p class="note error" role="alert">{{ error }}</p>{% endif %}

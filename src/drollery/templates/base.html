@@ -8,9 +8,10 @@
   <script nonce="{{ request.state.nonce }}">
     /* apply saved theme before first paint to avoid a flash */
     try {
-      var r = document.documentElement, t = localStorage.getItem("drollery.theme"), a = localStorage.getItem("drollery.accent");
+      var r = document.documentElement, t = localStorage.getItem("drollery.theme"), a = localStorage.getItem("drollery.accent"), st = localStorage.getItem("drollery.style");
       if (t === "light" || t === "dark") r.dataset.theme = t;
       if (a) r.dataset.accent = a;
+      if (st === "plain" || st === "pixel") r.dataset.style = st;
     } catch (e) {}
   </script>
   <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
@@ -18,6 +19,8 @@
   <link rel="apple-touch-icon" href="/static/apple-touch-icon.png">
   {% block head %}{% endblock %}
   <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/style-plain.css">
+  <link rel="stylesheet" href="/static/style-pixel.css">
   <script src="/static/htmx.min.js" defer></script>
   <script type="application/json" id="busy-text">{{ {"loading": _("Loading…"), "hint": _("This can take a few seconds"), "slow": _("Still working. The service is slow right now"), "sec": _("{n} s")}|tojson }}</script>
   <script src="/static/busy.js" defer></script>
@@ -41,6 +44,12 @@
             <button type="button" data-theme-set="light">{{ icon("sun") }}{{ _("Light") }}</button>
             <button type="button" data-theme-set="dark">{{ icon("moon") }}{{ _("Dark") }}</button>
             <button type="button" data-theme-set="system">{{ icon("monitor") }}{{ _("Auto") }}</button>
+          </div>
+          <p class="pop-h">{{ _("Style") }}</p>
+          <div class="modes" role="group" aria-label="{{ _('Style') }}">
+            <button type="button" data-style-set="doodle">{{ icon("castle") }}{{ _("Playful") }}</button>
+            <button type="button" data-style-set="plain">{{ icon("square") }}{{ _("Plain") }}</button>
+            <button type="button" data-style-set="pixel">{{ icon("grid") }}{{ _("Pixel") }}</button>
           </div>
           <p class="pop-h">{{ _("Highlight") }}</p>
           <div class="swatches" role="group" aria-label="{{ _('Highlight color') }}">
@@ -89,15 +98,20 @@
     var root = document.documentElement, menus = Array.prototype.slice.call(document.querySelectorAll("details.menu"));
     function save(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
     function sync() {
-      var t = root.dataset.theme || "system", a = root.dataset.accent || "gold";
+      var t = root.dataset.theme || "system", a = root.dataset.accent || "gold", st = root.dataset.style || "doodle";
       document.querySelectorAll("[data-theme-set]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.themeSet === t); });
       document.querySelectorAll("[data-accent-set]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.accentSet === a); });
+      document.querySelectorAll("[data-style-set]").forEach(function (b) { b.setAttribute("aria-pressed", b.dataset.styleSet === st); });
     }
     document.addEventListener("click", function (e) {
-      var th = e.target.closest("[data-theme-set]"), ac = e.target.closest("[data-accent-set]");
+      var th = e.target.closest("[data-theme-set]"), ac = e.target.closest("[data-accent-set]"), sy = e.target.closest("[data-style-set]");
       if (th) {
         if (th.dataset.themeSet === "system") { delete root.dataset.theme; save("drollery.theme", "system"); }
         else { root.dataset.theme = th.dataset.themeSet; save("drollery.theme", th.dataset.themeSet); }
+        sync();
+      } else if (sy) {
+        if (sy.dataset.styleSet === "doodle") { delete root.dataset.style; save("drollery.style", "doodle"); }
+        else { root.dataset.style = sy.dataset.styleSet; save("drollery.style", sy.dataset.styleSet); }
         sync();
       } else if (ac) { root.dataset.accent = ac.dataset.accentSet; save("drollery.accent", ac.dataset.accentSet); sync(); }
       else menus.forEach(function (m) { if (m.open && !m.contains(e.target)) m.open = false; });

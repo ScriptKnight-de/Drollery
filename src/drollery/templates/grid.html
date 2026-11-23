@@ -37,7 +37,7 @@
 {% endif %}
 {% else %}{% if page == 0 %}
 <div class="empty">
-  {% include "doodles/" ~ (["knight-snail","dragon-treasure","wizard","princess-tower","king-queen","burglar","forest","castle"]|random) ~ ".svg" %}
+  {% set doodle = ["knight-snail","dragon-treasure","wizard","princess-tower","king-queen","burglar","forest","castle"]|random %}{% include "doodles/" ~ doodle ~ ".svg" %}{% include "doodles/pixel/" ~ doodle ~ ".svg" %}
   {% if q or tag or kind or person_id %}
   <h2>{{ _("No loot found") }}</h2>
   <p>{{ _("Try fewer words, or clear the filter") }}</p>

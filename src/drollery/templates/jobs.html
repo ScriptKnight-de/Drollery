@@ -30,6 +30,6 @@
 </table>
 </div>
 {% else %}
-<div class="empty">{% include "doodles/wizard.svg" %}<h2>{{ _("The scribes are idle") }}</h2><p>{{ _("Background jobs appear here when you add links or enable AI") }}</p></div>
+<div class="empty">{% include "doodles/wizard.svg" %}{% include "doodles/pixel/wizard.svg" %}<h2>{{ _("The scribes are idle") }}</h2><p>{{ _("Background jobs appear here when you add links or enable AI") }}</p></div>
 {% endif %}
 {% endblock %}
