@@ -16,10 +16,10 @@ def test_pages_name_the_icons_and_each_file_exists(client, anon):
             assert client.get(h).status_code == 200
 
 
-def test_the_svg_icon_has_fixed_colours_and_no_theme_variables():
+def test_the_svg_icon_is_a_fixed_picture_with_no_theme_variables():
     svg = (STATIC / "favicon.svg").read_text()
     assert "var(" not in svg and "currentColor" not in svg and "light-dark" not in svg
-    assert 'fill="#ffb800"' in svg and "#16120a" in svg
+    assert 'viewBox="0 0 16 16"' in svg and "crispEdges" in svg and "#e5383b" in svg and "#2f6bff" in svg
 
 
 def test_png_sizes_are_what_their_names_say():

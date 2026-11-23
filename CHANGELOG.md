@@ -6,7 +6,9 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 ## [Unreleased]
 
 ### Changed
-- The castle in the page header is the fixed app icon too, so it no longer changes with the highlight colour.
+- **A new app icon, a pixelated jester:** drawn on a 16 by 16 grid in fixed colours (it ignores the highlight colour and the theme),
+  on an ink square so it reads on any page. It replaces the castle as favicon, `favicon.ico`, home-screen icon, and as the mark in the
+  page header, where it no longer changes with the highlight colour. `scripts/make_icons.py` draws every size.
 
 ## [0.10.1] - 2026-11-23
 
