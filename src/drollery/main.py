@@ -420,11 +420,7 @@ def home(request: Request, q: str = "", kind: str = "", tag: str = "", src: str 
         movie_info = movies.summaries(c, [i["id"] for i in items if i["kind"] == "movie"])
         track_hits = albums.track_hits(c, q, album_ids) if q.strip() else {}
     tpl = "grid.html" if request.headers.get("hx-request") and not request.headers.get("hx-boosted") else "index.html"
-    bulk_people = []
-    if tpl == "index.html":
-        with db.tx() as c:
-            bulk_people = [{"id": p["id"], "name": p["name"]} for p in people.everyone(c)]       # for the selection's "add person"
-    return render(request, tpl, bulk_people=bulk_people, items=items, q=q, kind=kind, tag=tag, src=src, sort=sort, person_id=person, person_row=person_row, page=page, more=len(items) == PAGE, counts=counts, pending=pending, album_info=album_info, movie_info=movie_info, track_hits=track_hits)
+    return render(request, tpl, items=items, q=q, kind=kind, tag=tag, src=src, sort=sort, person_id=person, person_row=person_row, page=page, more=len(items) == PAGE, counts=counts, pending=pending, album_info=album_info, movie_info=movie_info, track_hits=track_hits)
 
 
 @app.post("/add", dependencies=[Depends(web_auth)])
@@ -471,7 +467,8 @@ BULK_ACTIONS = ("tag_add", "tag_remove", "person_add", "person_remove", "ai", "d
 @app.post("/items/bulk", dependencies=[Depends(web_auth)])
 def items_bulk(ids: str = Form(""), action: str = Form(""), tags: str = Form(""), person_id: str = Form(""), step: str = Form(""),
                next: str = Form("/")):
-    """One action for several items at once (the selection on the library page). `ids` is a comma separated list of item ids."""
+    """One action for several items at once (the selection on the library page). `ids` is a comma separated list of item ids;
+    `person_id` is one person id or several, comma separated."""
     back = shares.safe_next(next, "/")
     wanted = list(dict.fromkeys(int(x) for x in ids.replace(" ", "").split(",") if x.isdigit() and int(x) > 0))
     if action not in BULK_ACTIONS or not wanted:
@@ -481,12 +478,14 @@ def items_bulk(ids: str = Form(""), action: str = Form(""), tags: str = Form("")
     new_tags = list(dict.fromkeys(db.normalize_tag(x) for x in _parse_tags(tags) if db.normalize_tag(x)))
     if action in ("tag_add", "tag_remove") and not new_tags:
         return flash_redirect(back, t("Type at least one tag"), "error")
-    person = None
+    persons: list[dict] = []
     if action in ("person_add", "person_remove"):
+        wanted_people = list(dict.fromkeys(int(x) for x in person_id.replace(" ", "").split(",") if x.isdigit() and int(x) > 0))[:50]
         with db.tx() as c:
-            person = people.get(c, int(person_id)) if person_id.strip().isdigit() and int(person_id) > 0 else None
-        if person is None:
+            persons = [p for p in (people.get(c, x) for x in wanted_people) if p is not None]
+        if not persons:
             return flash_redirect(back, t("Choose a person"), "error")
+    names = ", ".join(p["name"] for p in persons)
     done = 0
     with db.tx() as c:
         have = {r["id"] for r in c.execute(f"SELECT id FROM items WHERE id IN ({','.join('?' * len(wanted))})", wanted)}
@@ -506,12 +505,13 @@ def items_bulk(ids: str = Form(""), action: str = Form(""), tags: str = Form("")
                     db.set_user_tags(c, i, [x for x in mine if x not in new_tags])
                     done += 1
             elif action == "person_add":
-                done += people.link(c, i, person["id"])
+                changed = [people.link(c, i, p["id"]) for p in persons]
+                done += 1 if any(changed) else 0                                          # an item counts once, however many people were new on it
             elif action == "person_remove":
-                had = c.execute("SELECT 1 FROM item_people WHERE item_id=? AND person_id=?", (i, person["id"])).fetchone()
-                if had:
-                    people.unlink(c, i, person["id"])
-                    done += 1
+                had = [p for p in persons if c.execute("SELECT 1 FROM item_people WHERE item_id=? AND person_id=?", (i, p["id"])).fetchone()]
+                for p in had:
+                    people.unlink(c, i, p["id"])
+                done += 1 if had else 0
             elif action == "ai":
                 if i not in busy and pipeline.plan_jobs(c, i, step if step in ("transcribe", "describe") else ""):
                     done += 1
@@ -523,8 +523,8 @@ def items_bulk(ids: str = Form(""), action: str = Form(""), tags: str = Form("")
     text = {
         "tag_add": lambda: tn("Tags added to {n} item", "Tags added to {n} items", done),
         "tag_remove": lambda: tn("Tags removed from {n} item", "Tags removed from {n} items", done),
-        "person_add": lambda: tn("{name} added to {n} item", "{name} added to {n} items", done, name=person["name"] if person else ""),
-        "person_remove": lambda: tn("{name} removed from {n} item", "{name} removed from {n} items", done, name=person["name"] if person else ""),
+        "person_add": lambda: tn("{name} added to {n} item", "{name} added to {n} items", done, name=names),
+        "person_remove": lambda: tn("{name} removed from {n} item", "{name} removed from {n} items", done, name=names),
         "ai": lambda: tn("Queued AI processing for {n} item", "Queued AI processing for {n} items", done) if done
                       else t("Nothing to queue: no AI model is assigned, or every item is already queued"),
         "delete": lambda: tn("Deleted {n} item", "Deleted {n} items", done),

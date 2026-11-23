@@ -66,9 +66,18 @@
       </span>
     </div>
     <div class="bulk-row bulk-params" id="bulk-params" hidden>
-      <label data-for="tag_add tag_remove" hidden>{{ _("Tags") }} <input name="tags" placeholder="{{ _('Separate with spaces') }}" autocomplete="off"></label>
-      <label data-for="person_add person_remove" hidden>{{ _("Person") }}
-        <select name="person_id"><option value="">{{ _("Choose a person") }}</option>{% for p in bulk_people %}<option value="{{ p.id }}">{{ p.name }}</option>{% endfor %}</select></label>
+      <div class="fld" id="bulk-tag-fld" data-for="tag_add tag_remove" data-remove="{{ _('Remove {tag}') }}" hidden>
+        <label for="bulk-tag-entry">{{ _("Tags") }}</label>
+        <input id="bulk-tags-in" name="tags" placeholder="{{ _('Separate with spaces') }}" autocomplete="off">
+      </div>
+      <div class="fld bulk-people" id="bulk-person-fld" data-for="person_add person_remove" data-lookup="/people/search" data-remove="{{ _('Remove {name}', name='{name}') }}" hidden>
+        <label for="bulk-person-in">{{ _("People") }}</label>
+        <div class="tagfield" id="bulk-person-field">
+          <input type="text" id="bulk-person-in" class="tag-entry" placeholder="{{ _('Search people') }}" autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="bulk-suggest" maxlength="120">
+        </div>
+        <input type="hidden" name="person_id" value="">
+        <ul class="suggest" id="bulk-suggest" role="listbox" hidden></ul>
+      </div>
       <label data-for="ai" hidden>{{ _("What to run") }}
         <select name="step"><option value="">{{ _("Everything") }}</option><option value="transcribe">{{ _("Only transcribe") }}</option><option value="describe">{{ _("Only describe") }}</option></select></label>
       <button type="submit" class="btn primary small" id="bulk-apply">{{ _("Apply") }}</button>
@@ -78,6 +87,7 @@
 </div>
 <script src="/static/searchsuggest.js" defer></script>
 <script src="/static/searchstate.js" defer></script>
+<script src="/static/tagfield.js" defer></script>
 <script src="/static/bulk.js" defer></script>
 <script src="/static/gifhover.js" defer></script>
 <script nonce="{{ request.state.nonce }}">

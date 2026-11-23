@@ -142,3 +142,49 @@ def test_the_page_has_what_the_selection_needs(client, three):
     from pathlib import Path
     grid = (Path(__file__).resolve().parents[1] / "src" / "drollery" / "templates" / "grid.html").read_text()
     assert re.search(r'<div class="tile sound" data-id="\{\{ it.id \}\}"', grid) and grid.count('class="pick"') == 2         # sound cards can be chosen too
+
+
+def _person(client, name):
+    client.post("/people", data={"name": name})
+    with db.tx() as c:
+        return c.execute("SELECT id FROM people WHERE name=?", (name,)).fetchone()["id"]
+
+
+def test_several_people_are_added_and_removed_at_once(client, three):
+    a, b, c_ = three
+    ann, bob = _person(client, "Ann Archer"), _person(client, "Bob Baker")
+    client.post(f"/items/{a}/people", data={"person_id": ann})                          # one of them is already on one item
+    r = bulk(client, [a, b], "person_add", person_id=f"{ann},{bob}")
+    assert "Ann Archer, Bob Baker added to 2 items" in flash(r)                         # both names, and the item that gained only Bob still counts
+    with db.tx() as c:
+        assert c.execute("SELECT COUNT(*) FROM item_people").fetchone()[0] == 4
+    r = bulk(client, [a, b, c_], "person_add", person_id=f"{ann},{bob}")
+    assert "added to 1 item" in flash(r)                                                # only the third item had nothing yet
+    r = bulk(client, [a, b], "person_remove", person_id=f"{bob}, {ann}")
+    assert "Bob Baker, Ann Archer removed from 2 items" in flash(r)
+    with db.tx() as c:
+        assert [(x["item_id"], x["person_id"]) for x in c.execute("SELECT * FROM item_people ORDER BY person_id")] == [(c_, ann), (c_, bob)]
+
+
+def test_unknown_and_repeated_person_ids_are_ignored(client, three):
+    a, b, c_ = three
+    ann = _person(client, "Ann Archer")
+    r = bulk(client, [a], "person_add", person_id=f"{ann},{ann},9999,abc,-3")
+    assert "Ann Archer added to 1 item" in flash(r)
+    assert "Choose a person" in flash(bulk(client, [a], "person_add", person_id="9999,abc"))
+
+
+def test_the_selection_bar_has_chip_fields_and_a_people_search(client, three):
+    html = client.get("/").text
+    assert 'id="bulk-tag-fld"' in html and 'id="bulk-tags-in"' in html and 'name="tags"' in html
+    assert 'id="bulk-person-fld"' in html and 'data-lookup="/people/search"' in html and 'id="bulk-person-in"' in html and 'role="combobox"' in html
+    assert '<select name="person_id"' not in html                                        # no list of every person any more
+    assert html.index("/static/tagfield.js") < html.index("/static/bulk.js")             # the chip maker is there before the bar uses it
+    js = client.get("/static/bulk.js").text
+    assert "makeTagField(" in js and "wrap.dataset.lookup" in js and "tagchip" in js
+    assert "function makeTagField" in client.get("/static/tagfield.js").text
+
+
+def test_the_page_does_not_list_every_person_in_the_selection_bar(client, three):
+    _person(client, "Zed Zimmer")
+    assert "Zed Zimmer" not in client.get("/").text

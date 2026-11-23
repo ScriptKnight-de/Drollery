@@ -696,6 +696,11 @@ form.uploading { opacity: .55; pointer-events: none; }
 .bulk-actions { display: inline-flex; flex-wrap: wrap; gap: 8px; margin-left: auto; }
 .bulk-params label { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--tx2); }
 .bulk-params label[hidden] { display: none; }
+.bulk-params .fld { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--tx2); }
+.bulk-params [data-for][hidden] { display: none; }
+.bulk-params .tagfield { flex: 1 1 280px; min-width: 260px; }
+.bulk-people { position: relative; }
+.bulk-people .suggest { top: auto; bottom: calc(100% + 6px); left: auto; right: 0; width: min(360px, 100%); }       /* the bar sits at the bottom: suggestions open upwards */
 .bulk-params input, .bulk-params select { width: auto; min-width: 220px; height: 36px; padding: 0 12px; }
 .selecting main { padding-bottom: 160px; }   /* the bar must not cover the last row of tiles */
 @media (max-width: 600px) { .bulkbar { bottom: 8px; width: calc(100% - 16px); padding: 10px 12px; } .bulk-actions { margin-left: 0; } .bulk-params input, .bulk-params select { min-width: 0; width: 100%; } .bulk-params label { width: 100%; } }

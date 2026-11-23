@@ -69,7 +69,7 @@
   .person-card, .busy-card, .frame, .cover, .assign, .snippet, .lookup-pick, .backup-choices form, .restore-code, .errbox pre, .uz-types label) {
   border-width: 3px; box-shadow: var(--px-bevel); }
 :root[data-style="pixel"] :is(.pop, .modal, .panel, .tile, .person-card) { box-shadow: var(--px-bevel), var(--px-drop); }
-:root[data-style="pixel"] :is(input, textarea, select) { border-width: 3px; box-shadow: inset 3px 3px 0 var(--px-lo); }
+:root[data-style="pixel"] :is(input, textarea, select):not(.tag-entry) { border-width: 3px; box-shadow: inset 3px 3px 0 var(--px-lo); }
 :root[data-style="pixel"] :is(input, textarea, select):focus-visible { outline: none; border-color: var(--ac); }
 :root[data-style="pixel"] .drop { border-style: dashed; }
 

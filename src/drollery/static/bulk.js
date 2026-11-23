@@ -1,4 +1,6 @@
 // Selecting several tiles of the library and doing one thing to all of them.
+// Tags are typed as chips (the same field as on an item); people are found with a search box that suggests the people who exist,
+// and every pick becomes a chip with a cross.
 // "Select" switches the mode on: a click on a tile then marks it instead of opening it (Shift marks a range, Space or Enter
 // on a focused tile marks it, Esc leaves the mode). A bar at the bottom shows the count and the actions. The page without
 // this script is the same page with links: nothing here is needed to use the library.
@@ -7,6 +9,88 @@
   if (!toggle || !bar || !grid) return;
   var form = document.getElementById("bulk-form"), params = document.getElementById("bulk-params");
   var selected = new Set(), last = null, on = false;
+  var tagField = window.makeTagField ? window.makeTagField(document.getElementById("bulk-tag-fld"), document.getElementById("bulk-tags-in"), "bulk-tag-entry") : null;
+  var people = peoplePicker();
+
+  // ---- the people search: suggestions while typing, a chip for every pick
+  function peoplePicker() {
+    var wrap = document.getElementById("bulk-person-fld"), box = document.getElementById("bulk-person-field"), entry = document.getElementById("bulk-person-in"),
+        list = document.getElementById("bulk-suggest"), store = form.elements.person_id;
+    if (!wrap || !box || !entry || !list || !store) return null;
+    var chosen = [], timer = null, seq = 0, ph = entry.getAttribute("placeholder") || "";
+    var CROSS = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M17 7 7 17M7 7l10 10"/></svg>';
+    function close() { list.hidden = true; list.textContent = ""; entry.setAttribute("aria-expanded", "false"); }
+    function marked() { for (var i = 0; i < list.children.length; i++) if (list.children[i].getAttribute("aria-selected") === "true") return i; return -1; }
+    function mark(n) {
+      var items = list.children;
+      if (!items.length) return;
+      n = (n + items.length) % items.length;
+      for (var i = 0; i < items.length; i++) items[i].setAttribute("aria-selected", String(i === n));
+      items[n].scrollIntoView({ block: "nearest" });
+    }
+    function draw() {
+      box.querySelectorAll(".tagchip").forEach(function (c) { c.remove(); });
+      chosen.forEach(function (p) {
+        var chip = document.createElement("span"), word = document.createElement("span"), x = document.createElement("button");
+        chip.className = "tagchip"; word.textContent = p.name;
+        x.type = "button"; x.innerHTML = CROSS; x.title = wrap.dataset.remove.replace("{name}", p.name); x.setAttribute("aria-label", x.title);
+        x.addEventListener("click", function () { chosen = chosen.filter(function (q) { return q.id !== p.id; }); draw(); entry.focus(); });
+        chip.appendChild(word); chip.appendChild(x); box.insertBefore(chip, entry);
+      });
+      store.value = chosen.map(function (p) { return p.id; }).join(",");
+      entry.placeholder = chosen.length ? "" : ph;
+    }
+    function add(p) {
+      if (!chosen.some(function (q) { return q.id === p.id; })) chosen.push(p);
+      entry.value = ""; close(); draw(); entry.focus();
+    }
+    function show(rows) {
+      list.textContent = "";
+      rows.forEach(function (r) {
+        var li = document.createElement("li"), b = document.createElement("b");
+        li.setAttribute("role", "option"); li.setAttribute("aria-selected", "false"); li.dataset.id = r.id; li.dataset.name = r.name;
+        b.textContent = r.name; li.appendChild(b);
+        if (r.note) { var sm = document.createElement("small"); sm.textContent = r.note; li.appendChild(sm); }
+        list.appendChild(li);
+      });
+      list.hidden = !rows.length;
+      entry.setAttribute("aria-expanded", String(rows.length > 0));
+    }
+    entry.addEventListener("input", function () {
+      var q = entry.value.trim();
+      clearTimeout(timer);
+      if (!q) { close(); return; }
+      var mine = ++seq;
+      timer = setTimeout(function () {
+        fetch(wrap.dataset.lookup + "?q=" + encodeURIComponent(q), { credentials: "same-origin" })
+          .then(function (r) { return r.ok ? r.json() : []; })
+          .then(function (rows) {
+            if (mine !== seq || entry.value.trim() !== q) return;
+            show(rows.filter(function (r) { return !chosen.some(function (c) { return c.id === String(r.id); }); }));
+            if (list.children.length) mark(0);                                      // the best match is ready: Enter takes it
+          })
+          .catch(close);
+      }, 150);
+    });
+    entry.addEventListener("keydown", function (e) {
+      var at = marked();
+      if (e.key === "ArrowDown" && !list.hidden) { e.preventDefault(); mark(at + 1); }
+      else if (e.key === "ArrowUp" && !list.hidden) { e.preventDefault(); mark(at < 0 ? -1 : at - 1); }
+      else if (e.key === "Enter") {
+        if (!list.hidden && at >= 0) { e.preventDefault(); add({ id: list.children[at].dataset.id, name: list.children[at].dataset.name }); }
+        else if (entry.value.trim()) e.preventDefault();                           // typed text that is nobody: do not submit by accident
+      }
+      else if (e.key === "Escape" && !list.hidden) { e.preventDefault(); e.stopPropagation(); close(); }
+      else if (e.key === "Backspace" && !entry.value && chosen.length) { chosen.pop(); draw(); }
+    });
+    list.addEventListener("mousedown", function (e) {
+      var li = e.target.closest && e.target.closest("li");
+      if (li) { e.preventDefault(); add({ id: li.dataset.id, name: li.dataset.name }); }
+    });
+    entry.addEventListener("blur", function () { setTimeout(close, 120); });
+    box.addEventListener("click", function (e) { if (e.target === box) entry.focus(); });
+    return { reset: function () { chosen = []; entry.value = ""; close(); draw(); }, count: function () { return chosen.length; }, entry: entry };
+  }
 
   function tiles() { return Array.prototype.slice.call(grid.querySelectorAll(".tile[data-id]")); }
   function fill(template, values) { return template.replace(/\{(\w+)\}/g, function (m, k) { return k in values ? values[k] : m; }); }
@@ -48,18 +132,17 @@
 
   function closeParams() {
     params.hidden = true;
-    Array.prototype.forEach.call(params.querySelectorAll("label[data-for]"), function (l) { l.hidden = true; });
-    Array.prototype.forEach.call(params.querySelectorAll("input[name=tags], select[name=person_id]"), function (f) { f.required = false; });
+    Array.prototype.forEach.call(params.querySelectorAll("[data-for]"), function (l) { l.hidden = true; });
+    if (tagField) tagField.reset();
+    if (people) people.reset();
   }
 
   function openParams(action) {
     closeParams();
     form.elements.action.value = action;
-    Array.prototype.forEach.call(params.querySelectorAll("label[data-for]"), function (l) { l.hidden = l.dataset.for.split(" ").indexOf(action) < 0; });
-    form.elements.tags.required = action === "tag_add" || action === "tag_remove";
-    form.elements.person_id.required = action === "person_add" || action === "person_remove";
+    Array.prototype.forEach.call(params.querySelectorAll("[data-for]"), function (l) { l.hidden = l.dataset.for.split(" ").indexOf(action) < 0; });
     params.hidden = false;
-    var field = params.querySelector("label:not([hidden]) input, label:not([hidden]) select");
+    var field = params.querySelector("[data-for]:not([hidden]) input[type=text], [data-for]:not([hidden]) select");
     if (field) field.focus();
   }
 
@@ -84,7 +167,10 @@
     openParams(action);
   });
 
-  form.addEventListener("submit", function () {                           // fill in what was chosen, then the browser sends it
+  form.addEventListener("submit", function (e) {                          // fill in what was chosen, then the browser sends it
+    var act = form.elements.action.value;
+    if ((act === "tag_add" || act === "tag_remove") && !form.elements.tags.value.trim() && tagField) { e.preventDefault(); tagField.entry.focus(); return; }
+    if ((act === "person_add" || act === "person_remove") && people && !people.count()) { e.preventDefault(); people.entry.focus(); return; }
     form.elements.ids.value = Array.from(selected).join(",");
     form.elements.next.value = location.pathname + location.search;
     if (form.elements.action.value !== "delete") delete form.dataset.confirm;

@@ -6,6 +6,11 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 ## [Unreleased]
 
 ### Changed
+- **Editing tags and people for a selection works like on an item page:** tags are typed as chips (every word becomes a chip with a
+  cross to delete it), and people are found with a search box that suggests the people who exist while you type; every pick becomes
+  a chip too. Several people can be added or removed in one go (the message names them). The bar no longer lists every person in a
+  drop-down, which was slow with many people. The chip fields were also fixed in the Playful and Pixel styles, where the typing
+  field inside a chip box had its own outline.
 - **The Playful style is now a medieval fair** (it was close to Plain with a stone wall):
   - Bunting hangs from the header and the footer, in the highlight colour and two relatives of it.
   - Cards are snapshots taped to the wall: a little crooked, with a piece of tape in a different colour each, a hard shadow in the
