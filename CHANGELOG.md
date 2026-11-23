@@ -3,6 +3,15 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
+## [Unreleased]
+
+### Changed
+- **Pixel style, more ornaments:** the header and the footer each have five different strips (header: a town, ramparts with
+  banners, mountains with flying dragons, a camp with tents and fires, windmills; footer: a meadow, a treasury, a marching
+  patrol, a village road, a pond). One is picked when the page is made, and the two footer strips always differ. Each strip is
+  drawn in stone and the highlight colour, so banners, flames, tents and ducks follow the highlight switch.
+- **A new dragon** in the pixel scenes: a horned head with fangs and fire, a wing in the highlight colour, claws and a spade tail.
+
 ## [0.11.0] - 2026-11-23
 
 ### Added

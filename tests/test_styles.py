@@ -85,7 +85,11 @@ def test_the_assets_are_what_the_generator_draws():
     spec.loader.exec_module(gen)
     for name, build in gen.SCENES.items():
         assert (DOODLES / "pixel" / f"{name}.svg").read_text() == build().svg(gen.TITLES[name]), name
-    assert (STATIC / "pixel-skyline.svg").read_text() == gen.skyline()
+    made = gen.strips()
+    assert len(made) == 20                                                       # five strips for the header, five for the footer, two layers each
+    for name, text in made.items():
+        assert (STATIC / "pixel-orn" / name).read_text() == text, name
+    assert sorted(p.name for p in (STATIC / "pixel-orn").glob("*.svg")) == sorted(made)
     assert (STATIC / "pixel-stone-dark.svg").read_text() == gen.stone(True) and (STATIC / "pixel-stone-light.svg").read_text() == gen.stone(False)
 
 
@@ -93,3 +97,22 @@ def test_the_pixel_scenes_ship_in_the_package():
     import tomllib
     meta = tomllib.loads((BASE.parent.parent / "pyproject.toml").read_text())
     assert "templates/doodles/pixel/*" in meta["tool"]["setuptools"]["package-data"]["drollery"]
+
+
+def test_each_page_picks_ornaments_and_the_style_has_a_rule_for_each():
+    css = (STATIC / "style-pixel.css").read_text()
+    for place in ("top", "foot"):
+        for n in range(1, 6):
+            assert f'.{place} .orn[data-v="{n}"]' in css and f"pixel-orn/{place}-{n}-s.svg" in css and f"pixel-orn/{place}-{n}-a.svg" in css
+
+
+def test_the_header_and_footer_ornaments_vary(client):
+    client.post("/settings/impressum", data={"text": "An invented notice", "enabled": "1"})     # the footer only exists with an Impressum
+    seen_top, seen_foot = set(), set()
+    for _ in range(40):
+        html = client.get("/").text
+        seen_top.add(re.search(r'<header class="top">.*?<div class="orn" data-v="(\d)"', html, re.S).group(1))
+        foot = re.findall(r'<div class="orn" data-v="(\d)"', html.split('<footer')[1])
+        assert len(foot) == 2 and foot[0] != foot[1]                              # the two footer strips differ
+        seen_foot |= set(foot)
+    assert len(seen_top) >= 3 and len(seen_foot) >= 3 and seen_top | seen_foot <= set("12345")

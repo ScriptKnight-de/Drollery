@@ -3,7 +3,8 @@
 
     python scripts/gen_pixel.py
 
-Writes templates/doodles/pixel/*.svg (eight 20 by 20 scenes), static/pixel-skyline.svg (a mask for the header ornament) and
+Writes templates/doodles/pixel/*.svg (eight 20 by 20 scenes), static/pixel-orn/*.svg (five strips for the header and five for the footer,
+each in two layers that the page uses as masks: stone, and the highlight colour) and
 static/pixel-stone-dark.svg / pixel-stone-light.svg (see-through brick tiles over the page colour, which carries the highlight colour).
 
 A dot of a scene has a letter; the letter is a CSS class (p<letter>, see static/style-pixel.css). Most are fixed colours, but
@@ -124,16 +125,27 @@ def knight_snail() -> Canvas:
 
 
 def dragon_treasure() -> Canvas:
+    """A dragon in profile, facing left: horned head, a burst of fire, a wing of the highlight colour, a scaly body with a pale belly,
+    claws, a spade tail and a pile of gold. Every part touches the next, so the outline stays one clean line."""
     c = Canvas()
-    c.rect(0, 7, 3, 3, "G").rect(2, 5, 5, 5, "G").px(4, 6, "R").px(5, 6, "R")        # head, snout, eye
-    c.px(3, 3, "E").px(3, 4, "E").px(6, 3, "E").px(6, 4, "E")                       # horns
-    c.rect(1, 9, 2, 1, "E").px(1, 8, "R")                                           # teeth, tongue
-    c.rect(6, 8, 3, 6, "G").rect(6, 11, 9, 5, "G").rect(7, 12, 7, 4, "Y")           # neck, body, belly
-    c.rect(9, 4, 4, 7, "g").rect(10, 5, 2, 5, "A")                                  # wing
-    c.rect(15, 12, 4, 2, "G").px(18, 11, "G").px(19, 11, "G")                       # tail
-    c.speckle(6, 5, 12, 9, "g", 5, 4)
-    c.rect(7, 14, 2, 2, "g").rect(12, 14, 2, 2, "g")                                # feet
-    c.rect(14, 13, 5, 3, "Y").px(15, 12, "Y").px(17, 12, "Y").px(16, 13, "y").px(18, 14, "y")   # gold
+    for y, x0, x1 in ((2, 15, 16), (3, 14, 17), (4, 13, 17), (5, 12, 17), (6, 12, 16), (7, 12, 15), (8, 12, 14)):
+        c.rect(x0, y, x1 - x0 + 1, 1, "A")                                          # the wing
+    for x, y in ((12, 8), (13, 7), (14, 6), (15, 5), (16, 4), (16, 3)):
+        c.px(x, y, "a")                                                             # its bones
+    c.rect(7, 9, 10, 6, "G")                                                        # body
+    c.rect(8, 12, 8, 3, "Y")                                                        # pale belly
+    c.rect(7, 7, 3, 3, "G")                                                         # neck
+    c.rect(3, 3, 6, 4, "G").rect(1, 5, 3, 2, "G").rect(2, 7, 5, 1, "g")             # head, snout, lower jaw
+    c.px(6, 4, "E").px(5, 4, "R").px(2, 5, "g")                                     # eye and nostril
+    c.px(4, 1, "E").px(4, 2, "E").px(7, 1, "E").px(7, 2, "E")                       # horns
+    c.px(2, 7, "E").px(5, 8, "E")                                                   # fangs
+    for x, y in ((0, 8), (0, 9), (1, 9), (2, 9), (1, 10), (0, 10)):
+        c.px(x, y, "O")
+    c.px(1, 8, "Y").px(1, 9, "Y")                                                   # fire
+    c.rect(17, 11, 3, 3, "G").rect(18, 8, 2, 3, "G").px(18, 7, "a").px(19, 7, "a").px(19, 6, "a")   # tail and its spade
+    c.rect(8, 15, 3, 1, "g").rect(13, 15, 3, 1, "g").px(7, 15, "E").px(12, 15, "E")  # feet and claws
+    c.speckle(7, 9, 10, 3, "g", 6, 3)
+    c.rect(1, 13, 5, 3, "Y").px(2, 12, "Y").px(4, 12, "Y").px(3, 14, "y").px(5, 15, "y")   # a pile of gold
     c.ground()
     return c.outline()
 
@@ -208,68 +220,340 @@ TITLES = {"castle": "A castle built of blocks", "knight-snail": "A knight facing
           "burglar": "A burglar with a sack of loot", "forest": "A forest with a torch"}
 
 
-def skyline() -> str:
-    """A strip of block scenery for the header ornament, used as a mask: 23 dots high, shown at 2 pixels a dot."""
-    h = 23
-    cols = []
-    rng = random.Random(11)
-    x = 0
-    pieces = []
-    for kind in ("tower", "tree", "house", "tree", "castle", "tree", "tower", "house", "tree"):
-        pieces.append(kind)
-    cells: set[tuple[int, int]] = set()
+class Strip:
+    """A border strip in two layers: neutral stone and the highlight colour. Dots are cells; y counts from the top."""
 
-    def block(x0, y0, w, hh):
-        for j in range(y0, y0 + hh):
-            for i in range(x0, x0 + w):
-                cells.add((i, j))
-    for kind in pieces:
-        base = h
-        if kind == "tower":
-            block(x, base - 14, 6, 14)
-            for i in (0, 2, 4):
-                block(x + i, base - 16, 1, 2)
-            block(x + 2, base - 9, 2, 3)
-            width = 8
-        elif kind == "tree":
-            block(x + 3, base - 6, 2, 6)
-            block(x + 1, base - 13, 6, 8)
-            block(x, base - 11, 8, 4)
-            width = 10
-        elif kind == "house":
-            block(x, base - 8, 8, 8)
-            for k in range(4):
-                block(x + 3 - k, base - 12 + k, 2 + 2 * k, 1)                   # a roof that widens downwards
-            block(x + 3, base - 4, 2, 4)
-            width = 11
-        else:
-            block(x + 5, base - 18, 8, 18)
-            block(x, base - 11, 5, 11)
-            block(x + 13, base - 11, 5, 11)
-            for i in (5, 7, 9, 11):
-                block(x + i, base - 20, 1, 2)
-            for i in (0, 2, 4):
-                block(x + i, base - 13, 1, 2)
-                block(x + 13 + i, base - 13, 1, 2)
-            block(x + 8, base - 6, 2, 6)
-            width = 21
-        x += width
-        cols.append(x)
-        x += rng.randrange(2, 5)
-    width = x
-    rects = []
-    for y in range(h):
-        i = 0
-        while i < width:
-            if (i, y) not in cells:
-                i += 1
-                continue
-            j = i
-            while j < width and (j, y) in cells:
-                j += 1
-            rects.append(f'<rect x="{i}" y="{y}" width="{j - i}" height="1"/>')
-            i = j
-    return f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {h}" width="{width * 2}" height="{h * 2}" shape-rendering="crispEdges"><g fill="#000">{"".join(rects)}</g></svg>'
+    def __init__(self, h: int):
+        self.h = h
+        self.layer: dict[str, set[tuple[int, int]]] = {"S": set(), "A": set()}
+
+    def block(self, layer: str, x: int, up: int, w: int, hh: int) -> None:
+        """A block whose bottom edge is `up` dots above the base line."""
+        for j in range(self.h - up - hh, self.h - up):
+            for i in range(x, x + w):
+                self.layer[layer].add((i, j))
+
+    def cut(self, x: int, up: int, w: int, hh: int) -> None:
+        for j in range(self.h - up - hh, self.h - up):
+            for i in range(x, x + w):
+                for cells in self.layer.values():
+                    cells.discard((i, j))
+
+    def width(self) -> int:
+        return max((i for cells in self.layer.values() for i, _ in cells), default=0) + 1
+
+    def svg(self, layer: str, width: int) -> str:
+        rects = []
+        for y in range(self.h):
+            x = 0
+            while x < width:
+                if (x, y) not in self.layer[layer]:
+                    x += 1
+                    continue
+                e = x
+                while e < width and (e, y) in self.layer[layer]:
+                    e += 1
+                rects.append(f'<rect x="{x}" y="{y}" width="{e - x}" height="1"/>')
+                x = e
+        return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 {width} {self.h}" width="{width * 2}" height="{self.h * 2}" '
+                f'shape-rendering="crispEdges"><g fill="#000">{"".join(rects)}</g></svg>')
+
+
+# ---- things that stand on the base line; each draws itself at x and returns how wide it is
+def tower(s, x, hh=14):
+    s.block("S", x, 0, 6, hh)
+    for i in (0, 2, 4):
+        s.block("S", x + i, hh, 1, 2)
+    s.cut(x + 2, hh - 6, 2, 3)
+    s.block("S", x + 3, hh + 2, 1, 4)
+    s.block("A", x + 4, hh + 4, 3, 2)
+    return 8
+
+
+def house(s, x):
+    s.block("S", x, 0, 8, 7)
+    for k in range(4):
+        s.block("A", x + 3 - k, 7 + k, 2 + 2 * k, 1)                                # a roof that widens downwards
+    s.cut(x + 3, 0, 2, 4)
+    s.cut(x + 1, 4, 1, 2)
+    return 11
+
+
+def tree(s, x):
+    s.block("S", x + 3, 0, 2, 6)
+    s.block("S", x + 1, 5, 6, 8)
+    s.block("S", x, 7, 8, 4)
+    return 10
+
+
+def pine(s, x, hh=15):
+    s.block("S", x + 4, 0, 2, 3)
+    for k in range(hh - 3):
+        half = min(1 + k // 2, 5)
+        s.block("S", x + 5 - half, 3 + (hh - 4 - k), half * 2, 1)
+    return 12
+
+
+def keep(s, x):
+    s.block("S", x + 5, 0, 8, 18)
+    s.block("S", x, 0, 5, 11)
+    s.block("S", x + 13, 0, 5, 11)
+    for i in (5, 7, 9, 11):
+        s.block("S", x + i, 18, 1, 2)
+    for i in (0, 2, 4):
+        s.block("S", x + i, 11, 1, 2)
+        s.block("S", x + 13 + i, 11, 1, 2)
+    s.cut(x + 8, 0, 2, 6)
+    s.cut(x + 8, 12, 2, 3)
+    s.block("S", x + 9, 20, 1, 3)
+    s.block("A", x + 10, 21, 4, 2)
+    return 21
+
+
+def rampart(s, x, length=36):
+    s.block("S", x, 0, length, 8)
+    for i in range(0, length, 3):
+        s.block("S", x + i, 8, 2, 2)
+    for i in range(6, length - 4, 10):
+        s.block("A", x + i, 1, 3, 6)                                                # a banner hanging on the wall
+        s.cut(x + i + 1, 1, 1, 1)
+        s.block("S", x + i, 7, 3, 1)
+    s.cut(x + length // 2 - 2, 0, 4, 5)
+    return length + 3
+
+
+def mountain(s, x, w=22, hh=16):
+    for k in range(hh):
+        half = (w * (k + 1)) // (2 * hh)
+        s.block("S", x + w // 2 - half, hh - 1 - k, max(half * 2, 1), 1)
+    s.cut(x + w // 2 - 2, hh - 6, 4, 1)
+    return w + 2
+
+
+def dragon_flying(s, x, up):
+    art = ["....A.........",
+           "...AA......A..",
+           "..AAA.....AA..",
+           ".AAAAA...AAA..",
+           "AAAAAAAAAAAAAA",
+           ".AA.AAAAAAA.A.",
+           "........AA..AA"]
+    for j, row in enumerate(art):
+        for i, ch in enumerate(row):
+            if ch == "A":
+                s.block("A", x + i, up + len(art) - 1 - j, 1, 1)
+    return 16
+
+
+def tent(s, x):
+    for k in range(9):
+        w = max(2, min(k, 5) * 2)
+        s.block("A", x + 6 - w // 2, 8 - k, w, 1)                                    # a tent that widens downwards
+    s.block("A", x, 0, 12, 1)
+    s.cut(x + 4, 0, 4, 5)
+    s.block("S", x + 5, 9, 2, 3)
+    return 14
+
+
+def campfire(s, x):
+    s.block("S", x, 0, 8, 2)
+    s.block("A", x + 2, 2, 4, 2)
+    s.block("A", x + 3, 4, 2, 3)
+    s.block("A", x + 4, 7, 1, 2)
+    return 10
+
+
+def windmill(s, x):
+    s.block("S", x + 2, 0, 8, 3)
+    for k in range(12):
+        s.block("S", x + 3 + k // 6, 3 + k, 6 - 2 * (k // 6), 1)
+    for k in range(-5, 6):
+        s.block("A", x + 6 + k, 14 + k, 1, 1)
+        s.block("A", x + 6 - k, 14 + k, 1, 1)                                       # the sails
+    s.cut(x + 5, 0, 2, 4)
+    return 13
+
+
+def haystack(s, x):
+    for k in range(6):
+        s.block("A", x + k // 2, k, 10 - k, 1)
+    return 12
+
+
+def moon(s, x, up):
+    for j in range(7):
+        for i in range(7):
+            if (i - 3) ** 2 + (j - 3) ** 2 <= 10 and (i - 5) ** 2 + (j - 2) ** 2 > 9:
+                s.block("S", x + i, up + j, 1, 1)
+    return 8
+
+
+def flower(s, x, hh=6):
+    s.block("S", x + 1, 0, 1, hh)
+    s.block("A", x, hh, 3, 1)
+    s.block("A", x + 1, hh - 1, 1, 3)
+    s.cut(x + 1, hh, 1, 1)
+    return 5
+
+
+def mushroom(s, x):
+    s.block("S", x + 1, 0, 2, 3)
+    s.block("A", x, 3, 4, 2)
+    s.cut(x + 1, 4, 1, 1)
+    return 6
+
+
+def sheep(s, x):
+    s.block("S", x + 1, 2, 6, 4)
+    s.block("S", x + 7, 4, 3, 3)
+    s.block("S", x + 2, 0, 1, 2)
+    s.block("S", x + 5, 0, 1, 2)
+    s.cut(x + 8, 5, 1, 1)
+    s.block("A", x + 9, 3, 1, 1)
+    return 12
+
+
+def chest(s, x):
+    s.block("S", x, 0, 8, 5)
+    s.block("A", x, 5, 8, 1)
+    s.block("A", x + 3, 1, 2, 3)
+    return 10
+
+
+def barrel(s, x):
+    s.block("S", x, 0, 5, 6)
+    s.block("A", x, 1, 5, 1)
+    s.block("A", x, 4, 5, 1)
+    return 7
+
+
+def torch(s, x, hh=9):
+    s.block("S", x + 1, 0, 1, hh)
+    s.block("A", x, hh, 3, 2)
+    s.block("A", x + 1, hh + 2, 1, 2)
+    return 5
+
+
+def knight(s, x):
+    s.block("S", x, 0, 1, 4)
+    s.block("S", x + 2, 0, 1, 4)
+    s.block("S", x - 1, 4, 5, 5)
+    s.block("S", x, 9, 3, 3)
+    s.cut(x + 1, 10, 2, 1)
+    s.block("A", x + 1, 12, 1, 1)
+    s.block("S", x + 5, 0, 1, 17)
+    s.block("A", x + 6, 14, 4, 3)
+    return 12
+
+
+def signpost(s, x):
+    s.block("S", x + 3, 0, 1, 9)
+    s.block("A", x, 6, 8, 3)
+    s.cut(x + 2, 7, 4, 1)
+    return 10
+
+
+def lantern(s, x):
+    s.block("S", x + 2, 0, 1, 11)
+    s.block("S", x, 11, 5, 1)
+    s.block("A", x + 1, 8, 3, 3)
+    s.cut(x + 2, 9, 1, 1)
+    return 7
+
+
+def bush(s, x):
+    s.block("S", x + 1, 0, 6, 3)
+    s.block("S", x, 1, 8, 2)
+    s.block("S", x + 2, 3, 4, 1)
+    return 10
+
+
+def reed(s, x, hh=9):
+    s.block("S", x, 0, 1, hh)
+    s.block("A", x, hh, 1, 3)
+    s.block("S", x + 2, 0, 1, hh - 3)
+    return 4
+
+
+def duck(s, x):
+    s.block("A", x, 0, 6, 3)
+    s.block("A", x + 4, 3, 3, 3)
+    s.block("A", x + 7, 4, 2, 1)
+    s.cut(x + 5, 4, 1, 1)
+    return 11
+
+
+def lilypad(s, x):
+    s.block("S", x, 0, 4, 1)
+    s.block("A", x + 1, 1, 1, 1)
+    return 7
+
+
+def fence(s, x, n=4):
+    for i in range(n):
+        s.block("S", x + i * 4, 0, 1, 6)
+    s.block("S", x, 4, n * 4 - 3, 1)
+    s.block("S", x, 1, n * 4 - 3, 1)
+    return n * 4 + 1
+
+
+def sword_stone(s, x):
+    s.block("S", x, 0, 8, 4)
+    s.block("S", x + 1, 4, 6, 1)
+    s.block("A", x + 3, 5, 2, 8)
+    s.block("A", x + 1, 8, 6, 1)
+    return 10
+
+
+def grass(s, x):
+    s.block("S", x, 0, 1, 2)
+    s.block("S", x + 2, 0, 1, 3)
+    s.block("S", x + 4, 0, 1, 2)
+    return 6
+
+
+TOP_H, FOOT_H = 23, 22
+TOP = {
+    "town": [(tower, {}), (tree, {}), (house, {}), (tree, {}), (keep, {}), (tree, {}), (tower, {}), (house, {}), (pine, {"hh": 14}), (house, {}), (tree, {})],
+    "ramparts": [(rampart, {"length": 40}), (tower, {"hh": 15}), (rampart, {"length": 28}), (keep, {}), (rampart, {"length": 30}), (tower, {"hh": 12}), (rampart, {"length": 34})],
+    "mountains": [(mountain, {"w": 26, "hh": 17}), (pine, {"hh": 9}), (mountain, {"w": 30, "hh": 21}), (pine, {"hh": 11}), (pine, {"hh": 8}), (mountain, {"w": 22, "hh": 14}), (tower, {"hh": 8}), (mountain, {"w": 28, "hh": 19}), (pine, {"hh": 10})],
+    "camp": [(pine, {"hh": 17}), (pine, {"hh": 13}), (tent, {}), (campfire, {}), (tent, {}), (pine, {"hh": 16}), (pine, {"hh": 12}), (pine, {"hh": 18}), (tent, {}), (campfire, {}), (pine, {"hh": 14})],
+    "windmills": [(windmill, {}), (haystack, {}), (house, {}), (tree, {}), (windmill, {}), (house, {}), (haystack, {}), (tree, {}), (house, {}), (windmill, {})],
+}
+FOOT = {
+    "meadow": [(flower, {"hh": 5}), (grass, {}), (mushroom, {}), (flower, {"hh": 7}), (sheep, {}), (grass, {}), (flower, {"hh": 4}), (mushroom, {}), (bush, {}), (flower, {"hh": 6}), (grass, {}), (sheep, {})],
+    "treasury": [(chest, {}), (barrel, {}), (torch, {}), (barrel, {}), (chest, {}), (sword_stone, {}), (torch, {"hh": 7}), (barrel, {}), (chest, {})],
+    "march": [(knight, {}), (knight, {}), (knight, {}), (signpost, {}), (knight, {}), (knight, {}), (lantern, {}), (knight, {})],
+    "village": [(lantern, {}), (fence, {"n": 5}), (signpost, {}), (bush, {}), (lantern, {}), (fence, {"n": 4}), (barrel, {}), (bush, {}), (signpost, {}), (fence, {"n": 5})],
+    "pond": [(reed, {"hh": 10}), (reed, {"hh": 8}), (duck, {}), (lilypad, {}), (reed, {"hh": 11}), (duck, {}), (lilypad, {}), (lilypad, {}), (reed, {"hh": 9}), (reed, {"hh": 12}), (duck, {})],
+}
+
+
+def build_strip(pieces, h: int, target: int, seed: int) -> Strip:
+    """Place the things left to right with small gaps, and repeat the row until it is about `target` dots wide."""
+    rng = random.Random(seed)
+    s = Strip(h)
+    x = 2
+    while x < target:
+        for fn, kw in pieces:
+            x += fn(s, x, **kw) + rng.randrange(1, 4)
+    return s
+
+
+def strips() -> dict[str, str]:
+    """name -> svg text: pixel-orn/<place>-<name>-s.svg (stone) and -a.svg (highlight colour)."""
+    out: dict[str, str] = {}
+    for place, table, h, target in (("top", TOP, TOP_H, 300), ("foot", FOOT, FOOT_H, 230)):
+        for n, (name, pieces) in enumerate(table.items(), 1):
+            st = build_strip(pieces, h, target, 40 + n + (0 if place == "top" else 20))
+            width = st.width() + 3
+            if name == "mountains":
+                for k, up in ((0, 15), (1, 16)):
+                    dragon_flying(st, 36 + k * 130, up)
+                width = st.width() + 3
+            for layer in ("S", "A"):
+                out[f"{place}-{n}-{layer.lower()}.svg"] = st.svg(layer, width)
+    return out
 
 
 def stone(dark: bool) -> str:
@@ -299,10 +583,15 @@ def main() -> None:
     for name, build in SCENES.items():
         (out / f"{name}.svg").write_text(build().svg(TITLES[name]))
     static = ROOT / "src" / "drollery" / "static"
-    (static / "pixel-skyline.svg").write_text(skyline())
+    orn = static / "pixel-orn"
+    orn.mkdir(exist_ok=True)
+    for old in orn.glob("*.svg"):
+        old.unlink()
+    for name, text in strips().items():
+        (orn / name).write_text(text)
     (static / "pixel-stone-dark.svg").write_text(stone(True))
     (static / "pixel-stone-light.svg").write_text(stone(False))
-    print("wrote", len(SCENES), "scenes, the skyline and two stone tiles")
+    print("wrote", len(SCENES), "scenes,", len(strips()) // 2, "border strips and two stone tiles")
 
 
 if __name__ == "__main__":

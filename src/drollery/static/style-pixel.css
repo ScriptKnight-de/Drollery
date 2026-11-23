@@ -41,9 +41,28 @@
 /* header and footer: a stone slab with a thick dark edge and a bar of highlight colour */
 :root[data-style="pixel"] .top { background: var(--s1); backdrop-filter: none; border-bottom: 4px solid var(--px-ink); box-shadow: inset 0 -4px 0 var(--px-lo), 0 4px 0 var(--ac); }
 :root[data-style="pixel"] .foot-bar { background: var(--s1); backdrop-filter: none; border-top: 4px solid var(--px-ink); box-shadow: inset 0 4px 0 var(--px-hi), 0 -4px 0 var(--ac); }
-:root[data-style="pixel"] .orn { opacity: .9;
-  -webkit-mask-image: url("/static/pixel-skyline.svg"), linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
-  mask-image: url("/static/pixel-skyline.svg"), linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
+/* the ornaments: one of five strips in the header and one of five in the footer (picked when the page is made). Each strip is two
+   masks, stone and the highlight colour, so a banner, a tent, a flame or a duck takes the colour you chose */
+:root[data-style="pixel"] .orn { background: none; opacity: 1; position: relative;
+  --orn-stone: light-dark(#8d939b, #6a707a);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent); mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: 0 0; mask-position: 0 0;
+  -webkit-mask-composite: source-over; mask-composite: add; }
+:root[data-style="pixel"] .orn::before, :root[data-style="pixel"] .orn::after { content: ""; position: absolute; inset: 0;
+  -webkit-mask-image: var(--orn-a); mask-image: var(--orn-a); -webkit-mask-size: auto 100%; mask-size: auto 100%;
+  -webkit-mask-repeat: repeat-x; mask-repeat: repeat-x; -webkit-mask-position: center bottom; mask-position: center bottom; }
+:root[data-style="pixel"] .orn::before { background: var(--orn-stone); -webkit-mask-image: var(--orn-s); mask-image: var(--orn-s); }
+:root[data-style="pixel"] .orn::after { background: var(--ac); }
+:root[data-style="pixel"] .top .orn[data-v="1"] { --orn-s: url("/static/pixel-orn/top-1-s.svg"); --orn-a: url("/static/pixel-orn/top-1-a.svg"); }
+:root[data-style="pixel"] .top .orn[data-v="2"] { --orn-s: url("/static/pixel-orn/top-2-s.svg"); --orn-a: url("/static/pixel-orn/top-2-a.svg"); }
+:root[data-style="pixel"] .top .orn[data-v="3"] { --orn-s: url("/static/pixel-orn/top-3-s.svg"); --orn-a: url("/static/pixel-orn/top-3-a.svg"); }
+:root[data-style="pixel"] .top .orn[data-v="4"] { --orn-s: url("/static/pixel-orn/top-4-s.svg"); --orn-a: url("/static/pixel-orn/top-4-a.svg"); }
+:root[data-style="pixel"] .top .orn[data-v="5"] { --orn-s: url("/static/pixel-orn/top-5-s.svg"); --orn-a: url("/static/pixel-orn/top-5-a.svg"); }
+:root[data-style="pixel"] .foot .orn[data-v="1"] { --orn-s: url("/static/pixel-orn/foot-1-s.svg"); --orn-a: url("/static/pixel-orn/foot-1-a.svg"); }
+:root[data-style="pixel"] .foot .orn[data-v="2"] { --orn-s: url("/static/pixel-orn/foot-2-s.svg"); --orn-a: url("/static/pixel-orn/foot-2-a.svg"); }
+:root[data-style="pixel"] .foot .orn[data-v="3"] { --orn-s: url("/static/pixel-orn/foot-3-s.svg"); --orn-a: url("/static/pixel-orn/foot-3-a.svg"); }
+:root[data-style="pixel"] .foot .orn[data-v="4"] { --orn-s: url("/static/pixel-orn/foot-4-s.svg"); --orn-a: url("/static/pixel-orn/foot-4-a.svg"); }
+:root[data-style="pixel"] .foot .orn[data-v="5"] { --orn-s: url("/static/pixel-orn/foot-5-s.svg"); --orn-a: url("/static/pixel-orn/foot-5-a.svg"); }
 
 /* framed things: a dark outline, a lit and a shaded edge, a hard shadow */
 :root[data-style="pixel"] :is(.btn, .tile, .panel, .pop, .modal, .seg, .modes, .add .field, .drop, .tagfield, .side details, .stage, .previewcard, .note,
