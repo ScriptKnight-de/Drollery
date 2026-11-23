@@ -3,7 +3,7 @@
 All notable changes are listed here. The format follows [Keep a Changelog](https://keepachangelog.com), and the project
 uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions may still change behaviour).
 
-## [Unreleased]
+## [0.10.1] - 2026-11-23
 
 ### Changed
 - **One fixed app icon:** a gold tile with a dark castle, drawn bold so it reads at 16 pixels. It no longer follows the highlight
