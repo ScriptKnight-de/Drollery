@@ -260,6 +260,50 @@ def set_picture(person_id: int, src: Path) -> bool:
         tmp.unlink(missing_ok=True)
 
 
+PICTURE_URL_MAX = 25 * 1024 * 1024                  # a picture link bigger than this is refused
+
+
+def fetch_picture(person_id: int, url: str) -> bool:
+    """Make the picture a link points to the person's picture. The link is checked like every other download (public
+    addresses only, redirects included). Raises PersonError when it cannot be fetched or is not a picture."""
+    import tempfile
+
+    import httpx
+
+    from . import netguard, pipeline, providers
+    url = pipeline._unwrap(url.strip())
+    if not url.startswith(("http://", "https://")):
+        raise PersonError(N_("The picture link must start with http:// or https://"))
+    s = get_settings()
+    s.tmp_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        with tempfile.TemporaryDirectory(dir=s.tmp_dir) as td, netguard.make_client() as client:
+            r = pipeline._get_checked(client, url)
+            try:
+                ctype = r.headers.get("content-type", "").split(";")[0].strip().lower()
+                if r.status_code != 200:
+                    raise PersonError(N_("The picture link could not be fetched"))
+                if not ctype.startswith("image/"):
+                    raise PersonError(N_("That link is not a picture"))
+                raw = Path(td) / "download"
+                size = 0
+                with raw.open("wb") as f:
+                    for chunk in r.iter_bytes():
+                        size += len(chunk)
+                        if size > PICTURE_URL_MAX:
+                            raise PersonError(N_("That picture is too big"))
+                        f.write(chunk)
+            finally:
+                r.close()
+            if not set_picture(person_id, raw):
+                raise PersonError(N_("That is not a picture"))
+    except netguard.BlockedAddress as e:
+        raise PersonError(e.message()) from None
+    except (httpx.HTTPError, providers.ProviderError):
+        raise PersonError(N_("The picture link could not be fetched")) from None
+    return True
+
+
 def note(p: dict) -> str:
     """A few facts that tell two people with the same name apart (shown next to suggestions)."""
     bits = [full_name(p)] if full_name(p) and full_name(p) != p.get("name") else []

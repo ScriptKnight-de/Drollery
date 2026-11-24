@@ -4,6 +4,7 @@
   <label>{{ _("Surname") }} <input name="surname" value="{{ form.surname }}" maxlength="120" autocomplete="off"></label>
 </div>
 <label>{{ _("Picture") }} <input type="file" name="picture" accept="image/*"></label>
+<label>{{ _("Or a picture link") }} <input type="url" name="picture_url" maxlength="2000" placeholder="https://" autocomplete="off"><span class="hint">{{ _("Drollery fetches the picture from this link. A file chosen above is used first") }}</span></label>
 <div class="duo">
   <label>{{ _("Birthday") }} <input type="date" name="birthday" value="{{ form.birthday }}" min="1890-01-01" max="{{ today }}"></label>
   <label>{{ _("Gender") }}

@@ -38,8 +38,11 @@ def _item_exists(item_id: int) -> dict:
     return item
 
 
-async def _save_picture(person_id: int, up: UploadFile | None) -> bool:
-    """Take an uploaded picture for the person; True if there was one and it worked, False if none was sent."""
+async def _save_picture(person_id: int, up: UploadFile | None, url: str = "") -> bool:
+    """Take an uploaded picture (or, without a file, the picture a link points to) for the person; True if there was one
+    and it worked, False if none was sent."""
+    if (up is None or not up.filename) and url.strip():
+        return await asyncio.to_thread(people.fetch_picture, person_id, url)
     if up is None or not up.filename:
         return False
     s = get_settings()
@@ -126,7 +129,7 @@ def search(q: str = ""):
 
 @router.post("/people")
 async def create(request: Request, name: str = Form(""), first_name: str = Form(""), surname: str = Form(""), birthday: str = Form(""),
-                 gender: str = Form(""), link: str = Form(""), item: int = Form(0), picture: UploadFile | None = File(default=None)):
+                 gender: str = Form(""), link: str = Form(""), item: int = Form(0), picture: UploadFile | None = File(default=None), picture_url: str = Form("")):
     form = _form(name=name, first_name=first_name, surname=surname, birthday=birthday, gender=gender, link=link)
     if item > 0:
         _item_exists(item)
@@ -135,7 +138,7 @@ async def create(request: Request, name: str = Form(""), first_name: str = Form(
         with db.tx() as c:
             pid = people.create(c, data)
         try:
-            if await _save_picture(pid, picture):
+            if await _save_picture(pid, picture, picture_url):
                 with db.tx() as c:
                     c.execute("UPDATE people SET has_picture=1 WHERE id=?", (pid,))
         except people.PersonError:
@@ -193,11 +196,11 @@ def person_page(request: Request, person_id: int):
 
 @router.post("/people/{person_id}")
 async def save(request: Request, person_id: int, name: str = Form(""), first_name: str = Form(""), surname: str = Form(""), birthday: str = Form(""),
-               gender: str = Form(""), link: str = Form(""), remove_picture: str = Form(""), picture: UploadFile | None = File(default=None)):
+               gender: str = Form(""), link: str = Form(""), remove_picture: str = Form(""), picture: UploadFile | None = File(default=None), picture_url: str = Form("")):
     p = _person(person_id)
     try:
         data = people.clean(name, birthday, gender, link, first_name, surname)
-        got = await _save_picture(person_id, picture)
+        got = await _save_picture(person_id, picture, picture_url)
     except people.PersonError as e:
         return flash_redirect(f"/people/{person_id}", t(str(e)), "error")
     with db.tx() as c:

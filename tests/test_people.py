@@ -364,3 +364,45 @@ def test_an_older_database_gets_the_new_name_columns_and_keeps_its_people(client
         row = c.execute("SELECT name, first_name, surname FROM people WHERE name='Old Timer'").fetchone()
     assert {"first_name", "surname"} <= cols and (row["first_name"], row["surname"]) == ("", "")
     assert client.get(f"/people/{pid_of('Old Timer')}").status_code == 200
+
+
+# ------------------------------------------------------------- a picture from a link
+
+def _fake_web(monkeypatch, body, ctype="image/png", status=200):
+    import httpx
+
+    from drollery import netguard
+
+    monkeypatch.setattr(netguard, "_resolve", lambda host: ["93.184.216.34"])
+    monkeypatch.setattr(netguard, "make_client", lambda: httpx.Client(transport=httpx.MockTransport(lambda req: httpx.Response(status, content=body, headers={"content-type": ctype}))))
+
+
+def test_a_picture_is_taken_from_a_link(client, monkeypatch):
+    _fake_web(monkeypatch, two_color_png(120, 60))
+    r = client.post("/people", data={"name": "Ada", "picture_url": "https://pics.example/ada.png"})
+    assert r.status_code == 200 and "Ada added" in r.text
+    with db.tx() as c:
+        assert people.get(c, pid_of("Ada"))["has_picture"] == 1
+    assert client.get(f"/people/{pid_of('Ada')}/picture").status_code == 200
+
+
+def test_a_picture_link_can_replace_the_picture_of_an_existing_person(client, monkeypatch):
+    client.post("/people", data={"name": "Ada"})
+    pid = pid_of("Ada")
+    _fake_web(monkeypatch, two_color_png())
+    client.post(f"/people/{pid}", data={"name": "Ada", "picture_url": "https://pics.example/a.png"})
+    assert client.get(f"/people/{pid}/picture").status_code == 200
+
+
+def test_a_picture_link_that_is_no_picture_or_private_leaves_no_half_made_person(client, monkeypatch):
+    _fake_web(monkeypatch, b"<html></html>", ctype="text/html")
+    r = client.post("/people", data={"name": "Ghost", "picture_url": "https://pics.example/page"})
+    assert r.status_code == 422 and "not a picture" in r.text
+    _fake_web(monkeypatch, b"", status=404)
+    assert client.post("/people", data={"name": "Ghost", "picture_url": "https://pics.example/x.png"}).status_code == 422
+    from drollery import netguard
+    monkeypatch.setattr(netguard, "_resolve", lambda host: ["10.0.0.5"])
+    assert client.post("/people", data={"name": "Ghost", "picture_url": "http://intranet.example/x.png"}).status_code == 422
+    assert client.post("/people", data={"name": "Ghost", "picture_url": "ftp://x/y.png"}).status_code == 422
+    with db.tx() as c:
+        assert c.execute("SELECT COUNT(*) FROM people WHERE name='Ghost'").fetchone()[0] == 0
