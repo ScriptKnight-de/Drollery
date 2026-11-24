@@ -78,3 +78,19 @@ def test_the_default_size_limit_is_two_gigabytes():
     from drollery.config import Settings
     assert Settings().max_upload_mb == 2048
     assert "max_upload_mb = 2048" in (ROOT / "src" / "drollery" / "config.default.toml").read_text()
+
+
+def test_a_closed_dialog_can_never_cover_the_page():
+    """0.15.0 gave the zoom window the class "zoom", which the card editor's slider already used with display: grid; that made
+    the closed window a full-screen invisible layer over the whole page. Every dialog in the page frame has a class of its
+    own and a rule that hides it while closed."""
+    css = (STATIC / "style.css").read_text()
+    base = (ROOT / "src" / "drollery" / "templates" / "base.html").read_text()
+    assert 'id="zoom-dialog" class="bigview"' in base and ".bigview:not([open]) { display: none; }" in css
+    for cls in re.findall(r'<dialog[^>]*class="([^" ]+)', base):
+        rules = re.findall(r"(?m)^([^{}\n]*(?<![\w-])" + re.escape(cls) + r"(?![\w-])[^{}\n]*)\{([^}]*)\}", css)
+        shown = [sel for sel, body in rules if "display" in body and "[open]" not in sel and ":not([open])" not in sel
+                 and re.search(r"(?<![\w-])" + re.escape(cls) + r"(?![\w-])", sel.split()[-1])]       # a rule for the dialog itself, not for something inside it
+        assert not shown, f"the closed dialog .{cls} would be shown by: {shown}"
+    template_classes = set(re.findall(r'class="([^"]*)"', (ROOT / "src" / "drollery" / "templates" / "item_card.html").read_text()))
+    assert "bigview" not in " ".join(template_classes)

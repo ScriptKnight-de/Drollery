@@ -6,7 +6,7 @@
 (function () {
   var dlg = document.getElementById("zoom-dialog");
   if (!dlg || !dlg.showModal) return;
-  var stage = dlg.querySelector(".zoom-stage"), moved = null;
+  var stage = dlg.querySelector(".bigview-stage"), moved = null;
 
   function open(node) {
     stage.textContent = "";
@@ -19,7 +19,7 @@
     if (e.defaultPrevented) return;
     var close = e.target.closest("[data-zoom-close]");
     if (close) { dlg.close(); return; }
-    var full = e.target.closest(".zoom-stage img");
+    var full = e.target.closest(".bigview-stage img");
     if (full) { full.classList.toggle("full"); return; }
     var img = e.target.closest(".frame img");
     if (img) {

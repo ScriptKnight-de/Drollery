@@ -6,6 +6,7 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 ## [Unreleased]
 
 ### Fixed
+- 0.15.0 made every button and field unclickable: the new, closed zoom window took the class name `zoom`, which the card editor's slider already used with `display: grid`, so the empty window covered the whole page. It has its own class now and a rule that hides it while closed, and a test checks that no dialog in the page frame can be shown by a rule meant for something else. The card editor's slider is back to its normal size.
 - The note under a film player that the browser cannot play now also shows when the browser refuses the file outright ("Media resource could not be decoded"), not only when it plays the sound without a picture.
 
 ## [0.15.0] - 2026-11-24

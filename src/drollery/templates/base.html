@@ -81,9 +81,9 @@
 {% if flash %}<div class="note {{ flash.kind }}" role="status"><span>{{ flash.text }}</span>{% if undo_token %} <form method="post" action="/undo/{{ undo_token }}" class="inline" data-undo><button class="btn small" type="submit">{{ _("Undo") }}</button></form>{% endif %}</div>{% endif %}
 {% block content %}{% endblock %}
 </main>
-<dialog id="zoom-dialog" class="zoom" closedby="any" aria-label="{{ _('Bigger view') }}">
-  <div class="zoom-bar"><button type="button" class="btn small" data-zoom-close>{{ icon("x") }}{{ _("Close") }}</button></div>
-  <div class="zoom-stage"></div>
+<dialog id="zoom-dialog" class="bigview" closedby="any" aria-label="{{ _('Bigger view') }}">
+  <div class="bigview-bar"><button type="button" class="btn small" data-zoom-close>{{ icon("x") }}{{ _("Close") }}</button></div>
+  <div class="bigview-stage"></div>
 </dialog>
 <dialog id="confirm-dialog" class="modal confirm" closedby="any" aria-labelledby="cf-title">
   <div class="modal-head"><h2 id="cf-title">{{ _("Are you sure?") }}</h2></div>
