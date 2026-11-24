@@ -646,7 +646,7 @@ form.uploading { opacity: .55; pointer-events: none; }
 @media (prefers-reduced-motion: reduce) { .busy-spin { animation: none; border-top-color: var(--s2); border-right-color: var(--ac); } }
 
 /* the unified upload zone */
-.uploader { display: grid; gap: 12px; margin-bottom: 16px; }
+.uploader { display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; margin-bottom: 16px; }
 .uploader .uz { display: flex; align-items: center; justify-content: center; gap: 12px; min-height: 96px; padding: 20px; text-align: center; cursor: pointer; }
 .uploader .uz.over { border-color: var(--ac); background: color-mix(in srgb, var(--ac) 14%, var(--s1)); }
 .uploader .uz.picked { min-height: 64px; opacity: .85; }
@@ -769,3 +769,8 @@ p, li, .muted { text-wrap: pretty; }
 @media (prefers-reduced-motion: reduce) { .upload-panel.waiting .up-fill { animation: none; margin-left: 0; width: 100% !important; opacity: .5; } }
 .assign-auto { border: 2px dashed var(--ln); border-radius: 14px; padding: 10px 14px; display: grid; gap: 6px; }
 .assign-auto legend { padding: 0 6px; font-weight: 600; font-size: 14px; }
+
+/* a long link or error text (a whole address has no place to break) wraps inside the drop zone instead of pushing it wider */
+.uploader > *, .uz-panel, .uz-sum, .upload-panel, .upload-panel > * { min-width: 0; }
+.upload-panel .up-detail, .upload-panel .up-title, .uz-sum b, .uz-note { overflow-wrap: anywhere; }
+.upload-panel.inline .up-title { white-space: normal; }

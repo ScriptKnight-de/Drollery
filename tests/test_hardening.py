@@ -94,3 +94,9 @@ def test_a_closed_dialog_can_never_cover_the_page():
         assert not shown, f"the closed dialog .{cls} would be shown by: {shown}"
     template_classes = set(re.findall(r'class="([^"]*)"', (ROOT / "src" / "drollery" / "templates" / "item_card.html").read_text()))
     assert "bigview" not in " ".join(template_classes)
+
+
+def test_a_long_link_or_error_text_cannot_push_the_drop_zone_wider():
+    css = (STATIC / "style.css").read_text()
+    assert re.search(r"\.uploader \{[^}]*grid-template-columns: minmax\(0, 1fr\)", css)                # a grid column may shrink below its content
+    assert re.search(r"\.upload-panel \.up-detail[^{]*\{ overflow-wrap: anywhere", css)

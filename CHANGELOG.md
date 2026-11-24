@@ -5,6 +5,9 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+### Fixed
+- A long link, or a long error message with a link in it, no longer pushes the progress bar and the link line out of the drop zone on the library page. The text wraps inside it.
+
 ## [0.17.1] - 2026-11-24
 
 ### Fixed
