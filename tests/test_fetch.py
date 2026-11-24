@@ -122,3 +122,64 @@ def test_a_real_sound_link_is_still_saved_as_a_sound(client, monkeypatch, tmp_pa
     pipeline.job_fetch(fetch_job("https://example.org/song"))
     with db.tx() as c:
         assert [r["kind"] for r in db.search(c, "")] == ["audio"]
+
+
+# ------------------------------------------------ links that wrap another address, and links that can never work
+
+@pytest.mark.parametrize("wrapped, real", [
+    ("https://www.google.com/imgres?q=bananen&imgurl=https%3A%2F%2Fexample.org%2Fwp-content%2Fbanana.webp&imgrefurl=https%3A%2F%2Fexample.org%2Fbanane%2F&w=999",
+     "https://example.org/wp-content/banana.webp"),
+    ("https://www.google.de/url?sa=t&url=https%3A%2F%2Fexample.org%2Fclip.mp4&usg=x", "https://example.org/clip.mp4"),
+    ("https://www.bing.com/images/search?q=x&mediaurl=https%3A%2F%2Fexample.org%2Fa.png&exph=1", "https://example.org/a.png"),
+    ("https://www.google.com/search?q=cats", "https://www.google.com/search?q=cats"),                 # not a wrapper: left alone
+    ("https://www.google.com/imgres?q=x&imgurl=javascript%3Aalert(1)", "https://www.google.com/imgres?q=x&imgurl=javascript%3Aalert(1)"),
+    ("https://example.org/watch?v=1", "https://example.org/watch?v=1"),
+])
+def test_wrapping_links_hand_over_the_address_they_point_to(wrapped, real):
+    assert pipeline._unwrap(wrapped) == real
+
+
+def test_a_google_images_link_is_fetched_as_the_picture(client, monkeypatch):
+    got = []
+    monkeypatch.setattr(pipeline, "_direct_download", lambda url, td: got.append(url) or [])
+    monkeypatch.setattr(pipeline, "_run_tool", lambda cmd, timeout: got.append(cmd[-1]) or subprocess.CompletedProcess(cmd, 1, "", "ERROR"))
+    link = "https://www.google.com/imgres?q=b&imgurl=https%3A%2F%2Fexample.org%2Fb.webp&imgrefurl=https%3A%2F%2Fexample.org%2F"
+    with pytest.raises(providers.ProviderError):
+        pipeline.job_fetch(fetch_job(link))
+    assert got[0] == "https://example.org/b.webp"
+
+
+def test_a_youtube_search_page_is_refused_at_once_without_starting_a_download(client, monkeypatch):
+    started = []
+    monkeypatch.setattr(pipeline, "_run_tool", lambda cmd, timeout: started.append(cmd))
+    with pytest.raises(pipeline.FetchError, match="search results page"):
+        pipeline.job_fetch(fetch_job("https://www.youtube.com/results?search_query=big+push+konzert"))
+    assert started == []
+
+
+def test_a_playlist_link_never_downloads_more_than_the_file_limit(client, monkeypatch, tmp_path):
+    seen = []
+    fake_downloader(monkeypatch, {"Clip [abc].mp4": make_video(tmp_path, "x.mp4")}, seen)
+    pipeline.job_fetch(fetch_job())
+    cmd = seen[0]
+    assert cmd[cmd.index("--playlist-items") + 1] == "1-4"
+
+
+def test_a_timeout_and_an_unsupported_page_fail_once_with_a_plain_message(client, monkeypatch):
+    monkeypatch.setattr(pipeline, "_direct_download", lambda url, td: [])
+
+    def slow(cmd, timeout):
+        raise subprocess.TimeoutExpired(cmd, timeout)
+
+    monkeypatch.setattr(pipeline, "_run_tool", slow)
+    with pytest.raises(pipeline.FetchError, match="longer than fetch_timeout"):
+        pipeline.job_fetch(fetch_job("https://example.org/long"))
+    monkeypatch.setattr(pipeline, "_run_tool", lambda cmd, timeout: subprocess.CompletedProcess(cmd, 1, "", "ERROR: Unsupported URL"))
+    with pytest.raises(pipeline.FetchError, match="nothing downloadable"):
+        pipeline.job_fetch(fetch_job("https://example.org/page"))
+    with db.tx() as c:
+        job = db.enqueue(c, "fetch", None, json.dumps({"url": "https://example.org/page"}))
+        row = dict(c.execute("SELECT * FROM jobs WHERE id=?", (job,)).fetchone())
+    pipeline.run_job(row)
+    with db.tx() as c:
+        assert c.execute("SELECT status FROM jobs WHERE id=?", (job,)).fetchone()["status"] == "failed"      # no second and third try

@@ -10,7 +10,7 @@ import tempfile
 import threading
 import time
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 import httpx
 
@@ -414,8 +414,38 @@ def job_fetch(job: dict) -> None:
     _running.job_id = job.get("id")
     try:
         _fetch(job)
+    except subprocess.TimeoutExpired:
+        raise FetchError(f"the download took longer than fetch_timeout ({get_settings().fetch_timeout} s) and was stopped. "
+                         "Raise fetch_timeout in config.toml for a big file or a slow site") from None
     finally:
         _running.job_id = None
+
+
+class FetchError(providers.ProviderError):
+    """A link that cannot work however often it is tried (not a page with media, a search page, a timeout): it fails at once."""
+    final = True
+
+
+def _unwrap(url: str) -> str:
+    """Links that only wrap the real address: a Google Images result (…/imgres?imgurl=…) and Google's and Bing's redirect
+    links hand over the picture or page they point to. Anything else stays as it is."""
+    p = urlparse(url)
+    host, query = (p.hostname or "").lower(), parse_qs(p.query)
+    found = ""
+    if re.fullmatch(r"(www\.)?google\.[a-z.]{2,6}", host):
+        if p.path == "/imgres":
+            found = (query.get("imgurl") or [""])[0]
+        elif p.path == "/url":
+            found = next((v[0] for k, v in query.items() if k in ("url", "q") and v and v[0].startswith(("http://", "https://"))), "")
+    elif host.endswith("bing.com") and p.path.startswith("/images/search"):
+        found = (query.get("mediaurl") or [""])[0]
+    return found if found.startswith(("http://", "https://")) else url
+
+
+def _refuse_search_page(url: str) -> None:
+    p = urlparse(url)
+    if (p.hostname or "").lower().removeprefix("www.").removeprefix("m.") == "youtube.com" and p.path.startswith("/results"):
+        raise FetchError("this link is a search results page, not a video. Open the video you want and paste its own link")
 
 
 def _fetch(job: dict) -> None:
@@ -424,7 +454,9 @@ def _fetch(job: dict) -> None:
     payload = json.loads(job["payload"])
     url, clip = payload["url"], payload.get("clip") or {}
     if urlparse(url).scheme not in ("http", "https"):
-        raise providers.ProviderError("only http(s) URLs are supported")
+        raise FetchError("only http(s) URLs are supported")
+    url = _unwrap(url)                                # a Google Images result is fetched as the picture it points to
+    _refuse_search_page(url)
     netguard.check_url(url)                           # also here: a job may have been queued before the check existed, or the address may have changed
     with tempfile.TemporaryDirectory(dir=s.tmp_dir) as tds:
         td = Path(tds)
@@ -437,7 +469,7 @@ def _fetch(job: dict) -> None:
             # ranking, so with the resolution first a 1080p HEVC stream (TikTok offers one) beat a lower-resolution H.264 one, and
             # Firefox on Linux then said "no video with supported format and MIME type found".
             r = _run_tool(["yt-dlp", "--no-playlist", "--no-warnings", "--write-info-json",
-                           "--newline", "-S", "vcodec:h264,res:1080,acodec:aac", "--merge-output-format", "mp4",
+                           "--newline", "--playlist-items", f"1-{max(s.fetch_max_files, 1)}", "-S", "vcodec:h264,res:1080,acodec:aac", "--merge-output-format", "mp4",
                            "--max-filesize", f"{s.max_upload_mb}M",
                            "-o", str(td / "%(title).80B [%(id)s].%(ext)s"), url], s.fetch_timeout)
             err1 = r.stderr.strip()[-1500:]
@@ -457,7 +489,7 @@ def _fetch(job: dict) -> None:
                                "--filesize-max", f"{s.max_upload_mb}M", url], s.fetch_timeout)
                 files = sorted(gdir.iterdir()) if gdir.exists() else []
                 if not files:
-                    raise providers.ProviderError(
+                    raise FetchError(
                         f"nothing downloadable found. yt-dlp: {err1 or '-'} | gallery-dl: {r.stderr.strip()[-1500:] or '-'}")
         imported, skipped = 0, []
         for f in files[: s.fetch_max_files]:

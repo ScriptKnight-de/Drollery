@@ -5,6 +5,11 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+### Fixed
+- A Google Images result link (`google.com/imgres?…`) is now fetched as the picture it points to, and so are Google's and Bing's redirect and image-result links. They failed with "Unsupported URL" before.
+- A YouTube search results link used to be taken as a playlist and downloaded video after video until the time limit. It is now refused at once with "this link is a search results page, not a video", and a playlist link takes at most `fetch_max_files` videos (4 by default).
+- A download that hits `fetch_timeout`, and a link nothing can be downloaded from, now fail once with a plain message instead of a raw error and two more pointless tries.
+
 ## [0.17.0] - 2026-11-24
 
 ### Added
