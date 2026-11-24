@@ -5,6 +5,8 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+## [0.14.2] - 2026-11-24
+
 ### Fixed
 - A link to a video bigger than `max_upload_mb` no longer ends up as a sound in the library. The downloader skips the too-big video but still fetches its small audio stream, and that used to be saved without a word. The job now fails with "the video is larger than the limit of N MB" and nothing is saved.
 
