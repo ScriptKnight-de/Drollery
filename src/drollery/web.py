@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import random
+import re
 import tempfile
 from pathlib import Path
 from urllib.parse import quote, unquote
@@ -42,6 +43,7 @@ def security_headers(nonce: str) -> dict[str, str]:
 IMAGE_HEADERS = {"Cache-Control": "private, max-age=86400", "X-Content-Type-Options": "nosniff"}
 templates = Jinja2Templates(directory=BASE / "templates")
 FLASH = "drollery_flash"
+UNDO = "drollery_undo"
 PAGE = 40                       # tiles per page of the library (and of a person's items)
 
 
@@ -120,10 +122,13 @@ def orn_row(cells: int = 450) -> list[dict]:
 templates.env.globals.update({"asset_v": __version__, "orn_row": orn_row, "orn_sheet": _ORN["width"], "_": i18n.t, "job_type": _job_type, "kind_label": _kind_label, "_n": i18n.tn, "lang": i18n.current, "available_languages": i18n.languages, "flag_of": i18n.flag, "subtype_names": _SUBTYPES})
 
 
-def flash_redirect(url: str, text: str, kind: str = "ok") -> RedirectResponse:
-    """Redirect and show a one-time message on the next page. kind: ok | error."""
+def flash_redirect(url: str, text: str, kind: str = "ok", undo: str = "") -> RedirectResponse:
+    """Redirect and show a one-time message on the next page. kind: ok | error. `undo` is a trash token: the message then
+    carries an Undo button (see trash.py)."""
     resp = RedirectResponse(url, status_code=303)
     resp.set_cookie(FLASH, quote(f"{kind}|{i18n.t(text)}"), max_age=60, httponly=True, samesite="lax")
+    if undo:
+        resp.set_cookie(UNDO, undo, max_age=60, httponly=True, samesite="lax")
     return resp
 
 
@@ -142,11 +147,13 @@ def render(request: Request, name: str, status_code: int = 200, **ctx):
     if raw:
         kind, _, text = unquote(raw).partition("|")
         flash = {"kind": kind if kind in ("ok", "error") else "ok", "text": text}
-    base = {"embed": embed, "user": getattr(request.state, "user", None), "flash": flash, "impressum_live": accounts.impressum()[1], "privacy_live": accounts.privacy()[1], "metadata_lookup": get_settings().metadata_lookup, "max_upload_mb": get_settings().max_upload_mb, "max_movie_mb": get_settings().max_movie_mb,
+    undo = request.cookies.get(UNDO, "") if raw else ""
+    base = {"embed": embed, "undo_token": undo if re.fullmatch(r"[A-Za-z0-9_-]{16}", undo) else "", "user": getattr(request.state, "user", None), "flash": flash, "impressum_live": accounts.impressum()[1], "privacy_live": accounts.privacy()[1], "metadata_lookup": get_settings().metadata_lookup, "max_upload_mb": get_settings().max_upload_mb, "max_movie_mb": get_settings().max_movie_mb,
             "providers": {cap: aisettings.enabled(cap) for cap in aisettings.CAPS}}
     resp = templates.TemplateResponse(request, name, {**base, **ctx}, status_code=status_code)
     if raw:
         resp.delete_cookie(FLASH)
+        resp.delete_cookie(UNDO)
     return resp
 
 

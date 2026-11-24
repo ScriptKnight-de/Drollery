@@ -159,8 +159,8 @@
     if (action === "delete") {
       closeParams();
       form.elements.action.value = "delete";
-      form.dataset.confirm = selected.size === 1 ? bar.dataset.deleteOne : fill(bar.dataset.deleteMany, { n: selected.size });
-      form.requestSubmit();                                              // the page's own confirmation window asks first
+      delete form.dataset.confirm;                                       // no question: the message afterwards has an Undo button
+      form.requestSubmit();
       return;
     }
     delete form.dataset.confirm;

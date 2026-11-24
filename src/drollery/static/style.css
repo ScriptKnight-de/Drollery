@@ -740,3 +740,6 @@ p, li, .muted { text-wrap: pretty; }
   .chip::before { content: ""; position: absolute; inset: -9px; }
   .modes button { min-height: 44px; }
 }
+
+.note:has(form[data-undo]) { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.note form[data-undo] { margin: 0; }

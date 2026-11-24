@@ -17,7 +17,7 @@ from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse, Red
 from fastapi.staticfiles import StaticFiles
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import __version__, accounts, albums, autobackup, db, i18n, media, movies, netguard, people, pipeline, shares
+from . import __version__, accounts, albums, autobackup, db, i18n, media, movies, netguard, people, pipeline, shares, trash
 from .config import get_settings
 from .deps import LoginRequired, SetupRequired, api_auth, item_or_404, web_auth
 from .upload_redirect import UploadRedirects
@@ -95,6 +95,7 @@ def _announce_setup() -> None:
 async def lifespan(app: FastAPI):
     s = get_settings()
     db.init()
+    trash.purge_old(everything=True)                       # a restart forgets the timers: nothing deleted stays around
     for old in s.tmp_dir.iterdir():
         shutil.rmtree(old, ignore_errors=True) if old.is_dir() else old.unlink(missing_ok=True)
     if accounts.user_count() == 0:
@@ -535,10 +536,10 @@ def items_bulk(ids: str = Form(""), action: str = Form(""), tags: str = Form("")
             elif action == "ai":
                 if i not in busy and pipeline.plan_jobs(c, i, step if step in ("transcribe", "describe") else ""):
                     done += 1
+    undo = ""
     if action == "delete":                                                # the files go outside the transaction, like a single delete
-        for item in doomed:
-            _delete_item(item)
-            done += 1
+        undo = trash.delete(doomed) if doomed else ""
+        done += len(doomed)
     gone = len(wanted) - len(found)
     text = {
         "tag_add": lambda: tn("Tags added to {n} item", "Tags added to {n} items", done),
@@ -551,7 +552,15 @@ def items_bulk(ids: str = Form(""), action: str = Form(""), tags: str = Form("")
     }[action]()
     if gone:
         text += ". " + tn("{n} item was not found", "{n} items were not found", gone)
-    return flash_redirect(back, text)
+    return flash_redirect(back, text, undo=undo)
+
+
+@app.post("/undo/{token}", dependencies=[Depends(web_auth)])
+def undo_delete(token: str):
+    n = trash.restore(token)
+    if not n:
+        return flash_redirect("/", t("Too late: this can no longer be undone"), "error")
+    return flash_redirect("/", tn("Brought back {n} item", "Brought back {n} items", n))
 
 
 @app.post("/items/{item_id}/edit", dependencies=[Depends(web_auth)])
@@ -600,8 +609,8 @@ def item_reprocess(item_id: int, step: str = Form("")):
 
 @app.post("/items/{item_id}/delete", dependencies=[Depends(web_auth)])
 def item_delete(item_id: int):
-    _delete_item(item_or_404(item_id))
-    return RedirectResponse("/", status_code=303)
+    token = trash.delete([item_or_404(item_id)])             # kept for a minute: the message after it has an Undo button
+    return flash_redirect("/", t("Item deleted"), undo=token)
 
 
 @app.get("/jobs", dependencies=[Depends(web_auth)])

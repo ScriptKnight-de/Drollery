@@ -5,6 +5,12 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+### Added
+- Deleting an item (one, or several from the selection) can be undone for a minute: the message afterwards has an Undo button, and the question "are you sure?" is gone. The item, its tags, people, shares and files are kept in a short-lived trash folder and deleted for good after the minute (and at every start). The API's DELETE is still immediate.
+
+### Changed
+- The optional Whisper server image is pinned to `0.8.3-cpu` (what `latest-cpu` was) instead of following `latest-cpu`.
+
 ## [0.13.0] - 2026-11-23
 
 ### Added

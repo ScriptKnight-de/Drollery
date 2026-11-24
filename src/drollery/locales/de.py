@@ -138,7 +138,10 @@ MESSAGES = {
     "Only transcribe": "Nur transkribieren",
     "Only describe": "Nur beschreiben",
     "No AI providers are enabled. See {file} in the data volume.": "Es ist kein KI-Anbieter aktiviert. Siehe {file} im Datenvolume.",
-    "Feed this item to the dragon? It cannot be undone.": "Diesen Eintrag dem Drachen zum Fraß vorwerfen? Das lässt sich nicht rückgängig machen.",
+    "Item deleted": "Eintrag gelöscht",
+    "Undo": "Rückgängig",
+    "Too late: this can no longer be undone": "Zu spät: Das lässt sich nicht mehr rückgängig machen",
+    "Brought back {n} item": ("{n} Eintrag zurückgeholt", "{n} Einträge zurückgeholt"),
     "Delete": "Löschen",
 
     # ---- card image editor
@@ -316,8 +319,6 @@ MESSAGES = {
     "Selection": "Auswahl",
     "{n} selected": "{n} ausgewählt",
     "{n} selected, {m} shown": "{n} ausgewählt, {m} sichtbar",
-    "Delete the selected item? It cannot be brought back.": "Den ausgewählten Eintrag löschen? Er lässt sich nicht zurückholen.",
-    "Delete the {n} selected items? They cannot be brought back.": "Die {n} ausgewählten Einträge löschen? Sie lassen sich nicht zurückholen.",
     "Select all loaded": "Alle geladenen auswählen",
     "Clear selection": "Auswahl aufheben",
     "Add tags": "Tags hinzufügen",

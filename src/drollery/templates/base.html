@@ -26,6 +26,7 @@
   <script type="application/json" id="busy-text">{{ {"loading": _("Loading…"), "hint": _("This can take a few seconds"), "slow": _("Still working. The service is slow right now"), "sec": _("{n} s")}|tojson }}</script>
   <script src="/static/busy.js?v={{ asset_v }}" defer></script>
   <script src="/static/once.js?v={{ asset_v }}" defer></script>
+  <script src="/static/undo.js?v={{ asset_v }}" defer></script>
 </head>
 <body{% if embed %} class="embed"{% endif %}>
 {% macro orn() %}<div class="orn" style="--sw: {{ orn_sheet }}" aria-hidden="true">{% for p in orn_row() %}<i class="pc" style="--x: {{ p.x }}; --w: {{ p.w }}; --g: {{ p.g }}"></i>{% endfor %}</div>{% endmacro %}
@@ -76,7 +77,7 @@
   </div>
 </header>
 <main>
-{% if flash %}<p class="note {{ flash.kind }}" role="status">{{ flash.text }}</p>{% endif %}
+{% if flash %}<div class="note {{ flash.kind }}" role="status"><span>{{ flash.text }}</span>{% if undo_token %} <form method="post" action="/undo/{{ undo_token }}" class="inline" data-undo><button class="btn small" type="submit">{{ _("Undo") }}</button></form>{% endif %}</div>{% endif %}
 {% block content %}{% endblock %}
 </main>
 <dialog id="confirm-dialog" class="modal confirm" closedby="any" aria-labelledby="cf-title">

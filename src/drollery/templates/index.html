@@ -46,9 +46,7 @@
 <section id="grid" class="grid">{% include "grid.html" %}</section>
 
 <div id="bulkbar" class="bulkbar" role="region" aria-label="{{ _('Selection') }}" hidden
-     data-count="{{ _('{n} selected', n='{n}') }}" data-shown="{{ _('{n} selected, {m} shown', n='{n}', m='{m}') }}"
-     data-delete-one="{{ _('Delete the selected item? It cannot be brought back.') }}"
-     data-delete-many="{{ _('Delete the {n} selected items? They cannot be brought back.', n='{n}') }}">
+     data-count="{{ _('{n} selected', n='{n}') }}" data-shown="{{ _('{n} selected, {m} shown', n='{n}', m='{m}') }}">
   <form id="bulk-form" method="post" action="/items/bulk">
     <input type="hidden" name="ids"><input type="hidden" name="next"><input type="hidden" name="action">
     <div class="bulk-row">

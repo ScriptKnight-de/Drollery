@@ -246,11 +246,10 @@ def test_the_actions_share_one_toolbar_and_the_jobs_dot_shows_the_state(client, 
         assert states(client.get(f"/items/{image_id}").text) == [want], status
 
 
-def test_deleting_asks_in_the_app_not_in_the_browser(client, image_id):
+def test_deleting_an_item_asks_nothing_and_offers_undo_instead(client, image_id):
     page = client.get(f"/items/{image_id}").text
     form = page.split(f'action="/items/{image_id}/delete"')[1].split(">")[0]
-    assert "data-confirm=" in form and "onsubmit" not in form
-    assert 'id="confirm-dialog"' in page
+    assert "data-confirm=" not in form and "onsubmit" not in form
 
 
 # ----------------------------------------------- the card image is the preview of a clip
