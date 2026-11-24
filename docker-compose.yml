@@ -11,6 +11,12 @@ services:
     # Nothing in Drollery needs extra privileges: no Linux capabilities, and no way to gain any later.
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
+    # The container's own files cannot be changed while it runs: everything Drollery writes goes to the /data volume (the home
+    # and cache folders and the temporary folder are in it, TMPDIR sends big uploads there instead of into RAM). /tmp is a small
+    # memory disk for the odd tool that insists on it.
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m
     ports:
       # DROLLERY_BIND=127.0.0.1 in .env keeps it off the network when a reverse proxy on the same machine is the only way in
       - "${DROLLERY_BIND:-0.0.0.0}:${DROLLERY_PORT:-8080}:8080"
@@ -19,6 +25,7 @@ services:
         required: false
     environment:
       DROLLERY_DATA: /data
+      TMPDIR: /data/tmp
     volumes:
       - drollery-data:/data
     extra_hosts:

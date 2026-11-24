@@ -5,6 +5,9 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+### Changed
+- The Drollery container now runs with a read-only file system (`read_only: true`). Everything it writes goes to the `/data` volume, and `/tmp` is a small memory disk. Big uploads are spooled into `/data/tmp` (`TMPDIR`) instead of RAM.
+
 ## [0.14.0] - 2026-11-24
 
 ### Added

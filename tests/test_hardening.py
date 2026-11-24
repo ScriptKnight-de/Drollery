@@ -56,3 +56,11 @@ def test_the_playful_theme_no_longer_wiggles_the_menu_on_every_hover():
 def test_the_compose_file_drops_capabilities_and_can_bind_to_one_address():
     compose = (ROOT / "docker-compose.yml").read_text()
     assert "cap_drop: [ALL]" in compose and "no-new-privileges:true" in compose and "${DROLLERY_BIND:-0.0.0.0}" in compose
+
+
+def test_the_compose_file_makes_the_container_read_only_with_every_write_going_to_the_data_volume():
+    compose = (ROOT / "docker-compose.yml").read_text()
+    drollery = compose.split("  # ---- Optional local speech-to-text")[0]
+    assert "read_only: true" in drollery and "- /tmp:size=" in drollery and "TMPDIR: /data/tmp" in drollery
+    dockerfile = (ROOT / "Dockerfile").read_text()
+    assert "HOME=/data/.home" in dockerfile and "XDG_CACHE_HOME=/data/.cache" in dockerfile      # what read_only relies on
