@@ -5,6 +5,8 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+## [0.14.0] - 2026-11-24
+
 ### Added
 - Deleting an item (one, or several from the selection) can be undone for a minute: the message afterwards has an Undo button, and the question "are you sure?" is gone. The item, its tags, people, shares and files are kept in a short-lived trash folder and deleted for good after the minute (and at every start). The API's DELETE is still immediate.
 
