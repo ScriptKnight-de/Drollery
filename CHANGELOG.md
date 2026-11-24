@@ -5,6 +5,9 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+### Changed
+- When a link download is finished you stay on the library page: the grid refreshes, the new card is marked for a moment and scrolled into view, and the progress bar says "Added to the library" with an Open button. Before, you were sent to the page of the new item. Uploading a single file from your computer still opens its page.
+
 ## [0.17.2] - 2026-11-24
 
 ### Changed

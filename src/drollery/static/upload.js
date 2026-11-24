@@ -73,6 +73,28 @@
       ui.cancel.textContent = text.close || "Close";
       ui.cancel.onclick = function () { ui.root.remove(); };
     }
+    // Done: the library page stays where it is and shows the new card (it is marked for a moment); the bar says so and goes away
+    function added(itemId) {
+      var grid = document.getElementById("grid");
+      if (!grid || !window.htmx || !window.htmx.ajax) { location.href = itemId ? "/items/" + itemId : "/"; return; }
+      end(text.added || "Added to the library", false);
+      ui.root.classList.add("done");
+      if (itemId) {
+        var open = el("a", "btn small", text.open || "Open");
+        open.href = "/items/" + itemId;
+        ui.foot.insertBefore(open, ui.cancel);
+      }
+      setTimeout(function () { if (ui.root.isConnected && !ui.root.classList.contains("error")) ui.root.remove(); }, 12000);
+      var params = new URLSearchParams(location.search);
+      params.delete("page");                                         // the first page is where a new item shows up
+      document.body.addEventListener("htmx:afterSettle", function mark(e) {
+        if (e.target !== grid) return;
+        document.body.removeEventListener("htmx:afterSettle", mark);
+        var tile = itemId && grid.querySelector('.tile[data-id="' + itemId + '"]');
+        if (tile) { tile.classList.add("fresh"); tile.scrollIntoView({ block: "nearest", behavior: "smooth" }); }
+      });
+      window.htmx.ajax("GET", location.pathname + (params.toString() ? "?" + params : ""), { target: "#grid", swap: "innerHTML" });
+    }
     function tick() {
       if (gone) return;
       var r = new XMLHttpRequest();
@@ -82,8 +104,7 @@
         try { d = JSON.parse(r.responseText); } catch (e) {}
         if (r.status === 200 && d.status === "done") {
           ui.fill.style.width = "100%"; ui.pct.textContent = "100%";
-          ui.detail.textContent = text.opening || "…";
-          location.href = d.item_id ? "/items/" + d.item_id : "/";
+          added(d.item_id);
           return;
         }
         if (r.status === 200 && d.status === "failed") { end((text.dlfailed || "The download failed") + (d.error ? ": " + d.error : ""), true); return; }

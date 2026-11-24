@@ -767,6 +767,9 @@ p, li, .muted { text-wrap: pretty; }
 .upload-panel.waiting .up-fill { width: 35% !important; animation: up-slide 1.4s ease-in-out infinite alternate; }
 @keyframes up-slide { from { margin-left: 0; } to { margin-left: 65%; } }
 @media (prefers-reduced-motion: reduce) { .upload-panel.waiting .up-fill { animation: none; margin-left: 0; width: 100% !important; opacity: .5; } }
+.tile.fresh { animation: tile-fresh 2.6s ease-out; }
+@keyframes tile-fresh { 0%, 60% { outline: 4px solid var(--ac); outline-offset: 4px; } 100% { outline: 4px solid transparent; outline-offset: 4px; } }
+@media (prefers-reduced-motion: reduce) { .tile.fresh { animation: none; outline: 4px solid var(--ac); outline-offset: 4px; } }
 .assign-auto { border: 2px dashed var(--ln); border-radius: 14px; padding: 10px 14px; display: grid; gap: 6px; }
 .assign-auto legend { padding: 0 6px; font-weight: 600; font-size: 14px; }
 

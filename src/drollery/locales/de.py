@@ -160,6 +160,7 @@ MESSAGES = {
     "Making a browser-friendly copy in the background. It can take as long as the film itself": "Die browserfreundliche Kopie wird im Hintergrund gemacht. Das kann so lange dauern wie der Film selbst",
     "The browser-friendly copy was removed. The original is untouched": "Die browserfreundliche Kopie wurde entfernt. Das Original ist unberührt",
     "Your browser could not play this film. Use “Make browser-friendly copy” under the picture, or download the file and open it in a player such as VLC.": "Dein Browser konnte diesen Film nicht abspielen. Nimm „Browserfreundliche Kopie erstellen“ unter dem Bild, oder lade die Datei herunter und öffne sie in einem Player wie VLC.",
+    "Added to the library": "Zur Bibliothek hinzugefügt",
     "Item deleted": "Eintrag gelöscht",
     "Undo": "Rückgängig",
     "Too late: this can no longer be undone": "Zu spät: Das lässt sich nicht mehr rückgängig machen",

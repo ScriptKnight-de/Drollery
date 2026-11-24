@@ -69,7 +69,7 @@ def test_percentages_from_ytdlp_reach_the_job_while_it_runs(client, tmp_path, mo
 
 def test_the_progress_bar_script_follows_a_job_and_opens_the_item():
     js = (Path(__file__).resolve().parent.parent / "src/drollery/static/upload.js").read_text()
-    assert "d.job" in js and "/jobs/" in js and '"/items/" + d.item_id' in js
+    assert "d.job" in js and "/jobs/" in js and "added(d.item_id)" in js
 
 
 # ---------------------------------------------------------------- AI steps on import
@@ -118,3 +118,11 @@ def test_the_settings_page_saves_the_run_on_import_boxes(client):
     assert aisettings.auto("transcribe") and not aisettings.auto("describe")
     client.post("/settings/ai/assign", data={"transcribe": "default", "describe": "default"})            # an older form without the boxes changes nothing
     assert aisettings.auto("transcribe") and not aisettings.auto("describe")
+
+
+def test_a_finished_download_stays_on_the_library_page_and_marks_the_new_card():
+    root = Path(__file__).resolve().parent.parent / "src/drollery/static"
+    js = (root / "upload.js").read_text()
+    assert 'htmx.ajax("GET"' in js and 'target: "#grid"' in js and 'classList.add("fresh")' in js and 'params.delete("page")' in js
+    assert "location.href = itemId" in js                                                  # only where there is no library grid to refresh
+    assert ".tile.fresh" in (root / "style.css").read_text()
