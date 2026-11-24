@@ -5,6 +5,8 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-11-24
+
 ### Added
 - **Make browser-friendly copy** on the page of a video or movie, for a film your browser will not play (a codec it lacks, 10-bit, an odd container): a background job makes an H.264 + stereo AAC MP4 with the index at the front, with a percentage in the button while it runs. The player and shared links then play the copy; **Download** still gives the original, which is never touched. **Remove browser-friendly copy** deletes the copy again. It needs about as much free disk space as the film, and takes about as long as the film on a CPU. A copy goes with its item when you delete it, and comes back with Undo.
 
