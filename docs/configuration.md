@@ -11,7 +11,7 @@ Copy `.env.example` to `.env` and fill in what you use. Every line is optional.
 |---|---|
 | `DROLLERY_PORT` | the port the web interface is published on (default `8080`) |
 | `DROLLERY_BIND` | the host address the port is published on (default `0.0.0.0`, all interfaces; use `127.0.0.1` when a reverse proxy on the same machine is the only way in) |
-| `DROLLERY_IMAGE` | the image `docker compose up -d` pulls (default `ghcr.io/scriptknight-de/drollery:latest`); pin a release such as `ghcr.io/scriptknight-de/drollery:0.17.2`. `docker compose up -d --build` builds from the folder instead |
+| `DROLLERY_IMAGE` | the image `docker compose up -d` pulls (default `ghcr.io/scriptknight-de/drollery:latest`); pin a release such as `ghcr.io/scriptknight-de/drollery:0.17.3`. `docker compose up -d --build` builds from the folder instead |
 | `DROLLERY_SETUP_CODE` | choose your own first-run setup code instead of the generated one |
 | `DROLLERY_COOKIE_SECURE` | set to `1` when the site is served over HTTPS, so cookies are marked Secure |
 | `DROLLERY_PUBLIC_URL` | the address used in share links when you share beyond your home network, e.g. `https://memes.example.org` (can also be set under **Settings › Shares**) |
