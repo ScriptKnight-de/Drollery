@@ -140,7 +140,7 @@ MESSAGES = {
     "No AI providers are enabled. See {file} in the data volume.": "Es ist kein KI-Anbieter aktiviert. Siehe {file} im Datenvolume.",
     "Bigger view": "Große Ansicht",
     "Enlarge": "Vergrößern",
-    "Your browser can play the sound of this film but not its picture. Download the file and open it in a player such as VLC.": "Dein Browser kann den Ton dieses Films abspielen, aber nicht das Bild. Lade die Datei herunter und öffne sie in einem Player wie VLC.",
+    "Your browser could not play this film. Download the file and open it in a player such as VLC.": "Dein Browser konnte diesen Film nicht abspielen. Lade die Datei herunter und öffne sie in einem Player wie VLC.",
     "Item deleted": "Eintrag gelöscht",
     "Undo": "Rückgängig",
     "Too late: this can no longer be undone": "Zu spät: Das lässt sich nicht mehr rückgängig machen",

@@ -5,7 +5,11 @@ import zlib
 
 import pytest
 
+from pathlib import Path
+
 from drollery import db, pipeline
+
+STATIC_DIR = Path(__file__).resolve().parent.parent / "src" / "drollery" / "static"
 
 
 def two_color_png(w=200, h=100) -> bytes:
@@ -303,3 +307,8 @@ def test_a_shared_video_can_be_opened_bigger_too(client, video_id):
         token = c.execute("SELECT token FROM shares").fetchone()["token"]
     page = client.get(f"/s/{token}").text
     assert "data-enlarge" in page and "data-nopicture=" in page and "/static/zoom.js" in page
+
+
+def test_the_note_about_a_picture_the_browser_cannot_show_also_covers_a_decoding_error():
+    js = (STATIC_DIR / "videoframe.js").read_text()
+    assert 'addEventListener("error"' in js and "v.error.code === 3" in js and "v.error.code === 4" in js

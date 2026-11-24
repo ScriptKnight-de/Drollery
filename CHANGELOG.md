@@ -5,6 +5,9 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+### Fixed
+- The note under a film player that the browser cannot play now also shows when the browser refuses the file outright ("Media resource could not be decoded"), not only when it plays the sound without a picture.
+
 ## [0.15.0] - 2026-11-24
 
 ### Added
