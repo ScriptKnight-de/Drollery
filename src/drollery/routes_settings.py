@@ -421,7 +421,7 @@ def _ai_page(request: Request, status_code: int = 200, **extra):
     for cap in aisettings.CAPS:
         state = aisettings.describe_state(cap, models)
         options = [m for m in models if m["type"] in aisettings.COMPAT[cap]]
-        rows.append({"cap": cap, "label": aisettings.CAP_LABEL[cap], "help": aisettings.CAP_HELP[cap], "state": state, "options": options})
+        rows.append({"cap": cap, "label": aisettings.CAP_LABEL[cap], "help": aisettings.CAP_HELP[cap], "state": state, "options": options, "auto": aisettings.auto(cap)})
     with db.tx() as c:
         ai_tag_count = c.execute("SELECT COUNT(*) FROM tags WHERE source='ai'").fetchone()[0]
     return render(request, "settings_ai.html", status_code=status_code, tab="ai", models=models, rows=rows, ai_tag_count=ai_tag_count, worker_limit=accounts.worker_limit(), max_workers=accounts.MAX_WORKERS,
@@ -434,8 +434,12 @@ def ai_page(request: Request):
 
 
 @router.post("/ai/assign")
-def ai_assign(request: Request, transcribe: str = Form("default"), describe: str = Form("default")):
+def ai_assign(request: Request, transcribe: str = Form("default"), describe: str = Form("default"), auto_set: str = Form(""),
+              auto_transcribe: str = Form(""), auto_describe: str = Form("")):
     chosen = {"transcribe": transcribe, "describe": describe}
+    if auto_set:                                          # the form's own check boxes (an unticked box sends nothing)
+        accounts.set_setting("ai.auto.transcribe", None if auto_transcribe else "0")
+        accounts.set_setting("ai.auto.describe", None if auto_describe else "0")
     models = {str(m["id"]): m for m in accounts.list_models()}
     for cap, value in chosen.items():
         if value == "default":

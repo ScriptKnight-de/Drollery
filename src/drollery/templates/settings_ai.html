@@ -15,6 +15,12 @@
       </select>
     </label>
     {% endfor %}
+    <input type="hidden" name="auto_set" value="1">
+    <fieldset class="assign-auto">
+      <legend>{{ _("Start by itself when something is added") }}</legend>
+      {% for r in rows %}<label class="check"><input type="checkbox" name="auto_{{ r.cap }}" value="1" {{ "checked" if r.auto }}> {{ _(r.label) }}</label>{% endfor %}
+      <p class="hint">{{ _("Untick a step to run it only when you ask for it, from an item or from the selection. Movies are never processed by themselves") }}</p>
+    </fieldset>
     <div class="actions"><button class="btn primary" type="submit">{{ _("Save assignments") }}</button></div>
   </form>
 </section>

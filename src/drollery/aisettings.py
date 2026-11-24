@@ -59,6 +59,12 @@ def enabled(cap: str) -> bool:
     return provider(cap).enabled
 
 
+def auto(cap: str) -> bool:
+    """Does this step start by itself when something is added (an upload, a link, an album)? Yes unless it was switched off
+    in Settings > AI models. A model that is not set up never runs, whatever this says. Running a step by hand is always possible."""
+    return accounts.get_setting(f"ai.auto.{cap}") != "0"
+
+
 def describe_state(cap: str, models: list[dict]) -> dict:
     """What the Settings page shows for one capability."""
     value = assignment(cap)

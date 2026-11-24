@@ -5,6 +5,10 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+### Added
+- A link added on the library page now gets a progress bar there, like an upload, instead of sending you to the Jobs page. It shows the percentage while the site reports one (a moving stripe when it does not), says when the download waits for its turn or is trying again, and opens the new item when it is done. You can hide it and leave the page: the download carries on in the background.
+- Settings > AI models: a new box "Start by itself when something is added" for transcription and for naming and tagging. Unticked, a step runs only when you ask for it, from an item or from the selection. It is ticked by default, as before. A step whose model is not set up never starts, whatever the box says.
+
 ## [0.15.1] - 2026-11-24
 
 ### Fixed

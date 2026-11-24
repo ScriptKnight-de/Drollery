@@ -445,7 +445,7 @@ def home(request: Request, q: str = "", kind: str = "", tag: str = "", src: str 
 
 
 @app.post("/add", dependencies=[Depends(web_auth)])
-async def add(files: list[UploadFile] = File(default=[]), url: str = Form("")):
+async def add(request: Request, files: list[UploadFile] = File(default=[]), url: str = Form("")):
     last = None
     for f in files:
         if not f.filename:
@@ -460,7 +460,9 @@ async def add(files: list[UploadFile] = File(default=[]), url: str = Form("")):
         except netguard.BlockedAddress as e:
             return flash_redirect("/", e.message(), "error")
         with db.tx() as c:
-            db.enqueue(c, "fetch", None, json.dumps({"url": url.strip()}))
+            job_id = db.enqueue(c, "fetch", None, json.dumps({"url": url.strip()}))
+        if request.headers.get("x-drollery-upload"):          # the progress bar of the library page follows the download itself
+            return JSONResponse({"job": job_id})
         return RedirectResponse("/jobs", status_code=303)
     return RedirectResponse(f"/items/{last}" if last and len(files) == 1 else "/", status_code=303)
 
@@ -626,6 +628,17 @@ def jobs_page(request: Request):
                 tr = c.execute("SELECT title FROM tracks WHERE id=?", (json.loads(r["payload"]).get("track_id", 0),)).fetchone()
             r["label"] = f"{r['label']} · {tr['title']}" if tr else r["label"]
     return render(request, "jobs.html", jobs=rows)
+
+
+@app.get("/jobs/{job_id}/status", dependencies=[Depends(web_auth)])
+def job_status(job_id: int):
+    """Where one job stands, for the progress bar that follows a link download."""
+    with db.tx() as c:
+        row = c.execute("SELECT status, progress, error, item_id, attempts FROM jobs WHERE id=?", (job_id,)).fetchone()
+    if row is None:
+        raise HTTPException(404, "job not found")
+    return JSONResponse({"status": row["status"], "progress": row["progress"], "item_id": row["item_id"],
+                         "attempts": row["attempts"], "error": (row["error"] or "")[:400]}, headers={"Cache-Control": "no-store"})
 
 
 @app.post("/jobs/retry-failed", dependencies=[Depends(web_auth)])

@@ -58,7 +58,7 @@ async def _make(files_in: list[UploadFile], cover_in: list[UploadFile], title: s
         item_id, created = await asyncio.to_thread(albums.create_album, ups, work, covers[0] if covers else None, title, artist, subtype, description, parse_tags(tags))
         if created:                                    # queue speech-to-text for every track, if a model is set up
             with db.tx() as c:
-                pipeline.plan_jobs(c, item_id)
+                pipeline.plan_jobs(c, item_id, auto=True)
         return item_id, created
 
 

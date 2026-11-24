@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import threading
 import time
 from pathlib import Path
 from urllib.parse import urlparse
@@ -84,7 +85,7 @@ def import_file(src: Path, original_name: str, source_url: str = "", source_meta
         if tags:
             db.set_user_tags(c, item_id, tags)
         db.reindex(c, item_id)
-        plan_jobs(c, item_id)
+        plan_jobs(c, item_id, auto=True)
     return item_id, True
 
 
@@ -106,21 +107,27 @@ def plan_track_jobs(c, item_id: int, redo: bool = False) -> int:
     return n
 
 
-def plan_jobs(c, item_id: int, only: str = "") -> list[str]:
+def plan_jobs(c, item_id: int, only: str = "", auto: bool = False) -> list[str]:
     """Queue the background jobs that the enabled providers can do for this item.
 
     only="transcribe" or only="describe" starts just that one step: a transcription then does not go on to describe, and
-    describing works from what is there (the picture, and the transcript if the item has one)."""
+    describing works from what is there (the picture, and the transcript if the item has one).
+
+    auto=True is an import (an upload, a link, a new album): a step then starts only if it is set up AND not switched off
+    for imports (Settings > AI models). A person asking for it by hand always gets it, as long as the model is set up."""
+    def ready(cap: str) -> bool:
+        return aisettings.enabled(cap) and (not auto or aisettings.auto(cap))
+    payload = {"auto": True} if auto else {}
     item = db.get_item(c, item_id)
     queued = []
     if item["kind"] == "album":
         # an album is many tracks: nothing to describe as a whole, but every track can be transcribed so its words are searchable
-        if only != "describe" and aisettings.enabled("transcribe"):
+        if only != "describe" and ready("transcribe"):
             queued += ["transcribe_track"] * plan_track_jobs(c, item_id)
         return queued
     if item["kind"] == "movie":
         return queued                        # a movie runs for hours: nothing is transcribed or named behind the person's back
-    has_speech = item["kind"] not in ("image", "gif") and item["has_audio"] and aisettings.enabled("transcribe")
+    has_speech = item["kind"] not in ("image", "gif") and item["has_audio"] and ready("transcribe")
     if only == "transcribe":
         if has_speech:
             db.enqueue(c, "transcribe", item_id, json.dumps({"describe_after": False}))
@@ -133,10 +140,10 @@ def plan_jobs(c, item_id: int, only: str = "") -> list[str]:
         return queued
     if has_speech:
         queued.append("transcribe")          # transcribe chains into describe when it finishes
-    elif aisettings.enabled("describe") and (item["kind"] != "audio"):
+    elif ready("describe") and (item["kind"] != "audio"):
         queued.append("describe")
     for t in queued:
-        db.enqueue(c, t, item_id)
+        db.enqueue(c, t, item_id, json.dumps(payload))
     return queued
 
 
@@ -160,7 +167,8 @@ def job_transcribe(job: dict) -> None:
     with db.tx() as c:
         c.execute("UPDATE items SET transcript=?, updated_at=? WHERE id=?", (text, time.time(), item["id"]))
         db.reindex(c, item["id"])
-        if aisettings.enabled("describe") and _payload(job).get("describe_after", True):
+        p = _payload(job)
+        if aisettings.enabled("describe") and p.get("describe_after", True) and (not p.get("auto") or aisettings.auto("describe")):
             db.enqueue(c, "describe", item["id"])
 
 
@@ -269,8 +277,43 @@ def _save_direct(r: httpx.Response, td: Path) -> list[Path]:
     return [dest]
 
 
+_running = threading.local()                       # the fetch job this thread is working on (its progress is shown to the person)
+_PERCENT = re.compile(r"\[download\]\s+(\d{1,3}(?:\.\d+)?)%")
+
+
+def _set_progress(job_id: int, percent: float | None) -> None:
+    with db.tx() as c:
+        c.execute("UPDATE jobs SET progress=? WHERE id=?", (percent, job_id))
+
+
 def _run_tool(cmd: list[str], timeout: int) -> subprocess.CompletedProcess:
-    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    job_id = getattr(_running, "job_id", None)
+    if not job_id or cmd[0] != "yt-dlp":
+        return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    # yt-dlp for a fetch job: its output is read while it runs, so the percentage reaches the progress bar on the library page
+    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, errors="replace")
+    errors: list[str] = []
+    reader = threading.Thread(target=lambda: errors.append(proc.stderr.read()), daemon=True)
+    reader.start()
+    timed_out = []
+    timer = threading.Timer(timeout, lambda: (timed_out.append(1), proc.kill()))
+    timer.start()
+    out, shown = [], -1
+    try:
+        for line in proc.stdout:
+            out.append(line)
+            m = _PERCENT.search(line)
+            pct = min(99, int(float(m.group(1)))) if m else -1
+            if pct > shown:                                         # never goes back: the video and then the sound are two downloads
+                shown = pct
+                _set_progress(job_id, shown)
+        proc.wait()
+    finally:
+        timer.cancel()
+        reader.join(timeout=5)
+    if timed_out:
+        raise subprocess.TimeoutExpired(cmd, timeout)
+    return subprocess.CompletedProcess(cmd, proc.returncode, "".join(out), "".join(errors))
 
 
 def apply_clip(item_id: int, created: bool, clip: dict) -> None:
@@ -314,7 +357,16 @@ def _refuse_audio_left_over(files: list[Path], meta: dict[Path, dict], stderr: s
 
 
 def job_fetch(job: dict) -> None:
+    _running.job_id = job.get("id")
+    try:
+        _fetch(job)
+    finally:
+        _running.job_id = None
+
+
+def _fetch(job: dict) -> None:
     s = get_settings()
+    first_item = 0
     payload = json.loads(job["payload"])
     url, clip = payload["url"], payload.get("clip") or {}
     if urlparse(url).scheme not in ("http", "https"):
@@ -331,7 +383,7 @@ def job_fetch(job: dict) -> None:
             # ranking, so with the resolution first a 1080p HEVC stream (TikTok offers one) beat a lower-resolution H.264 one, and
             # Firefox on Linux then said "no video with supported format and MIME type found".
             r = _run_tool(["yt-dlp", "--no-playlist", "--no-warnings", "--write-info-json",
-                           "-S", "vcodec:h264,res:1080,acodec:aac", "--merge-output-format", "mp4",
+                           "--newline", "-S", "vcodec:h264,res:1080,acodec:aac", "--merge-output-format", "mp4",
                            "--max-filesize", f"{s.max_upload_mb}M",
                            "-o", str(td / "%(title).80B [%(id)s].%(ext)s"), url], s.fetch_timeout)
             err1 = r.stderr.strip()[-1500:]
@@ -372,7 +424,11 @@ def job_fetch(job: dict) -> None:
                     db.reindex(c, item_id)
             if clip:
                 apply_clip(item_id, created, clip)
+            first_item = first_item or item_id
             imported += 1
+        if imported:                                         # the progress bar on the library page opens this item when it is done
+            with db.tx() as c:
+                c.execute("UPDATE jobs SET item_id=?, progress=100 WHERE id=? AND item_id IS NULL", (first_item, job.get("id")))
         if not imported:
             names = ", ".join(skipped[:5]) or "(no files)"
             raise providers.ProviderError(f"downloaded files were not recognised as images, video or audio: {names}")

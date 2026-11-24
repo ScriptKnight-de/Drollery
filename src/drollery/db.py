@@ -240,6 +240,7 @@ REQUIRED_COLUMNS = {
 # Columns added after the first release: a database made before them gets them at start.
 ADDED_COLUMNS = {
     "people": (("first_name", "TEXT NOT NULL DEFAULT ''"), ("surname", "TEXT NOT NULL DEFAULT ''")),
+    "jobs": (("progress", "REAL"),),                      # 0-100 for a download that reports it, else NULL
 }
 
 

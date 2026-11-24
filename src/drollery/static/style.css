@@ -762,3 +762,10 @@ p, li, .muted { text-wrap: pretty; }
 .bigview-stage img.full { max-width: none; max-height: none; cursor: zoom-out; }
 .bigview-stage video { --ar: 1.7778; width: min(96vw, calc((100vh - 80px) * var(--ar))); max-width: none; max-height: calc(100vh - 80px); aspect-ratio: var(--ar); background: #000; border-radius: 6px; }
 .note.video-problem { margin: 12px 0 0; }
+
+/* a download that does not report a percentage: the bar shows a moving stripe */
+.upload-panel.waiting .up-fill { width: 35% !important; animation: up-slide 1.4s ease-in-out infinite alternate; }
+@keyframes up-slide { from { margin-left: 0; } to { margin-left: 65%; } }
+@media (prefers-reduced-motion: reduce) { .upload-panel.waiting .up-fill { animation: none; margin-left: 0; width: 100% !important; opacity: .5; } }
+.assign-auto { border: 2px dashed var(--ln); border-radius: 14px; padding: 10px 14px; display: grid; gap: 6px; }
+.assign-auto legend { padding: 0 6px; font-weight: 600; font-size: 14px; }

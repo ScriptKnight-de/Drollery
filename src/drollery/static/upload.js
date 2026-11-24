@@ -53,6 +53,54 @@
     ui.cancel.onclick = function () { ui.root.remove(); };
   }
 
+  // A link is downloaded by a background job. The bar follows that job (percent when the site tells it, else a moving stripe)
+  // and opens the new item when it is done; leaving the page does not stop the download.
+  function follow(ui, jobId, o) {
+    var poll, gone = false;
+    busy = false;
+    if (o.unlock) o.unlock();
+    ui.root.classList.remove("processing");
+    ui.root.classList.add("working", "waiting");
+    ui.title.textContent = (text.downloading || "Downloading") + (o.label ? ": " + o.label : "");
+    ui.pct.textContent = "";
+    ui.detail.textContent = text.waiting || "Waiting for its turn";
+    ui.cancel.textContent = text.hide || "Hide";
+    ui.cancel.onclick = function () { gone = true; clearTimeout(poll); ui.root.remove(); };
+    function end(message, isError) {
+      ui.root.classList.remove("working", "waiting");
+      ui.root.classList.toggle("error", !!isError);
+      ui.detail.textContent = message;
+      ui.cancel.textContent = text.close || "Close";
+      ui.cancel.onclick = function () { ui.root.remove(); };
+    }
+    function tick() {
+      if (gone) return;
+      var r = new XMLHttpRequest();
+      r.open("GET", "/jobs/" + jobId + "/status");
+      r.onload = function () {
+        var d = {};
+        try { d = JSON.parse(r.responseText); } catch (e) {}
+        if (r.status === 200 && d.status === "done") {
+          ui.fill.style.width = "100%"; ui.pct.textContent = "100%";
+          ui.detail.textContent = text.opening || "…";
+          location.href = d.item_id ? "/items/" + d.item_id : "/";
+          return;
+        }
+        if (r.status === 200 && d.status === "failed") { end((text.dlfailed || "The download failed") + (d.error ? ": " + d.error : ""), true); return; }
+        if (r.status === 200) {
+          var running = d.status === "running", pct = running && d.progress != null ? Math.round(d.progress) : null;
+          ui.root.classList.toggle("waiting", pct === null);
+          if (pct !== null) { ui.fill.style.width = pct + "%"; ui.pct.textContent = pct + "%"; ui.bar.setAttribute("aria-valuenow", String(pct)); }
+          ui.detail.textContent = d.attempts > 1 ? (text.again || "The first try failed, trying again") : running ? (text.fetching || "Downloading in the background, you can leave this page") : (text.waiting || "Waiting for its turn");
+        }
+        poll = setTimeout(tick, 1500);
+      };
+      r.onerror = function () { poll = setTimeout(tick, 3000); };
+      r.send();
+    }
+    tick();
+  }
+
   // o: { url, data (FormData), label, total (bytes, fallback), host (element for an inline bar), lock(), unlock() }
   function send(o) {
     var ui = build(o.label, o.host), samples = [];
@@ -86,6 +134,7 @@
         try {
           var d = JSON.parse(xhr.responseText);
           if (d.redirect) { busy = false; ui.detail.textContent = text.opening || "…"; location.href = d.redirect; return; }
+          if (d.job) { follow(ui, d.job, o); return; }                           // a link: the download goes on in the background, the bar follows it
         } catch (e) {}
       }
       if (xhr.status >= 200 && xhr.status < 300 || xhr.status === 422) {          // the form again, with what is wrong
