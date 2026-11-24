@@ -74,10 +74,10 @@ def test_the_logo_wiggles_in_every_theme_and_the_title_squiggle_is_gone():
     assert not (STATIC / "squiggle.svg").exists()
 
 
-def test_the_default_size_limit_is_two_gigabytes():
+def test_the_default_size_limit_is_ten_gigabytes():
     from drollery.config import Settings
-    assert Settings().max_upload_mb == 2048
-    assert "max_upload_mb = 2048" in (ROOT / "src" / "drollery" / "config.default.toml").read_text()
+    assert Settings().max_upload_mb == 10240
+    assert "max_upload_mb = 10240" in (ROOT / "src" / "drollery" / "config.default.toml").read_text()
 
 
 def test_a_closed_dialog_can_never_cover_the_page():

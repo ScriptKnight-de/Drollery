@@ -50,8 +50,8 @@ volumes:
 ```
 
 The image is published with these tags: `latest` (the newest version on the main branch), a release number such as
-`0.17.1` (that exact release), and `0.17` (the newest `0.17.x`). To stay on one release, use its number, for example
-`ghcr.io/scriptknight-de/drollery:0.17.1`. The same image is also in the Forgejo registry as
+`0.17.2` (that exact release), and `0.17` (the newest `0.17.x`). To stay on one release, use its number, for example
+`ghcr.io/scriptknight-de/drollery:0.17.2`. The same image is also in the Forgejo registry as
 `forgejo.scriptknight.de/scriptknight/drollery`.
 
 **Or use the project's Compose file**, which also gives you the optional Whisper container and the `.env` file. It pulls
@@ -110,7 +110,7 @@ suggests what it should become, which you can change:
 | one video file | **separate item**, or a **movie, parody or synchro** | you choose; a video of 300 MB or more is suggested as a movie |
 | a link | a download in the background | works for direct file links, most video sites (via `yt-dlp`) and picture galleries (via `gallery-dl`); follow it under **Jobs** |
 
-A progress bar shows the speed and the time left, and you can cancel. Limits: 2 GB per file, 16 GB for a movie, 2 GB
+A progress bar shows the speed and the time left, and you can cancel. Limits: 10 GB per file, 16 GB for a movie, 2 GB
 per album (changeable, see [Configuration](docs/configuration.md)). A file that is already in your library is not added
 twice.
 

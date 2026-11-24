@@ -11,7 +11,7 @@ Copy `.env.example` to `.env` and fill in what you use. Every line is optional.
 |---|---|
 | `DROLLERY_PORT` | the port the web interface is published on (default `8080`) |
 | `DROLLERY_BIND` | the host address the port is published on (default `0.0.0.0`, all interfaces; use `127.0.0.1` when a reverse proxy on the same machine is the only way in) |
-| `DROLLERY_IMAGE` | the image `docker compose up -d` pulls (default `ghcr.io/scriptknight-de/drollery:latest`); pin a release such as `ghcr.io/scriptknight-de/drollery:0.17.1`. `docker compose up -d --build` builds from the folder instead |
+| `DROLLERY_IMAGE` | the image `docker compose up -d` pulls (default `ghcr.io/scriptknight-de/drollery:latest`); pin a release such as `ghcr.io/scriptknight-de/drollery:0.17.2`. `docker compose up -d --build` builds from the folder instead |
 | `DROLLERY_SETUP_CODE` | choose your own first-run setup code instead of the generated one |
 | `DROLLERY_COOKIE_SECURE` | set to `1` when the site is served over HTTPS, so cookies are marked Secure |
 | `DROLLERY_PUBLIC_URL` | the address used in share links when you share beyond your home network, e.g. `https://memes.example.org` (can also be set under **Settings › Shares**) |
@@ -29,7 +29,7 @@ docker compose restart drollery
 
 | Setting | Default | Meaning |
 |---|---|---|
-| `max_upload_mb` | 2048 | largest single file you can upload (pictures, clips, sounds), and the largest file a link download may fetch. A video from a link that is bigger than this is not saved: the job fails and says so |
+| `max_upload_mb` | 10240 | largest single file you can upload (pictures, clips, sounds), and the largest file a link download may fetch. A video from a link that is bigger than this is not saved: the job fails and says so |
 | `max_movie_mb` | 16384 | largest single movie file |
 | `max_album_mb` | 2048 | all tracks of one album together, and the unpacked size of a ZIP |
 | `max_album_tracks` | 500 | most tracks in one album |

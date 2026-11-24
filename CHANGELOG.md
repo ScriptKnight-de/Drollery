@@ -5,6 +5,11 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+## [0.17.2] - 2026-11-24
+
+### Changed
+- `max_upload_mb` is 10240 (10 GB) by default, up from 2048. It is the largest file an upload or a link download may be. A `config.toml` that has its own `max_upload_mb` line keeps that value: edit or delete the line there to get the new default.
+
 ### Fixed
 - A long link, or a long error message with a link in it, no longer pushes the progress bar and the link line out of the drop zone on the library page. The text wraps inside it.
 
