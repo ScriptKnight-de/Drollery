@@ -5,6 +5,11 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+## [0.18.0] - 2026-11-24
+
+### Added
+- A person's picture can come from a link: the person forms (new person and edit) have an "Or a picture link" field next to the file upload. Drollery fetches the image with the same safety checks as other link downloads (public addresses only, redirects checked, 25 MB at most), and a Google Images result link works too. A chosen file is used first.
+
 ## [0.17.3] - 2026-11-24
 
 ### Changed
