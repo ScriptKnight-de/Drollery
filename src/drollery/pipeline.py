@@ -291,6 +291,28 @@ def apply_clip(item_id: int, created: bool, clip: dict) -> None:
         db.reindex(c, item_id)
 
 
+def _kind_of(f: Path) -> str:
+    try:
+        return media.guess(f.name)[0]
+    except media.MediaError:
+        return ""
+
+
+def _refuse_audio_left_over(files: list[Path], meta: dict[Path, dict], stderr: str, limit_mb: int) -> None:
+    """A video over the size limit is skipped by yt-dlp, but its small audio stream still downloads. Saving that would put a
+    sound in the library where the person asked for a video, so the job fails and says why instead."""
+    if not files or any(_kind_of(f) != "audio" for f in files):
+        return
+    said_so = "larger than max-filesize" in stderr
+    has_picture = any((fmt.get("vcodec") or "none") != "none"
+                      for f in files for fmt in (meta.get(f, {}).get("requested_formats") or [])) or \
+                  any((meta.get(f, {}).get("vcodec") or "none") not in ("none", "audio only") for f in files)
+    if said_so or has_picture:
+        raise providers.ProviderError(
+            f"the video is larger than the limit of {limit_mb} MB, so only its sound could be downloaded. Nothing was saved. "
+            f"Raise max_upload_mb in config.toml to fetch it")
+
+
 def job_fetch(job: dict) -> None:
     s = get_settings()
     payload = json.loads(job["payload"])
@@ -322,6 +344,7 @@ def job_fetch(job: dict) -> None:
                 for f in files:
                     if f.name.startswith(info.name.removesuffix(".info.json")):
                         meta[f] = d
+            _refuse_audio_left_over(files, meta, r.stderr, s.max_upload_mb)
             if not files:
                 gdir = td / "gallery"
                 r = _run_tool(["gallery-dl", "-q", "-D", str(gdir), "--range", f"1-{s.fetch_max_files}",

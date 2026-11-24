@@ -95,3 +95,30 @@ def test_nothing_downloaded_at_all_says_so(client, monkeypatch):
     with pytest.raises(providers.ProviderError) as e:
         pipeline.job_fetch(fetch_job())
     assert "nothing downloadable" in str(e.value) and "Video unavailable" in str(e.value)
+
+
+def test_a_video_over_the_size_limit_fails_instead_of_saving_only_its_sound(client, monkeypatch):
+    """yt-dlp skips the too-big video stream and still downloads the audio one: that must not end up as a sound in the library."""
+    monkeypatch.setattr(pipeline, "_direct_download", lambda url, td: [])
+
+    def run(cmd, timeout):
+        outdir = Path(cmd[cmd.index("-o") + 1]).parent
+        (outdir / "Big talk [abc].m4a").write_bytes(b"audio")
+        (outdir / "Big talk [abc].info.json").write_text(json.dumps({"title": "Big talk", "requested_formats": [{"vcodec": "avc1"}, {"vcodec": "none"}]}))
+        return subprocess.CompletedProcess(cmd, 0, "", "File is larger than max-filesize (900000000 bytes > 524288000 bytes). Aborting.")
+
+    monkeypatch.setattr(pipeline, "_run_tool", run)
+    with pytest.raises(providers.ProviderError, match="larger than the limit of 500 MB"):
+        pipeline.job_fetch(fetch_job())
+    with db.tx() as c:
+        assert db.search(c, "") == []
+
+
+def test_a_real_sound_link_is_still_saved_as_a_sound(client, monkeypatch, tmp_path):
+    song = tmp_path / "song.mp3"
+    subprocess.run(["ffmpeg", "-v", "error", "-y", "-f", "lavfi", "-i", "sine=f=300:d=1", str(song)], check=True)
+    seen = []
+    fake_downloader(monkeypatch, {"Song [abc].mp3": song.read_bytes(), "Song [abc].info.json": json.dumps({"title": "Song", "vcodec": "none"})}, seen)
+    pipeline.job_fetch(fetch_job("https://example.org/song"))
+    with db.tx() as c:
+        assert [r["kind"] for r in db.search(c, "")] == ["audio"]
