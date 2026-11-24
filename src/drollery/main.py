@@ -263,6 +263,7 @@ def _delete_item(item: dict) -> None:
         c.execute("DELETE FROM tracks_fts WHERE rowid IN (SELECT id FROM tracks WHERE item_id=?)", (item["id"],))
         c.execute("DELETE FROM items WHERE id=?", (item["id"],))
     pipeline.media_path(item).unlink(missing_ok=True)
+    pipeline.web_path(item).unlink(missing_ok=True)
     if item["kind"] == "album":
         albums.remove_files(item)
     pipeline.thumb_path(item).unlink(missing_ok=True)
@@ -273,12 +274,14 @@ def _delete_item(item: dict) -> None:
 # ------------------------------------------------------------------ files
 
 @app.get("/media/{item_id}", dependencies=[Depends(api_auth)])
-def media_file(item_id: int):
+def media_file(item_id: int, original: int = 0):
     item = item_or_404(item_id)
-    path = pipeline.media_path(item)
+    path, mime = pipeline.media_path(item), item["mime"]
+    if not original and item["kind"] in ("video", "movie") and pipeline.web_path(item).exists():
+        path, mime = pipeline.web_path(item), "video/mp4"        # the browser-friendly copy plays; ?original=1 is the file as it came
     if not path.exists():
         raise HTTPException(404, "file missing on disk")
-    return FileResponse(path, media_type=item["mime"], filename=item["original_name"] or None,
+    return FileResponse(path, media_type=mime, filename=item["original_name"] or None,
                         content_disposition_type="inline", headers={k: v for k, v in FILE_HEADERS.items() if k != "Cache-Control"})
 
 
@@ -480,7 +483,7 @@ def item_page(request: Request, item_id: int):
         item_people = people.of_item(c, item_id)
         movie = movies.get(c, item_id) if item["kind"] == "movie" else None
     return render(request, "item.html", item=item, jobs=jobs, item_people=item_people, movie=movie, movie_facts=movies.facts(movie) if movie else {},
-                  subtypes=movies.SUBTYPES, **share_context(request, item))
+                  subtypes=movies.SUBTYPES, web_copy=item["kind"] in ("video", "movie") and pipeline.web_path(item).exists(), **share_context(request, item))
 
 
 BULK_MAX = 500          # items one bulk action may touch
@@ -613,6 +616,28 @@ def item_reprocess(item_id: int, step: str = Form("")):
 def item_delete(item_id: int):
     token = trash.delete([item_or_404(item_id)])             # kept for a minute: the message after it has an Undo button
     return flash_redirect("/", t("Item deleted"), undo=token)
+
+
+@app.post("/items/{item_id}/convert", dependencies=[Depends(web_auth)])
+def item_convert(item_id: int):
+    """Queue the browser-friendly copy of a video or movie (it can take as long as the film itself)."""
+    item = item_or_404(item_id)
+    back = f"/items/{item_id}"
+    if item["kind"] not in ("video", "movie"):
+        return flash_redirect(back, t("Only videos and movies can be converted"), "error")
+    if pipeline.web_path(item).exists():
+        return flash_redirect(back, t("There is a browser-friendly copy already"), "error")
+    with db.tx() as c:
+        if not c.execute("SELECT 1 FROM jobs WHERE item_id=? AND type='convert' AND status IN ('queued','running')", (item_id,)).fetchone():
+            db.enqueue(c, "convert", item_id)
+    return flash_redirect(back, t("Making a browser-friendly copy in the background. It can take as long as the film itself"))
+
+
+@app.post("/items/{item_id}/convert/delete", dependencies=[Depends(web_auth)])
+def item_convert_delete(item_id: int):
+    item = item_or_404(item_id)
+    pipeline.web_path(item).unlink(missing_ok=True)
+    return flash_redirect(f"/items/{item_id}", t("The browser-friendly copy was removed. The original is untouched"))
 
 
 @app.get("/jobs", dependencies=[Depends(web_auth)])

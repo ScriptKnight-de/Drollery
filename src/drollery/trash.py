@@ -31,7 +31,7 @@ def _root() -> Path:
 
 
 def _files(item: dict) -> list[Path]:
-    paths = [pipeline.media_path(item), pipeline.thumb_path(item), pipeline.card_path(item), pipeline.card_source_path(item)]
+    paths = [pipeline.media_path(item), pipeline.web_path(item), pipeline.thumb_path(item), pipeline.card_path(item), pipeline.card_source_path(item)]
     if item["kind"] == "album":
         paths.append(albums.album_dir(item))
     return paths

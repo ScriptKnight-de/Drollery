@@ -152,6 +152,13 @@ of the page, add a free key under **Settings › Online lookup**:
 
 You need your own free keys; they are stored only on your server.
 
+**A film that will not play in your browser.** Browsers cannot decode every video (HEVC, AV1, 10-bit and some containers
+fail, often with the sound playing and no picture, or the message "media resource could not be decoded"). On the page
+of a video or movie, **Make browser-friendly copy** converts it in the background to H.264 video with stereo AAC sound
+and the index at the front, with a percentage on the button. The player and shared links then play the copy;
+**Download** still gives the original, which is never changed. It needs about as much free disk space as the film and
+takes about as long as the film on a CPU. **Remove browser-friendly copy** deletes the copy again.
+
 ### Tag, describe and credit people
 
 Under an item's edit box you can add **tags** (type a word and press space or Enter; each becomes a small chip with a

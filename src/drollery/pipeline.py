@@ -48,6 +48,11 @@ def card_source_path(item: dict) -> Path:
     return get_settings().cards_dir / f"{item['sha256']}.src.jpg"
 
 
+def web_path(item: dict) -> Path:
+    """The browser-friendly copy of a video or movie (H.264 + AAC in an MP4), made on request. The original is never touched."""
+    return get_settings().media_dir / item["sha256"][:2] / f"{item['sha256']}.web.mp4"
+
+
 def _title_from_name(name: str) -> str:
     return re.sub(r"[\s_]+", " ", Path(name).stem).strip()[:120] or "untitled"
 
@@ -334,6 +339,55 @@ def apply_clip(item_id: int, created: bool, clip: dict) -> None:
         db.reindex(c, item_id)
 
 
+class ConvertError(providers.ProviderError):
+    """A conversion that cannot work by trying again (a wrong file, no room, ffmpeg's own refusal): the job fails at once."""
+    final = True
+
+
+_OUT_TIME = re.compile(r"out_time_(?:us|ms)=(\d+)")
+CONVERT_MARGIN = 512 * 1024 * 1024               # free space that must remain after the copy is made
+
+
+def job_convert(job: dict) -> None:
+    """Make a copy of a video or movie that every browser can play: H.264 video (even sides, 4:2:0), stereo AAC sound, the
+    index at the front so it starts at once. Files a browser cannot decode (HEVC, AV1, 10-bit, odd containers) play from it."""
+    s = get_settings()
+    item = _item(job["item_id"])
+    if item["kind"] not in ("video", "movie"):
+        raise ConvertError("only videos and movies can be converted")
+    src = media_path(item)
+    if not src.exists():
+        raise ConvertError("the file is missing on disk")
+    if shutil.disk_usage(s.data_dir).free < src.stat().st_size + CONVERT_MARGIN:
+        raise ConvertError("there is not enough free disk space for a second copy of this file")
+    duration = float(item["duration"] or 0)
+    with tempfile.TemporaryDirectory(dir=s.tmp_dir) as td:
+        out = Path(td) / "web.mp4"
+        cmd = ["ffmpeg", "-v", "error", "-nostdin", "-y", "-i", str(src), "-map", "0:v:0", "-map", "0:a?", "-sn", "-dn",
+               "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2", "-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-pix_fmt", "yuv420p",
+               "-c:a", "aac", "-b:a", "160k", "-ac", "2", "-movflags", "+faststart", "-progress", "pipe:1", "-nostats", str(out)]
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, errors="replace")
+        errors: list[str] = []
+        reader = threading.Thread(target=lambda: errors.append(proc.stderr.read()), daemon=True)
+        reader.start()
+        shown = -1
+        for line in proc.stdout:
+            m = _OUT_TIME.match(line.strip())
+            if m and duration > 0:
+                pct = min(99, int(int(m.group(1)) / 1_000_000 / duration * 100))
+                if pct > shown:
+                    shown = pct
+                    _set_progress(job["id"], pct)
+        proc.wait()
+        reader.join(timeout=5)
+        if proc.returncode != 0 or not out.exists():
+            raise ConvertError(("".join(errors).strip()[-800:]) or f"ffmpeg ended with code {proc.returncode}")
+        dest = web_path(item)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        out.replace(dest)                                   # same disk: the copy appears all at once, never half-written
+    _set_progress(job["id"], 100)
+
+
 def _kind_of(f: Path) -> str:
     try:
         return media.guess(f.name)[0]
@@ -486,7 +540,7 @@ def job_rebuild_search(job: dict) -> None:
 
 
 HANDLERS = {"fetch": job_fetch, "transcribe": job_transcribe, "describe": job_describe, "transcribe_track": job_transcribe_track,
-            "check_video_sizes": job_check_video_sizes, "rebuild_search": job_rebuild_search}
+            "check_video_sizes": job_check_video_sizes, "rebuild_search": job_rebuild_search, "convert": job_convert}
 
 
 def run_job(job: dict) -> None:
@@ -499,5 +553,6 @@ def run_job(job: dict) -> None:
         db.finish_job(job["id"], None, s.job_max_attempts, job["attempts"])
     except Exception as e:  # noqa: BLE001 - a job must never crash the worker
         log.warning("job %s (%s) failed: %s", job["id"], job["type"], e)
-        db.finish_job(job["id"], f"{type(e).__name__}: {e}", s.job_max_attempts, job["attempts"],
+        db.finish_job(job["id"], f"{type(e).__name__}: {e}", s.job_max_attempts,
+                      s.job_max_attempts if getattr(e, "final", False) else job["attempts"],
                       pause=300 if getattr(e, "transient", False) else 30)      # a busy service needs minutes, not seconds

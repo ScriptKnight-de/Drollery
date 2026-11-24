@@ -8,7 +8,7 @@
   <div>
     <div class="frame">
       {% if item.kind in ("image", "gif") %}<img src="/media/{{ item.id }}" alt="{{ item.title }}">
-      {% elif item.kind in ("video", "movie") %}<button type="button" class="btn small enlarge" data-enlarge>{{ icon("search") }}{{ _("Enlarge") }}</button><video src="/media/{{ item.id }}" controls preload="metadata" data-nopicture="{{ _('Your browser could not play this film. Download the file and open it in a player such as VLC.') }}" {% if item.width and item.height %}style="--ar: {{ (item.width / item.height)|round(4) }}"{% endif %} {% if item.has_card %}poster="/card/{{ item.id }}?v={{ (item.updated_at * 1000)|int }}"{% elif item.has_thumb %}poster="/thumb/{{ item.id }}?v={{ (item.updated_at * 1000)|int }}"{% endif %}></video>
+      {% elif item.kind in ("video", "movie") %}<button type="button" class="btn small enlarge" data-enlarge>{{ icon("search") }}{{ _("Enlarge") }}</button><video src="/media/{{ item.id }}" controls preload="metadata" data-nopicture="{{ _('Your browser could not play this film. Use “Make browser-friendly copy” under the picture, or download the file and open it in a player such as VLC.') }}" {% if item.width and item.height %}style="--ar: {{ (item.width / item.height)|round(4) }}"{% endif %} {% if item.has_card %}poster="/card/{{ item.id }}?v={{ (item.updated_at * 1000)|int }}"{% elif item.has_thumb %}poster="/thumb/{{ item.id }}?v={{ (item.updated_at * 1000)|int }}"{% endif %}></video>
       {% else %}<div class="sound-stage" style="--h: {{ ((item.id * 137.508) % 360)|round|int }}">{{ sound_play(item) }}</div>{% endif %}
     </div>
     {% include "item_actions.html" %}

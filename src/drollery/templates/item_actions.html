@@ -5,7 +5,13 @@
 {% set album = item.kind == "album" %}
 <div class="toolbar" role="group" aria-label="{{ _('Actions') }}">
   {% if album %}<a class="btn small" href="/albums/{{ item.id }}/download">{{ icon("download") }}{{ _("Download all") }}</a>
-  {% else %}<a class="btn small" href="/media/{{ item.id }}" download="{{ item.original_name }}">{{ icon("download") }}{{ _("Download") }}</a>{% endif %}
+  {% else %}<a class="btn small" href="/media/{{ item.id }}?original=1" download="{{ item.original_name }}">{{ icon("download") }}{{ _("Download") }}</a>{% endif %}
+  {% if item.kind in ("video", "movie") %}
+  {% set converting = jobs|selectattr("type", "equalto", "convert")|selectattr("status", "in", ["queued", "running"])|list %}
+  {% if web_copy %}<form method="post" action="/items/{{ item.id }}/convert/delete" data-confirm="{{ _('Remove the browser-friendly copy? The original stays, and you can make the copy again.') }}"><button class="btn small" type="submit" title="{{ _('This film plays from a copy every browser can play') }}">{{ icon("film") }}{{ _("Remove browser-friendly copy") }}</button></form>
+  {% elif converting %}<span class="btn small" role="status" aria-disabled="true">{{ icon("film") }}{{ _("Converting…") }}{% if converting[0].progress is not none %} {{ converting[0].progress|int }}%{% endif %}</span>
+  {% else %}<form method="post" action="/items/{{ item.id }}/convert"><button class="btn small" type="submit" title="{{ _('For a film your browser cannot play: makes a copy it can, in the background') }}">{{ icon("film") }}{{ _("Make browser-friendly copy") }}</button></form>{% endif %}
+  {% endif %}
   {% if album and metadata_lookup %}<a class="btn small" href="/albums/{{ item.id }}/lookup?run=1" data-popup="{{ _('Look up details online') }}" data-busy="{{ _('Searching MusicBrainz…') }}">{{ icon("search") }}{{ _("Look up details online") }}</a>{% endif %}
   {% if item.kind == "movie" and metadata_lookup %}<a class="btn small" href="/movies/{{ item.id }}/lookup?run=1" data-popup="{{ _('Look up on IMDb') }}" data-busy="{{ _('Searching for the movie…') }}">{{ icon("search") }}{{ _("Look up on IMDb") }}</a>{% endif %}
   {% if item.kind != "audio" %}<a class="btn small" href="/items/{{ item.id }}/card" data-popup="{{ _('Card image') }}">{{ icon("crop") }}{{ _("Card image") }}</a>{% endif %}

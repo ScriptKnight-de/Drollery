@@ -115,12 +115,14 @@ def share_raw(request: Request, token: str, name: str, download: int = 0):
     share, item = _resolve(request, token)
     if not shares.is_open(share):
         raise HTTPException(410, "This link has expired or was revoked")
-    path = pipeline.media_path(item)
+    path, mime = pipeline.media_path(item), item["mime"]
+    if not download and item["kind"] in ("video", "movie") and pipeline.web_path(item).exists():
+        path, mime = pipeline.web_path(item), "video/mp4"      # played in the browser: the browser-friendly copy; a download is the original
     if not path.exists():
         raise HTTPException(404, "File missing")
     if _counts_as_view(request, token):
         shares.count_view(share["id"])                    # a direct hit (embed, chat preview, download); not the page's own <img>
-    resp = FileResponse(path, media_type=item["mime"], filename=item["original_name"] or shares.file_slug(item),
+    resp = FileResponse(path, media_type=mime, filename=item["original_name"] or shares.file_slug(item),
                         content_disposition_type="attachment" if download else "inline")
     resp.headers.update(FILE_HEADERS)
     return resp
