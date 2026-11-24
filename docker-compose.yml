@@ -1,3 +1,5 @@
+# The Whisper image is pinned to the release that `latest-cpu` pointed to on 2026-11-24 (same image, checked by digest), so a
+# `docker compose pull` never swaps the speech server under you. To update it, change 0.8.3-cpu in the three places below.
 services:
   drollery:
     # `docker compose up -d` pulls this ready-made image (linux/amd64 and linux/arm64); `docker compose up -d --build`
@@ -31,7 +33,7 @@ services:
   # make every model download fail with "Permission denied". This hands such files to uid 1000; it changes nothing when
   # the ownership is already right.
   whisper-permissions:
-    image: ghcr.io/speaches-ai/speaches:latest-cpu
+    image: ghcr.io/speaches-ai/speaches:0.8.3-cpu
     profiles: ["whisper"]
     restart: "no"
     user: root
@@ -40,7 +42,7 @@ services:
       - whisper-models:/models
 
   whisper:
-    image: ghcr.io/speaches-ai/speaches:latest-cpu
+    image: ghcr.io/speaches-ai/speaches:0.8.3-cpu
     profiles: ["whisper"]
     restart: unless-stopped
     depends_on:
@@ -67,7 +69,7 @@ services:
   # When it fails it says why: the HTTP code, what the Whisper server answered, and what usually causes that. The real
   # reason is always in the server's own log: docker compose logs whisper
   whisper-model:
-    image: ghcr.io/speaches-ai/speaches:latest-cpu
+    image: ghcr.io/speaches-ai/speaches:0.8.3-cpu
     profiles: ["whisper"]
     restart: "no"
     depends_on:
