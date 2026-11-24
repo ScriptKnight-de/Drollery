@@ -50,8 +50,8 @@ volumes:
 ```
 
 The image is published with these tags: `latest` (the newest version on the main branch), a release number such as
-`0.14.2` (that exact release), and `0.14` (the newest `0.14.x`). To stay on one release, use its number, for example
-`ghcr.io/scriptknight-de/drollery:0.14.2`. The same image is also in the Forgejo registry as
+`0.15.0` (that exact release), and `0.15` (the newest `0.15.x`). To stay on one release, use its number, for example
+`ghcr.io/scriptknight-de/drollery:0.15.0`. The same image is also in the Forgejo registry as
 `forgejo.scriptknight.de/scriptknight/drollery`.
 
 **Or use the project's Compose file**, which also gives you the optional Whisper container and the `.env` file. It pulls

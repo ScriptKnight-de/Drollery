@@ -5,6 +5,8 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+## [0.15.0] - 2026-11-24
+
 ### Added
 - A picture opens bigger in a window of its own when you click it (click again for real size, with scrolling). A video has an **Enlarge** button that moves the player into such a window, still playing; it goes back when you close it. Both also work on shared links.
 - A film whose picture the browser cannot decode (it plays the sound and keeps showing the preview picture) now says so, with a hint to download it and use a player such as VLC.
