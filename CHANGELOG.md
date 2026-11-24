@@ -5,6 +5,15 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+### Added
+- A picture opens bigger in a window of its own when you click it (click again for real size, with scrolling). A video has an **Enlarge** button that moves the player into such a window, still playing; it goes back when you close it. Both also work on shared links.
+- A film whose picture the browser cannot decode (it plays the sound and keeps showing the preview picture) now says so, with a hint to download it and use a player such as VLC.
+- The logo wiggles when pointed at or focused in every theme, not only the playful one.
+
+### Changed
+- `max_upload_mb` is 2048 (2 GB) by default, up from 500. It is also the largest file a link download may fetch. A `config.toml` that sets its own value keeps it.
+- The playful theme no longer draws the squiggly line under page titles.
+
 ## [0.14.2] - 2026-11-24
 
 ### Fixed

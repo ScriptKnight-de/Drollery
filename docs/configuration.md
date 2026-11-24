@@ -29,7 +29,7 @@ docker compose restart drollery
 
 | Setting | Default | Meaning |
 |---|---|---|
-| `max_upload_mb` | 500 | largest single file you can upload (pictures, clips, sounds), and the largest file a link download may fetch. A long video from a link is often bigger than 500: the job then fails and says so, so raise it (for example `2048`) if you fetch long videos |
+| `max_upload_mb` | 2048 | largest single file you can upload (pictures, clips, sounds), and the largest file a link download may fetch. A video from a link that is bigger than this is not saved: the job fails and says so |
 | `max_movie_mb` | 16384 | largest single movie file |
 | `max_album_mb` | 2048 | all tracks of one album together, and the unpacked size of a ZIP |
 | `max_album_tracks` | 500 | most tracks in one album |

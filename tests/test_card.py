@@ -285,3 +285,21 @@ def test_the_player_keeps_the_shape_of_the_film_whatever_its_preview_picture(cli
     assert "--ar:" in shared and "/static/videoframe.js" in shared
     css = client.get("/static/style.css").text
     assert "aspect-ratio: var(--ar)" in css and "object-fit: contain" in css
+
+
+# ------------------------------------------------ a bigger view, and a film whose picture the browser cannot show
+
+def test_a_picture_and_a_video_can_be_opened_bigger(client, image_id, video_id):
+    page = client.get(f"/items/{image_id}").text
+    assert 'id="zoom-dialog"' in page and "/static/zoom.js" in page
+    assert "data-enlarge" not in page                                       # a picture opens by clicking it
+    film = client.get(f"/items/{video_id}").text
+    assert "data-enlarge" in film and "data-nopicture=" in film and "/static/videoframe.js" in film
+
+
+def test_a_shared_video_can_be_opened_bigger_too(client, video_id):
+    client.post(f"/items/{video_id}/shares", data={"preset": "never", "label": "", "next": f"/items/{video_id}"})
+    with db.tx() as c:
+        token = c.execute("SELECT token FROM shares").fetchone()["token"]
+    page = client.get(f"/s/{token}").text
+    assert "data-enlarge" in page and "data-nopicture=" in page and "/static/zoom.js" in page

@@ -27,6 +27,7 @@
   <script src="/static/busy.js?v={{ asset_v }}" defer></script>
   <script src="/static/once.js?v={{ asset_v }}" defer></script>
   <script src="/static/undo.js?v={{ asset_v }}" defer></script>
+  <script src="/static/zoom.js?v={{ asset_v }}" defer></script>
 </head>
 <body{% if embed %} class="embed"{% endif %}>
 {% macro orn() %}<div class="orn" style="--sw: {{ orn_sheet }}" aria-hidden="true">{% for p in orn_row() %}<i class="pc" style="--x: {{ p.x }}; --w: {{ p.w }}; --g: {{ p.g }}"></i>{% endfor %}</div>{% endmacro %}
@@ -80,6 +81,10 @@
 {% if flash %}<div class="note {{ flash.kind }}" role="status"><span>{{ flash.text }}</span>{% if undo_token %} <form method="post" action="/undo/{{ undo_token }}" class="inline" data-undo><button class="btn small" type="submit">{{ _("Undo") }}</button></form>{% endif %}</div>{% endif %}
 {% block content %}{% endblock %}
 </main>
+<dialog id="zoom-dialog" class="zoom" closedby="any" aria-label="{{ _('Bigger view') }}">
+  <div class="zoom-bar"><button type="button" class="btn small" data-zoom-close>{{ icon("x") }}{{ _("Close") }}</button></div>
+  <div class="zoom-stage"></div>
+</dialog>
 <dialog id="confirm-dialog" class="modal confirm" closedby="any" aria-labelledby="cf-title">
   <div class="modal-head"><h2 id="cf-title">{{ _("Are you sure?") }}</h2></div>
   <div class="modal-body" id="cf-text"></div>

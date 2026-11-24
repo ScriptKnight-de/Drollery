@@ -39,7 +39,7 @@ def test_the_panel_offers_the_three_types_and_the_fields_of_each(client):
 
 def test_the_limits_are_handed_to_the_script_and_the_lookup_boxes_follow_the_switch(client):
     page = home(client)
-    assert 'data-max-upload="500"' in page and 'data-max-movie="16384"' in page and 'data-lookup="1"' in page
+    assert 'data-max-upload="2048"' in page and 'data-max-movie="16384"' in page and 'data-lookup="1"' in page
     from drollery.config import get_settings
     s = get_settings()
     old = s.metadata_lookup

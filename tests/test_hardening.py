@@ -64,3 +64,17 @@ def test_the_compose_file_makes_the_container_read_only_with_every_write_going_t
     assert "read_only: true" in drollery and "- /tmp:size=" in drollery and "TMPDIR: /data/tmp" in drollery
     dockerfile = (ROOT / "Dockerfile").read_text()
     assert "HOME=/data/.home" in dockerfile and "XDG_CACHE_HOME=/data/.cache" in dockerfile      # what read_only relies on
+
+
+def test_the_logo_wiggles_in_every_theme_and_the_title_squiggle_is_gone():
+    base = (STATIC / "style.css").read_text()
+    assert re.search(r"\.brand:is\(:hover, :focus-visible\) \.mark \{ animation: logo-wiggle", base)       # no theme selector: all of them
+    playful = (STATIC / "style-playful.css").read_text()
+    assert "squiggle" not in playful and "h1::after" not in playful
+    assert not (STATIC / "squiggle.svg").exists()
+
+
+def test_the_default_size_limit_is_two_gigabytes():
+    from drollery.config import Settings
+    assert Settings().max_upload_mb == 2048
+    assert "max_upload_mb = 2048" in (ROOT / "src" / "drollery" / "config.default.toml").read_text()

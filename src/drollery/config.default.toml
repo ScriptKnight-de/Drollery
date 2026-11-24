@@ -1,7 +1,7 @@
 # Drollery configuration. Copied to <data>/config.toml on first start; edit that copy.
 # Restart the container after changes.
 
-max_upload_mb = 500       # per-file upload limit
+max_upload_mb = 2048      # per-file upload limit, and the largest file a link download may fetch
 max_movie_mb = 16384      # one movie file (they are long)
 max_album_mb = 2048       # all tracks of one album together, and the unpacked size of a ZIP
 max_album_tracks = 500

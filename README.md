@@ -110,7 +110,7 @@ suggests what it should become, which you can change:
 | one video file | **separate item**, or a **movie, parody or synchro** | you choose; a video of 300 MB or more is suggested as a movie |
 | a link | a download in the background | works for direct file links, most video sites (via `yt-dlp`) and picture galleries (via `gallery-dl`); follow it under **Jobs** |
 
-A progress bar shows the speed and the time left, and you can cancel. Limits: 500 MB per file, 16 GB for a movie, 2 GB
+A progress bar shows the speed and the time left, and you can cancel. Limits: 2 GB per file, 16 GB for a movie, 2 GB
 per album (changeable, see [Configuration](docs/configuration.md)). A file that is already in your library is not added
 twice.
 

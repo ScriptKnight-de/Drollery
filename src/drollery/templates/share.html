@@ -15,7 +15,7 @@
 <article class="share">
   <div class="frame">
     {% if item.kind in ("image", "gif") %}<img src="/s/{{ share.token }}/raw/{{ slug }}" alt="{{ item.title }}">
-    {% elif item.kind in ("video", "movie") %}<video src="/s/{{ share.token }}/raw/{{ slug }}" controls playsinline preload="metadata" {% if item.width and item.height %}style="--ar: {{ (item.width / item.height)|round(4) }}"{% endif %} {% if preview %}poster="/s/{{ share.token }}/thumb"{% endif %}></video>
+    {% elif item.kind in ("video", "movie") %}<button type="button" class="btn small enlarge" data-enlarge>{{ icon("search") }}{{ _("Enlarge") }}</button><video src="/s/{{ share.token }}/raw/{{ slug }}" controls playsinline preload="metadata" data-nopicture="{{ _('Your browser can play the sound of this film but not its picture. Download the file and open it in a player such as VLC.') }}" {% if item.width and item.height %}style="--ar: {{ (item.width / item.height)|round(4) }}"{% endif %} {% if preview %}poster="/s/{{ share.token }}/thumb"{% endif %}></video>
     {% else %}<audio src="/s/{{ share.token }}/raw/{{ slug }}" controls preload="metadata"></audio>{% endif %}
   </div>
   <div class="panel stack">

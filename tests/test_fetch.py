@@ -108,7 +108,7 @@ def test_a_video_over_the_size_limit_fails_instead_of_saving_only_its_sound(clie
         return subprocess.CompletedProcess(cmd, 0, "", "File is larger than max-filesize (900000000 bytes > 524288000 bytes). Aborting.")
 
     monkeypatch.setattr(pipeline, "_run_tool", run)
-    with pytest.raises(providers.ProviderError, match="larger than the limit of 500 MB"):
+    with pytest.raises(providers.ProviderError, match="larger than the limit of 2048 MB"):
         pipeline.job_fetch(fetch_job())
     with db.tx() as c:
         assert db.search(c, "") == []

@@ -30,8 +30,6 @@
 :root:not([data-style]) h1 { font-size: 34px; line-height: 40px; }
 :root:not([data-style]) h2 { font-size: 24px; line-height: 30px; }
 :root:not([data-style]) .brand { font-size: 28px; line-height: 34px; letter-spacing: .01em; }
-:root:not([data-style]) .page-head > h1::after { content: ""; display: block; height: 9px; width: 132px; max-width: 100%; margin-top: 2px; background: var(--ac);
-  -webkit-mask: url("/static/squiggle.svg") 0 0 / 24px 9px repeat-x; mask: url("/static/squiggle.svg") 0 0 / 24px 9px repeat-x; }
 
 /* header and footer: a painted banner, with bunting hanging from it */
 :root:not([data-style]) .top { background: color-mix(in srgb, var(--ac) 12%, var(--s1)); backdrop-filter: none; border-bottom: 3px solid var(--pl-ink); }
@@ -43,7 +41,7 @@
 :root:not([data-style]) .top::after { top: 100%; margin-top: 3px; }
 :root:not([data-style]) .foot-bar { position: relative; height: 88px; padding-top: 28px; }
 :root:not([data-style]) .foot-bar::before { top: 3px; }
-:root:not([data-style]) .brand:hover .mark { animation: pl-wiggle .5s var(--pl-spring); }
+:root:not([data-style]) .brand:is(:hover, :focus-visible) .mark { animation: pl-wiggle .5s var(--pl-spring); }
 
 /* things with an outline and a hard coloured shadow, and corners that are not quite square */
 :root:not([data-style]) :is(.btn, .seg, .add .field, .panel, .pop, .modal, .side details, .stage, .previewcard, .person-card, .note, .tagfield) {
