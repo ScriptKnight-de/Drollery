@@ -5,6 +5,14 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+## [0.19.0] - 2026-11-25
+
+### Added
+- Settings > Cookies: paste the cookies.txt of a browser that is signed in, and downloads of links use it (yt-dlp, gallery-dl and direct file downloads). That is the answer to "Sign in to confirm your age" and to members-only galleries. The cookies are write-only (only the site names are shown), a cookie is only sent to the site it belongs to, and each job works on its own private copy of the file. A failed download that asks for cookies now says where to add them.
+
+### Fixed
+- A picture from a link without a file name (an image proxy link) failed with "downloaded files were not recognised": the long name was cut and took the `.png` with it. The long part is cut first and the ending is added afterwards.
+
 ## [0.18.1] - 2026-11-25
 
 ### Fixed
