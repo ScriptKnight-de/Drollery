@@ -5,6 +5,12 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+## [0.18.1] - 2026-11-25
+
+### Fixed
+- A file that a browser extension handed over as a link, such as a picture from an image proxy, failed with "nothing downloadable found". The direct download now looks like a browser (user agent) and sends the page the file was on as the Referer when the clipper names it (`referer` in `POST /api/v1/ingest`). A host that answers `application/octet-stream` is accepted when the file's first bytes show it is a picture, video or sound.
+- yt-dlp failed with "Cannot write video metadata to JSON file" when a link's id was very long (an image proxy link carries the whole address). The id in the temporary file name is cut at 40 characters.
+
 ## [0.18.0] - 2026-11-24
 
 ### Added
