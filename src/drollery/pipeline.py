@@ -4,6 +4,7 @@ import hashlib
 import itertools
 import json
 import logging
+import mimetypes
 import re
 import shutil
 import subprocess
@@ -293,11 +294,14 @@ def _save_direct(r: httpx.Response, td: Path) -> list[Path]:
         if not ctype:
             return []
     name = Path(urlparse(str(r.url)).path).name or "download"
-    if not Path(name).suffix:
-        ext = {"image/jpeg": ".jpg", "image/png": ".png", "image/gif": ".gif", "image/webp": ".webp",
-               "video/mp4": ".mp4", "video/webm": ".webm", "audio/mpeg": ".mp3"}.get(ctype, "")
-        name += ext
-    dest = td / _safe_name(name)
+    try:
+        media.guess(name)
+        stem, ext = Path(name).stem, Path(name).suffix                        # the link ends in a real file name
+    except media.MediaError:                                                  # no name to go by (an image proxy link): the type decides
+        ext = {"image/jpeg": ".jpg", "image/png": ".png", "image/gif": ".gif", "image/webp": ".webp", "image/avif": ".avif",
+               "video/mp4": ".mp4", "video/webm": ".webm", "audio/mpeg": ".mp3"}.get(ctype) or mimetypes.guess_extension(ctype) or ""
+        stem = name
+    dest = td / (_safe_name(stem)[:100] + re.sub(r"[^\w.]", "", ext))          # cut the long part, never the ending that says what it is
     limit = get_settings().max_upload_mb * 1024 * 1024
     size = 0
     with dest.open("wb") as f:

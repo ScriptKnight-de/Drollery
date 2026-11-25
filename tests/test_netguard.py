@@ -339,3 +339,12 @@ def test_the_page_a_clipper_names_is_kept_with_the_link(client):
     with db.tx() as c:
         got = {j: json.loads(c.execute("SELECT payload FROM jobs WHERE id=?", (j,)).fetchone()["payload"]) for j in (r.json()["job_id"], r2.json()["job_id"])}
     assert got[r.json()["job_id"]]["referer"] == "https://page.example/gallery" and "referer" not in got[r2.json()["job_id"]]
+
+
+def test_a_very_long_link_without_a_file_name_still_gets_its_ending(client, monkeypatch, dns, tmp_path):
+    dns["img.example"] = [PUBLIC]
+    monkeypatch.setattr(netguard, "make_client", client_for(lambda request: httpx.Response(200, content=png(6), headers={"content-type": "image/png"})))
+    files = pipeline._direct_download("https://img.example/unsafe/w:48/" + "aHR0cHM6Ly9t" * 40, tmp_path)
+    assert len(files) == 1 and files[0].suffix == ".png" and len(files[0].name) < 120 and files[0].read_bytes() == png(6)
+    from drollery import media
+    assert media.guess(files[0].name)[0] == "image"                                   # the import accepts it
