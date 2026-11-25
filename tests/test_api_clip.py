@@ -67,7 +67,7 @@ def test_patch_sets_exactly_these_people_and_ignores_unknown_ids(client):
 
 
 def fetch(monkeypatch, tmp_path, payload):
-    def direct(url, td):
+    def direct(url, td, referer=""):
         f = td / "pic.png"; f.write_bytes(png(7)); return [f]
     monkeypatch.setattr(pipeline, "_direct_download", direct)
     monkeypatch.setattr(pipeline.netguard, "check_url", lambda url: None)

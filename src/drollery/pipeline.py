@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import itertools
 import json
 import logging
 import re
@@ -248,10 +249,28 @@ def _get_checked(client: httpx.Client, url: str) -> httpx.Response:
     raise providers.ProviderError("too many redirects")
 
 
-def _direct_download(url: str, td: Path) -> list[Path]:
-    """If the URL itself is an image/video/audio file, fetch it directly."""
+BROWSER_UA = "Mozilla/5.0 (X11; Linux x86_64; rv:128.0) Gecko/20100101 Firefox/128.0 Drollery"
+_SNIFF = ((b"\x89PNG", "image/png"), (b"\xff\xd8\xff", "image/jpeg"), (b"GIF8", "image/gif"), (b"RIFF", "image/webp"),
+          (b"\x1aE\xdf\xa3", "video/webm"), (b"OggS", "audio/ogg"), (b"ID3", "audio/mpeg"))
+
+
+def _sniff(head: bytes) -> str:
+    """The media type of a file by its first bytes, for servers that call every file application/octet-stream."""
+    for magic, ctype in _SNIFF:
+        if head.startswith(magic) and (magic != b"RIFF" or head[8:12] == b"WEBP"):
+            return ctype
+    return "video/mp4" if head[4:8] == b"ftyp" else ""
+
+
+def _direct_download(url: str, td: Path, referer: str = "") -> list[Path]:
+    """If the URL itself is an image/video/audio file, fetch it directly. Like a browser would: with a browser-like user agent and,
+    when the clipper knows it, the page the picture was on (image hosts often refuse a request that comes from nowhere)."""
+    headers = {"User-Agent": BROWSER_UA, "Accept": "image/*,video/*,audio/*;q=0.9,*/*;q=0.5"}
+    if referer.startswith(("http://", "https://")):
+        headers["Referer"] = referer
     try:
         with netguard.make_client() as client:
+            client.headers.update(headers)
             r = _get_checked(client, url)
             try:
                 return _save_direct(r, td)
@@ -262,9 +281,17 @@ def _direct_download(url: str, td: Path) -> list[Path]:
 
 
 def _save_direct(r: httpx.Response, td: Path) -> list[Path]:
-    ctype = r.headers.get("content-type", "").split(";")[0].strip()
-    if r.status_code != 200 or ctype.split("/")[0] not in media.KINDS:
+    ctype = r.headers.get("content-type", "").split(";")[0].strip().lower()
+    if r.status_code != 200:
         return []
+    chunks = r.iter_bytes()
+    first = next(chunks, b"")
+    if ctype.split("/")[0] not in media.KINDS:
+        if ctype not in ("application/octet-stream", "binary/octet-stream", ""):
+            return []
+        ctype = _sniff(first[:16])                     # the server does not say what it is: the file itself does
+        if not ctype:
+            return []
     name = Path(urlparse(str(r.url)).path).name or "download"
     if not Path(name).suffix:
         ext = {"image/jpeg": ".jpg", "image/png": ".png", "image/gif": ".gif", "image/webp": ".webp",
@@ -274,7 +301,7 @@ def _save_direct(r: httpx.Response, td: Path) -> list[Path]:
     limit = get_settings().max_upload_mb * 1024 * 1024
     size = 0
     with dest.open("wb") as f:
-        for chunk in r.iter_bytes():
+        for chunk in itertools.chain([first], chunks):
             size += len(chunk)
             if size > limit:
                 raise providers.ProviderError("file exceeds max_upload_mb")
@@ -461,7 +488,7 @@ def _fetch(job: dict) -> None:
     with tempfile.TemporaryDirectory(dir=s.tmp_dir) as tds:
         td = Path(tds)
         meta: dict[Path, dict] = {}
-        files = _direct_download(url, td)
+        files = _direct_download(url, td, str(payload.get("referer") or ""))
         if not files:
             netguard.check_redirects(url)             # yt-dlp and gallery-dl follow redirects themselves: make sure the way is clean first
             # Prefer H.264/AAC and always merge to .mp4: it plays in every browser. Without this, YouTube pairs like H.264 video
@@ -471,7 +498,7 @@ def _fetch(job: dict) -> None:
             r = _run_tool(["yt-dlp", "--no-playlist", "--no-warnings", "--write-info-json",
                            "--newline", "--playlist-items", f"1-{max(s.fetch_max_files, 1)}", "-S", "vcodec:h264,res:1080,acodec:aac", "--merge-output-format", "mp4",
                            "--max-filesize", f"{s.max_upload_mb}M",
-                           "-o", str(td / "%(title).80B [%(id)s].%(ext)s"), url], s.fetch_timeout)
+                           "-o", str(td / "%(title).80B [%(id).40B].%(ext)s"), url], s.fetch_timeout)
             err1 = r.stderr.strip()[-1500:]
             files = [p for p in td.iterdir() if p.suffix != ".json" and not p.name.endswith(".part")]
             for info in td.glob("*.info.json"):

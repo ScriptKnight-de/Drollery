@@ -26,7 +26,7 @@ def test_other_files_are_still_refused(name):
 
 def fake_downloader(monkeypatch, writes: dict[str, bytes | str], seen: list):
     """Replace the yt-dlp call with one that writes the given files into its output directory."""
-    monkeypatch.setattr(pipeline, "_direct_download", lambda url, td: [])           # the URL is a web page, not a media file
+    monkeypatch.setattr(pipeline, "_direct_download", lambda url, td, referer="": [])           # the URL is a web page, not a media file
 
     def run(cmd, timeout):
         seen.append(cmd)
@@ -99,7 +99,7 @@ def test_nothing_downloaded_at_all_says_so(client, monkeypatch):
 
 def test_a_video_over_the_size_limit_fails_instead_of_saving_only_its_sound(client, monkeypatch):
     """yt-dlp skips the too-big video stream and still downloads the audio one: that must not end up as a sound in the library."""
-    monkeypatch.setattr(pipeline, "_direct_download", lambda url, td: [])
+    monkeypatch.setattr(pipeline, "_direct_download", lambda url, td, referer="": [])
 
     def run(cmd, timeout):
         outdir = Path(cmd[cmd.index("-o") + 1]).parent
@@ -141,7 +141,7 @@ def test_wrapping_links_hand_over_the_address_they_point_to(wrapped, real):
 
 def test_a_google_images_link_is_fetched_as_the_picture(client, monkeypatch):
     got = []
-    monkeypatch.setattr(pipeline, "_direct_download", lambda url, td: got.append(url) or [])
+    monkeypatch.setattr(pipeline, "_direct_download", lambda url, td, referer="": got.append(url) or [])
     monkeypatch.setattr(pipeline, "_run_tool", lambda cmd, timeout: got.append(cmd[-1]) or subprocess.CompletedProcess(cmd, 1, "", "ERROR"))
     link = "https://www.google.com/imgres?q=b&imgurl=https%3A%2F%2Fexample.org%2Fb.webp&imgrefurl=https%3A%2F%2Fexample.org%2F"
     with pytest.raises(providers.ProviderError):
@@ -166,7 +166,7 @@ def test_a_playlist_link_never_downloads_more_than_the_file_limit(client, monkey
 
 
 def test_a_timeout_and_an_unsupported_page_fail_once_with_a_plain_message(client, monkeypatch):
-    monkeypatch.setattr(pipeline, "_direct_download", lambda url, td: [])
+    monkeypatch.setattr(pipeline, "_direct_download", lambda url, td, referer="": [])
 
     def slow(cmd, timeout):
         raise subprocess.TimeoutExpired(cmd, timeout)

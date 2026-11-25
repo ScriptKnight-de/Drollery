@@ -261,7 +261,7 @@ def test_the_downloaders_are_only_started_after_the_redirects_were_checked(clien
 
     started = []
     monkeypatch.setattr(netguard, "make_client", client_for(handler))
-    monkeypatch.setattr(pipeline, "_direct_download", lambda url, td: [])
+    monkeypatch.setattr(pipeline, "_direct_download", lambda url, td, referer="": [])
     monkeypatch.setattr(pipeline, "_run_tool", lambda cmd, timeout: started.append(cmd))
     with pytest.raises(netguard.BlockedAddress):
         run_job("https://short.example/watch")
@@ -273,7 +273,7 @@ def test_a_clean_chain_lets_the_downloader_run(client, monkeypatch, dns):
     dns["www.video.example"] = [PUBLIC]
     handler = lambda request: (httpx.Response(301, headers={"location": "https://www.video.example/watch"}) if request.url.host == "video.example" else httpx.Response(200))  # noqa: E731
     monkeypatch.setattr(netguard, "make_client", client_for(handler))
-    monkeypatch.setattr(pipeline, "_direct_download", lambda url, td: [])
+    monkeypatch.setattr(pipeline, "_direct_download", lambda url, td, referer="": [])
     started = []
     monkeypatch.setattr(pipeline, "_run_tool", lambda cmd, timeout: started.append(cmd[0]) or type("R", (), {"stderr": "", "returncode": 1})())
     with pytest.raises(providers.ProviderError, match="nothing downloadable"):
@@ -311,3 +311,31 @@ def test_a_very_long_chain_of_public_hops_is_walked_only_so_far(client, monkeypa
     monkeypatch.setattr(netguard, "make_client", client_for(lambda r: n.append(1) or httpx.Response(302, headers={"location": "https://a.example/next"})))
     netguard.check_redirects("https://a.example/start")
     assert len(n) == netguard.MAX_HOPS
+
+
+def test_a_direct_download_looks_like_a_browser_and_names_the_page(client, monkeypatch, dns, tmp_path):
+    dns["img.example"] = [PUBLIC]
+    seen = {}
+
+    def handler(request):
+        seen.update(request.headers)
+        return httpx.Response(200, content=png(5), headers={"content-type": "application/octet-stream"})     # the host does not say what the file is
+
+    monkeypatch.setattr(netguard, "make_client", client_for(handler))
+    files = pipeline._direct_download("https://img.example/unsafe/w:48/aHR0cHM6Ly9t", tmp_path, "https://page.example/gallery")
+    assert seen["referer"] == "https://page.example/gallery" and "Firefox" in seen["user-agent"] and "httpx" not in seen["user-agent"]
+    assert len(files) == 1 and files[0].read_bytes() == png(5)          # recognised by its first bytes
+
+
+def test_octet_stream_that_is_no_media_is_still_refused(client, monkeypatch, dns, tmp_path):
+    dns["img.example"] = [PUBLIC]
+    monkeypatch.setattr(netguard, "make_client", client_for(lambda request: httpx.Response(200, content=b"<html>login</html>", headers={"content-type": "application/octet-stream"})))
+    assert pipeline._direct_download("https://img.example/x", tmp_path) == []
+
+
+def test_the_page_a_clipper_names_is_kept_with_the_link(client):
+    r = client.post("/api/v1/ingest", json={"url": "https://img.example/a.png", "referer": "https://page.example/gallery"})
+    r2 = client.post("/api/v1/ingest", json={"url": "https://img.example/b.png", "referer": "javascript:alert(1)"})
+    with db.tx() as c:
+        got = {j: json.loads(c.execute("SELECT payload FROM jobs WHERE id=?", (j,)).fetchone()["payload"]) for j in (r.json()["job_id"], r2.json()["job_id"])}
+    assert got[r.json()["job_id"]]["referer"] == "https://page.example/gallery" and "referer" not in got[r2.json()["job_id"]]

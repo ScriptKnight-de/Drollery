@@ -338,6 +338,9 @@ async def api_ingest(request: Request):
     clip = _clip_fields(body)
     if clip:
         payload["clip"] = clip
+    referer = str(body.get("referer") or "").strip()[:2000]          # the page a clipper found the file on: some hosts only hand it out with that
+    if referer.startswith(("http://", "https://")):
+        payload["referer"] = referer
     with db.tx() as c:
         job_id = db.enqueue(c, "fetch", None, json.dumps(payload))
     return {"job_id": job_id}
