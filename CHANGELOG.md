@@ -5,6 +5,11 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+## [0.19.2] - 2026-11-25
+
+### Changed
+- A download that fails because the site wants a sign-in now says so at the start of the error, and says what to do: add cookies under Settings > Cookies, or, when cookies are saved but were not accepted (YouTube retires the cookies of a normal browser window), export them again from a private window. The hint used to be at the end, where long error texts are cut off.
+
 ## [0.19.1] - 2026-11-25
 
 ### Fixed
