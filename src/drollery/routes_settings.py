@@ -10,7 +10,7 @@ import segno
 from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import FileResponse, RedirectResponse, StreamingResponse
 
-from . import autobackup, __version__, accounts, aisettings, backup, db, i18n, imdb, pipeline, restore, security
+from . import autobackup, __version__, accounts, aisettings, backup, cookies, db, i18n, imdb, pipeline, restore, security
 from .config import get_settings
 from .deps import web_auth
 from .i18n import t, tn
@@ -205,6 +205,26 @@ def lookup_save(omdb_key: str = Form(""), remove: str = Form("")):
         return flash_redirect("/settings/lookup", t("That does not look like an OMDb key (letters and digits only)"), "error")
     accounts.set_setting(imdb.KEY_SETTING, key)
     return flash_redirect("/settings/lookup", t("OMDb key saved"))
+
+
+# --------------------------------------------------------------- cookies for downloads
+
+@router.get("/cookies")
+def cookies_page(request: Request):
+    sites = cookies.sites()
+    return render(request, "settings_cookies.html", tab="cookies", sites=sites[:40], more=max(0, len(sites) - 40), has_cookies=bool(sites), max_kb=cookies.MAX_BYTES // 1024)
+
+
+@router.post("/cookies")
+def cookies_save(text: str = Form(""), remove: str = Form("")):
+    """The cookies are write-only, like the keys: stored, never shown again, never put into a page, a log or an error."""
+    if remove:
+        cookies.remove()
+        return flash_redirect("/settings/cookies", t("Cookies removed"))
+    n = cookies.save(text)
+    if not n:
+        return flash_redirect("/settings/cookies", t("No cookies found in that text. Paste the whole cookies.txt file"), "error")
+    return flash_redirect("/settings/cookies", tn("{n} cookie saved", "{n} cookies saved", n))
 
 
 # --------------------------------------------------------------- impressum

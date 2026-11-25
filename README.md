@@ -93,7 +93,7 @@ the background), **Settings**, the **palette** button (light, dark or automatic,
 **Details** (type, size, length, and for albums and movies everything the lookup found) and one box where you edit the
 title, description, **people** and tags.
 
-**Settings** has tabs for your *Profile*, *Security*, *API keys*, *AI models*, *People*, *Shares*, *Online lookup*, the
+**Settings** has tabs for your *Profile*, *Security*, *API keys*, *AI models*, *People*, *Shares*, *Cookies* (for downloads that need a sign-in), *Online lookup*, the
 *Impressum* and *About*.
 
 ## How do I…?
@@ -231,7 +231,7 @@ docker run --rm -v drollery_drollery-data:/data -v "$PWD":/backup alpine \
 **From the web interface:** **Settings › Backup** downloads your library as one `.tgz` file, either *everything*
 (database and files) or *metadata only* (titles, tags, transcripts, people, accounts and settings: small and quick).
 Drollery keeps running while it is made, and the download starts at once. The file is laid out like the data folder, so
-the restore below works for it. Keep it private: it contains your accounts and saved API keys.
+the restore below works for it. Keep it private: it contains your accounts and saved API keys and cookies.
 
 **Automatic backups:** under **Settings › Backup** Drollery can make backups by itself and keep the latest ones. Choose how
 often (every day or every week on Sunday) and at what hour of the server's clock, whether to back up only the metadata (small,
@@ -240,7 +240,7 @@ off until you switch it on. The files go to the `backups` folder in the data vol
 folder on another disk or a mounted share to be safe from losing the volume, because a folder on the same disk only protects
 against deleting something by mistake. A backup missed while the server was off is made when it starts again, a failed one is
 shown on the page with its reason and tried again after an hour, and the page lists the backups with *Download*, *Delete* and
-*Back up now*. The files can be owner-read only (they hold password hashes and saved API keys) and restore like any other
+*Back up now*. The files can be owner-read only (they hold password hashes and saved API keys and cookies) and restore like any other
 backup.
 
 **Restore** a backup: on a new Drollery that has no account yet, the first page offers **Or restore a backup**. Choose the

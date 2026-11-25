@@ -1,0 +1,26 @@
+{% extends "settings_base.html" %}
+{% from "icons.html" import icon %}
+{% block settings %}
+<section class="panel stack">
+  <h2>{{ _("Cookies for downloads") }}</h2>
+  <p class="muted">{{ _("Some sites only hand out a video or picture to someone who is signed in: YouTube asks for your age, a members-only gallery wants its login. Paste the cookies of a browser that is signed in, and Drollery downloads as that browser would. A cookie is only sent to the site it belongs to.") }}</p>
+  <ol class="muted">
+    <li>{{ _("Sign in to the site in your browser. For YouTube use a private window, then close it after the export, because YouTube renews cookies of a normal window.") }}</li>
+    <li>{{ _("Export the cookies of that site as a cookies.txt file with a browser extension (search for “cookies.txt” in your browser's extension store).") }}</li>
+    <li>{{ _("Open the file, copy everything and paste it below.") }}</li>
+  </ol>
+  <p class="hint">{{ _("Cookies are like a password: anyone who has them can act as you on that site. They are stored on this server only, are not shown again, and are part of a backup that includes the settings.") }}</p>
+</section>
+
+<form class="panel form" method="post" action="/settings/cookies" autocomplete="off">
+  <p>{% if has_cookies %}<span class="dot done"></span>{{ _("Cookies are saved for:") }} <b>{{ sites|join(", ") }}</b>{% if more %} {{ _("and {n} more", n=more) }}{% endif %}{% else %}<span class="dot idle"></span>{{ _("No cookies yet") }}{% endif %}</p>
+  <label>{{ _("cookies.txt") }}
+    <textarea name="text" rows="8" spellcheck="false" autocomplete="off" placeholder="{{ _('Paste the whole file here') if not has_cookies else _('Paste a new file to replace the saved cookies') }}"></textarea>
+    <span class="hint">{{ _("Netscape format, up to {kb} KB. Pasting replaces what was saved before", kb=max_kb) }}</span>
+  </label>
+  <div class="actions">
+    <button class="btn primary" type="submit">{{ icon("check") }}{{ _("Save cookies") }}</button>
+    {% if has_cookies %}<button class="btn" type="submit" name="remove" value="1">{{ icon("trash") }}{{ _("Remove cookies") }}</button>{% endif %}
+  </div>
+</form>
+{% endblock %}

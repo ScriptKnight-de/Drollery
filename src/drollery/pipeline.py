@@ -16,7 +16,7 @@ from urllib.parse import parse_qs, urlparse
 
 import httpx
 
-from . import accounts, aisettings, db, media, netguard, people, providers
+from . import accounts, aisettings, cookies, db, media, netguard, people, providers
 from .config import get_settings
 
 log = logging.getLogger("drollery")
@@ -272,6 +272,7 @@ def _direct_download(url: str, td: Path, referer: str = "") -> list[Path]:
     try:
         with netguard.make_client() as client:
             client.headers.update(headers)
+            cookies.apply_to_client(client)
             r = _get_checked(client, url)
             try:
                 return _save_direct(r, td)
@@ -499,12 +500,14 @@ def _fetch(job: dict) -> None:
             # + Opus audio are merged into .mkv, which many browsers cannot play. The codec comes BEFORE the resolution: -S is only a
             # ranking, so with the resolution first a 1080p HEVC stream (TikTok offers one) beat a lower-resolution H.264 one, and
             # Firefox on Linux then said "no video with supported format and MIME type found".
-            r = _run_tool(["yt-dlp", "--no-playlist", "--no-warnings", "--write-info-json",
+            jar = cookies.write_file(td)
+            with_cookies = ["--cookies", str(jar)] if jar else []
+            r = _run_tool(["yt-dlp", *with_cookies, "--no-playlist", "--no-warnings", "--write-info-json",
                            "--newline", "--playlist-items", f"1-{max(s.fetch_max_files, 1)}", "-S", "vcodec:h264,res:1080,acodec:aac", "--merge-output-format", "mp4",
                            "--max-filesize", f"{s.max_upload_mb}M",
                            "-o", str(td / "%(title).80B [%(id).40B].%(ext)s"), url], s.fetch_timeout)
             err1 = r.stderr.strip()[-1500:]
-            files = [p for p in td.iterdir() if p.suffix != ".json" and not p.name.endswith(".part")]
+            files = [p for p in td.iterdir() if p.suffix != ".json" and not p.name.endswith(".part") and p.name != "cookies.txt"]
             for info in td.glob("*.info.json"):
                 try:
                     d = json.loads(info.read_text())
@@ -516,12 +519,13 @@ def _fetch(job: dict) -> None:
             _refuse_audio_left_over(files, meta, r.stderr, s.max_upload_mb)
             if not files:
                 gdir = td / "gallery"
-                r = _run_tool(["gallery-dl", "-q", "-D", str(gdir), "--range", f"1-{s.fetch_max_files}",
+                r = _run_tool(["gallery-dl", *with_cookies, "-q", "-D", str(gdir), "--range", f"1-{s.fetch_max_files}",
                                "--filesize-max", f"{s.max_upload_mb}M", url], s.fetch_timeout)
                 files = sorted(gdir.iterdir()) if gdir.exists() else []
                 if not files:
+                    hint = " | Tip: Settings > Cookies lets Drollery download as a signed-in browser would" if "cookies" in err1.lower() and not jar else ""
                     raise FetchError(
-                        f"nothing downloadable found. yt-dlp: {err1 or '-'} | gallery-dl: {r.stderr.strip()[-1500:] or '-'}")
+                        f"nothing downloadable found. yt-dlp: {err1 or '-'} | gallery-dl: {r.stderr.strip()[-1500:] or '-'}{hint}")
         imported, skipped = 0, []
         for f in files[: s.fetch_max_files]:
             try:
