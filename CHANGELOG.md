@@ -5,6 +5,11 @@ uses [Semantic Versioning](https://semver.org) (while it is 0.x, minor versions 
 
 ## [Unreleased]
 
+## [0.19.1] - 2026-11-25
+
+### Fixed
+- YouTube links failed with "Requested format is not available" (also with cookies saved): YouTube only lists the real video formats after a script challenge is solved, and the image had neither the helper scripts (`yt-dlp-ejs`) nor a JavaScript runtime. Both are installed now (`yt-dlp[default]` and `deno`, for amd64 and arm64).
+
 ## [0.19.0] - 2026-11-25
 
 ### Added
