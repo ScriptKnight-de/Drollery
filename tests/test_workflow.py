@@ -159,3 +159,9 @@ def test_the_compose_file_pulls_the_published_image_and_can_still_build_it():
     assert re.search(r"^DROLLERY_IMAGE=$", env, re.M) and "DROLLERY_IMAGE" in (ROOT / "docs/configuration.md").read_text()
     readme = (ROOT / "README.md").read_text()
     assert "docker compose up -d               # add --build" in readme and "docker compose pull && docker compose up -d" in readme
+
+
+def test_the_image_can_solve_youtubes_script_challenges():
+    """Without yt-dlp-ejs and a JavaScript runtime YouTube only lists thumbnails: "Requested format is not available"."""
+    deps = (ROOT / "pyproject.toml").read_text()
+    assert '"yt-dlp[default]"' in deps and '"deno"' in deps

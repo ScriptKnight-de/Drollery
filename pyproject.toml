@@ -24,7 +24,8 @@ dependencies = [
   "jinja2>=3.1",
   "python-multipart>=0.0.9",
   "httpx>=0.27",
-  "yt-dlp",
+  "yt-dlp[default]",   # with yt-dlp-ejs: the scripts YouTube needs solved before it hands out the video formats
+  "deno",              # the JavaScript runtime yt-dlp runs those scripts in (a pip package with the binary, for amd64 and arm64)
   "gallery-dl",
   "segno>=1.6",
   "pydantic>=2",       # imported directly (config.py); fastapi brings it, but the code should not rely on that
