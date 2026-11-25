@@ -523,9 +523,14 @@ def _fetch(job: dict) -> None:
                                "--filesize-max", f"{s.max_upload_mb}M", url], s.fetch_timeout)
                 files = sorted(gdir.iterdir()) if gdir.exists() else []
                 if not files:
-                    hint = " | Tip: Settings > Cookies lets Drollery download as a signed-in browser would" if "cookies" in err1.lower() and not jar else ""
+                    asks = "sign in" in err1.lower() or "cookies" in err1.lower()
+                    hint = ""
+                    if asks and not jar:
+                        hint = " (the site wants you signed in: add the cookies of a signed-in browser under Settings > Cookies)"
+                    elif asks:
+                        hint = " (the saved cookies were not accepted. YouTube retires the cookies of a normal browser window: export them again from a private window, paste them under Settings > Cookies, then close that window)"
                     raise FetchError(
-                        f"nothing downloadable found. yt-dlp: {err1 or '-'} | gallery-dl: {r.stderr.strip()[-1500:] or '-'}{hint}")
+                        f"nothing downloadable found{hint}. yt-dlp: {err1 or '-'} | gallery-dl: {r.stderr.strip()[-1500:] or '-'}")
         imported, skipped = 0, []
         for f in files[: s.fetch_max_files]:
             try:

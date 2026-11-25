@@ -70,7 +70,8 @@ def test_the_downloaders_get_the_cookie_file_and_it_is_not_imported_as_a_downloa
     with pytest.raises(pipeline.FetchError) as e:
         pipeline.job_fetch({"id": 1, "type": "fetch", "item_id": None, "payload": json.dumps({"url": "https://video.example/watch"}), "attempts": 1})
     assert [c[0] for c in seen] == ["yt-dlp", "gallery-dl"]
-    assert all("--cookies" in c for c in seen) and "Tip:" not in str(e.value)               # cookies were used, so no tip to add some
+    assert all("--cookies" in c for c in seen)
+    assert str(e.value).startswith("nothing downloadable found (the saved cookies were not accepted")         # said first: the rest of the message is long
 
 
 def test_without_cookies_the_error_points_to_the_setting(client, monkeypatch):
@@ -81,7 +82,7 @@ def test_without_cookies_the_error_points_to_the_setting(client, monkeypatch):
     monkeypatch.setattr(pipeline, "_run_tool", lambda cmd, timeout: subprocess.CompletedProcess(cmd, 1, "", "ERROR: Sign in to confirm your age. Use --cookies"))
     with pytest.raises(pipeline.FetchError) as e:
         pipeline.job_fetch({"id": 1, "type": "fetch", "item_id": None, "payload": json.dumps({"url": "https://video.example/watch"}), "attempts": 1})
-    assert "Settings > Cookies" in str(e.value)
+    assert str(e.value).startswith("nothing downloadable found (the site wants you signed in: add the cookies") and "Settings > Cookies" in str(e.value)
 
 
 def test_a_direct_download_sends_cookies_only_to_their_site(client, monkeypatch, tmp_path):
